@@ -60,6 +60,21 @@ export default ({ strapi }: any) => ({
       }
 
       const userId = user.documentId || String(user.id);
+
+      // Check bookmark limit before creating
+      const licenseGuard = strapi.plugin('magic-mark').service('license-guard');
+      const limitCheck = await licenseGuard.canCreateBookmark(userId);
+      
+      if (!limitCheck.canCreate) {
+        return ctx.throw(403, {
+          error: 'BOOKMARK_LIMIT_REACHED',
+          message: limitCheck.message || `Bookmark limit reached (${limitCheck.current}/${limitCheck.max}). Upgrade to Premium or Advanced to create more bookmarks.`,
+          current: limitCheck.current,
+          max: limitCheck.max,
+          upgradeUrl: '/admin/settings/magic-mark/upgrade'
+        });
+      }
+
       const service = strapi.plugin('magic-mark').service('bookmarks');
 
       const bookmark = await service.create(name, path, query, emoji, description, userId, sharedWithRoles, sharedWithUsers, isPublic);

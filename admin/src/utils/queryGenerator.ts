@@ -2,6 +2,7 @@
 /**
  * Generates correct Strapi v5 filter query strings from QueryBuilder structure
  * Based on: https://docs.strapi.io/cms/api/document-service/filters
+ * Supports deep relation filtering (e.g., user.role.name)
  */
 
 import qs from 'qs';
@@ -9,6 +10,8 @@ import qs from 'qs';
 export interface Condition {
   id: string;
   field: string;
+  /** Field path for deep filtering (e.g., ['user', 'role', 'name']) */
+  fieldPath?: string[];
   operator: string;
   value: string;
 }
@@ -21,7 +24,32 @@ export interface ConditionGroup {
 }
 
 /**
+ * Build a nested filter object from a field path
+ * e.g., ['user', 'role', 'name'] with operator 'eq' and value 'Admin'
+ * becomes: { user: { role: { name: { $eq: 'Admin' } } } }
+ */
+const buildNestedFilter = (fieldPath: string[], operator: string, value: string): any => {
+  if (fieldPath.length === 0) return {};
+  
+  if (fieldPath.length === 1) {
+    // Simple field - just the operator
+    return {
+      [fieldPath[0]]: {
+        [`$${operator}`]: value
+      }
+    };
+  }
+  
+  // Build nested structure from inside out
+  const [first, ...rest] = fieldPath;
+  return {
+    [first]: buildNestedFilter(rest, operator, value)
+  };
+};
+
+/**
  * Convert QueryBuilder structure to Strapi filter object
+ * Supports deep relation filtering via fieldPath
  */
 export const structureToFilters = (group: ConditionGroup): any => {
   const logic = group.logic.toLowerCase(); // 'and' or 'or'
@@ -31,20 +59,29 @@ export const structureToFilters = (group: ConditionGroup): any => {
       // Filter out empty conditions
       if ((item as ConditionGroup).isGroup) return true;
       const cond = item as Condition;
-      return cond.field && cond.value;
+      // Check if has either field or fieldPath
+      const hasField = cond.field || (cond.fieldPath && cond.fieldPath.length > 0);
+      // null/notNull operators don't need a value
+      const needsValue = !['null', 'notNull'].includes(cond.operator);
+      return hasField && (!needsValue || cond.value);
     })
     .map(item => {
       if ((item as ConditionGroup).isGroup) {
         // Nested group - recurse
         return structureToFilters(item as ConditionGroup);
       } else {
-        // Simple condition
+        // Simple or deep condition
         const cond = item as Condition;
-        return {
-          [cond.field]: {
-            [`$${cond.operator}`]: cond.value
-          }
-        };
+        
+        // Use fieldPath if available, otherwise use field
+        const path = cond.fieldPath && cond.fieldPath.length > 0 
+          ? cond.fieldPath 
+          : [cond.field];
+        
+        // Handle null/notNull operators (no value needed)
+        const value = ['null', 'notNull'].includes(cond.operator) ? true : cond.value;
+        
+        return buildNestedFilter(path, cond.operator, value);
       }
     });
 

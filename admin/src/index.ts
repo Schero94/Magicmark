@@ -47,6 +47,16 @@ export default {
       [
         {
           intlLabel: {
+            id: `${pluginId}.settings.upgrade`,
+            defaultMessage: 'Upgrade',
+          },
+          id: 'magic-mark-upgrade',
+          to: `${pluginId}/upgrade`,
+          Component: () => import(/* webpackChunkName: "magic-mark-upgrade" */ './pages/UpgradePage') as any,
+          permissions: [],
+        },
+        {
+          intlLabel: {
             id: `${pluginId}.settings.license`,
             defaultMessage: 'License',
           },

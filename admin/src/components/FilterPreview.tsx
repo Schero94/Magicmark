@@ -1,6 +1,7 @@
 // @ts-nocheck
 import React from 'react';
 import { Box, Flex, Typography } from '@strapi/design-system';
+import { Filter, Link as LinkIcon } from '@strapi/icons';
 import styled from 'styled-components';
 import { parseQueryString, ParsedQuery, ParsedFilter } from '../utils/queryParser';
 
@@ -9,16 +10,17 @@ const FilterChip = styled.div<{ logic?: 'AND' | 'OR' }>`
   align-items: center;
   padding: 4px 12px;
   border-radius: 4px;
-  background: ${props => props.logic === 'OR' ? '#FFF4E6' : '#E8F4FD'};
-  border: 1px solid ${props => props.logic === 'OR' ? '#FFB84D' : '#5DA9E9'};
+  background: ${props => props.logic === 'OR' ? props.theme.colors.warning100 : props.theme.colors.primary100};
+  border: 1px solid ${props => props.logic === 'OR' ? props.theme.colors.warning500 : props.theme.colors.primary500};
   font-size: 12px;
   margin: 4px;
   gap: 4px;
+  color: ${props => props.theme.colors.neutral800};
 `;
 
 const LogicBadge = styled.span<{ logic: 'AND' | 'OR' }>`
   font-weight: bold;
-  color: ${props => props.logic === 'OR' ? '#D97706' : '#0369A1'};
+  color: ${props => props.logic === 'OR' ? props.theme.colors.warning700 : props.theme.colors.primary700};
   font-size: 10px;
   text-transform: uppercase;
 `;
@@ -28,10 +30,11 @@ const PopulateChip = styled.div`
   align-items: center;
   padding: 4px 12px;
   border-radius: 4px;
-  background: #F0FDF4;
-  border: 1px solid #86EFAC;
+  background: ${props => props.theme.colors.success100};
+  border: 1px solid ${props => props.theme.colors.success500};
   font-size: 12px;
   margin: 4px;
+  color: ${props => props.theme.colors.neutral800};
 `;
 
 const SortChip = styled.div`
@@ -39,10 +42,11 @@ const SortChip = styled.div`
   align-items: center;
   padding: 4px 12px;
   border-radius: 4px;
-  background: #FEF3C7;
-  border: 1px solid #FCD34D;
+  background: ${props => props.theme.colors.warning100};
+  border: 1px solid ${props => props.theme.colors.warning500};
   font-size: 12px;
   margin: 4px;
+  color: ${props => props.theme.colors.neutral800};
 `;
 
 interface FilterPreviewProps {
@@ -90,7 +94,7 @@ const FilterPreview: React.FC<FilterPreviewProps> = ({ query }) => {
           <Flex wrap="wrap" gap={1}>
             {parsed.sort.map((sort, idx) => (
               <SortChip key={idx}>
-                📊 {sort}
+                <Filter width="12px" height="12px" style={{ marginRight: '4px' }} /> {sort}
               </SortChip>
             ))}
           </Flex>
@@ -106,7 +110,7 @@ const FilterPreview: React.FC<FilterPreviewProps> = ({ query }) => {
           <Flex wrap="wrap" gap={1}>
             {parsed.populate.map((field, idx) => (
               <PopulateChip key={idx}>
-                🔗 {field}
+                <LinkIcon width="12px" height="12px" style={{ marginRight: '4px' }} /> {field}
               </PopulateChip>
             ))}
           </Flex>

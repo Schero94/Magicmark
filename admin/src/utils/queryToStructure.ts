@@ -1,11 +1,14 @@
 // @ts-nocheck
 /**
  * Converts URL query string back into QueryBuilder structure
+ * Supports deep relation filtering (e.g., filters[user][email][$contains]=admin)
  */
 
 export interface Condition {
   id: string;
   field: string;
+  /** Field path for deep filtering (e.g., ['user', 'email']) */
+  fieldPath?: string[];
   operator: string;
   value: string;
 }
@@ -18,8 +21,36 @@ export interface ConditionGroup {
 }
 
 /**
+ * Extract field path and operator from filter key parts
+ * e.g., ['user', 'email', '$contains'] -> { fieldPath: ['user', 'email'], operator: 'contains' }
+ */
+const extractFieldPathAndOperator = (parts: string[]): { fieldPath: string[]; operator: string } | null => {
+  // Find the operator (last part starting with $)
+  let operatorIndex = -1;
+  for (let i = parts.length - 1; i >= 0; i--) {
+    if (parts[i].startsWith('$')) {
+      operatorIndex = i;
+      break;
+    }
+  }
+  
+  if (operatorIndex === -1) return null;
+  
+  const operator = parts[operatorIndex].substring(1); // Remove $
+  const fieldPath = parts.slice(0, operatorIndex);
+  
+  if (fieldPath.length === 0) return null;
+  
+  return { fieldPath, operator };
+};
+
+/**
  * Parse URL query parameters into QueryBuilder structure
- * Supports nested groups like: filters[$and][1][$or][0][field][$eq]=value
+ * Supports:
+ * - Simple filters: filters[$and][0][field][$eq]=value
+ * - Deep filters: filters[$and][0][user][email][$contains]=admin
+ * - Very deep filters: filters[$and][0][user][role][name][$eq]=Admin
+ * - Nested groups: filters[$and][1][$or][0][field][$eq]=value
  */
 export const parseQueryToStructure = (queryString: string): ConditionGroup => {
   const params = new URLSearchParams(queryString);
@@ -30,33 +61,74 @@ export const parseQueryToStructure = (queryString: string): ConditionGroup => {
   params.forEach((value, key) => {
     if (key.startsWith('filters[')) {
       // Parse the key structure
-      // filters[$and][0][id][$eq] or filters[$and][1][$or][0][email][$contains]
       const parts = key.match(/\[([^\]]+)\]/g)?.map(p => p.slice(1, -1)) || [];
       
-      if (parts.length >= 4) {
-        // parts: ['$and', '0', 'id', '$eq'] or ['$and', '1', '$or', '0', 'email', '$contains']
+      console.log('[QueryParser] Parsing key:', key, 'parts:', parts);
+      
+      if (parts.length < 2) return; // Need at least [field][$op]
+      
+      // Check if first part is logic operator ($and/$or)
+      if (parts[0].startsWith('$')) {
+        // Format: filters[$and][0][field][$eq] or filters[$and][0][user][email][$contains]
         const logic = parts[0].substring(1); // Remove $
         const index = parseInt(parts[1]);
         
-        // Check if nested group
+        if (isNaN(index)) return;
+        
+        // Check if nested group (third part is also a logic operator)
         if (parts[2].startsWith('$')) {
-          // Nested: filters[$and][1][$or][0][email][$contains]
+          // Nested: filters[$and][1][$or][0][user][email][$contains]
           const nestedLogic = parts[2].substring(1);
           const nestedIndex = parseInt(parts[3]);
-          const field = parts[4];
-          const operator = parts[5].substring(1);
+          
+          if (isNaN(nestedIndex)) return;
+          
+          // Remaining parts are field path + operator
+          const remainingParts = parts.slice(4);
+          const extracted = extractFieldPathAndOperator(remainingParts);
+          
+          if (!extracted) return;
           
           if (!filterTree[logic]) filterTree[logic] = {};
           if (!filterTree[logic][index]) filterTree[logic][index] = { nested: nestedLogic, items: {} };
-          filterTree[logic][index].items[nestedIndex] = { field, operator, value };
+          filterTree[logic][index].items[nestedIndex] = { 
+            fieldPath: extracted.fieldPath,
+            field: extracted.fieldPath[extracted.fieldPath.length - 1], // Last element for backward compat
+            operator: extracted.operator, 
+            value 
+          };
         } else {
-          // Simple: filters[$and][0][id][$eq]
-          const field = parts[2];
-          const operator = parts[3].substring(1);
+          // Simple or deep: filters[$and][0][user][email][$contains]
+          const remainingParts = parts.slice(2);
+          const extracted = extractFieldPathAndOperator(remainingParts);
+          
+          if (!extracted) return;
           
           if (!filterTree[logic]) filterTree[logic] = {};
-          filterTree[logic][index] = { field, operator, value };
+          filterTree[logic][index] = { 
+            fieldPath: extracted.fieldPath,
+            field: extracted.fieldPath[extracted.fieldPath.length - 1], // Last element for backward compat
+            operator: extracted.operator, 
+            value 
+          };
         }
+      } else {
+        // Format WITHOUT $and/$or: filters[user][email][$contains] or filters[field][$eq]
+        // This happens when there's only a single condition (generator optimization)
+        console.log('[QueryParser] Parsing simple filter without logic operator');
+        
+        const extracted = extractFieldPathAndOperator(parts);
+        
+        if (!extracted) return;
+        
+        // Add to 'and' with index 0 by default
+        if (!filterTree['and']) filterTree['and'] = {};
+        filterTree['and'][0] = { 
+          fieldPath: extracted.fieldPath,
+          field: extracted.fieldPath[extracted.fieldPath.length - 1],
+          operator: extracted.operator, 
+          value 
+        };
       }
     }
   });
@@ -91,6 +163,7 @@ export const parseQueryToStructure = (queryString: string): ConditionGroup => {
         subGroup.conditions.push({
           id: `condition_${conditionId++}`,
           field: subItem.field,
+          fieldPath: subItem.fieldPath,
           operator: subItem.operator,
           value: decodeURIComponent(subItem.value),
         });
@@ -98,10 +171,11 @@ export const parseQueryToStructure = (queryString: string): ConditionGroup => {
       
       rootGroup.conditions.push(subGroup);
     } else {
-      // Simple condition
+      // Simple or deep condition
       rootGroup.conditions.push({
         id: `condition_${conditionId++}`,
         field: item.field,
+        fieldPath: item.fieldPath,
         operator: item.operator,
         value: decodeURIComponent(item.value),
       });
@@ -113,6 +187,7 @@ export const parseQueryToStructure = (queryString: string): ConditionGroup => {
     rootGroup.conditions.push({
       id: 'condition_1',
       field: '',
+      fieldPath: [],
       operator: 'eq',
       value: '',
     });

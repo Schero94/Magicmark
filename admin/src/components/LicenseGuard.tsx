@@ -8,7 +8,7 @@ import {
   Loader,
 } from '@strapi/design-system';
 import { useFetchClient, useNotification } from '@strapi/strapi/admin';
-import { Check, Key, Cross } from '@strapi/icons';
+import { Check, Key, Cross, Lock, Sparkle, Lightbulb, User, Mail } from '@strapi/icons';
 import { useNavigate } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
 
@@ -365,7 +365,7 @@ const LicenseGuard: React.FC<LicenseGuardProps> = ({ children }) => {
                   display: 'block',
                 }}
               >
-                🔐 Activate MagicMark Plugin
+                Activate MagicMark Plugin
               </Typography>
               <Typography
                 variant="epsilon"
@@ -421,12 +421,12 @@ const LicenseGuard: React.FC<LicenseGuardProps> = ({ children }) => {
               >
                 <Typography variant="omega" style={{ fontSize: '13px', lineHeight: '1.6' }}>
                   {useExistingKey 
-                    ? '🔑 Enter your email and license key to activate.'
+                    ? 'Enter your email and license key to activate.'
                     : useAutoCreate && adminUser && adminUser.email
-                    ? `✨ Click "Activate" to auto-create a license with your account (${adminUser.email})`
+                    ? `Click "Activate" to auto-create a license with your account (${adminUser.email})`
                     : useAutoCreate
-                    ? '✨ Click "Activate" to auto-create a license with your admin account'
-                    : '💡 A license will be created with the details below.'
+                    ? 'Click "Activate" to auto-create a license with your admin account'
+                    : 'A license will be created with the details below.'
                   }
                 </Typography>
               </Box>
@@ -489,12 +489,14 @@ const LicenseGuard: React.FC<LicenseGuardProps> = ({ children }) => {
                   <Typography variant="omega" fontWeight="bold" style={{ marginBottom: '12px', display: 'block' }}>
                     Ready to activate with your account:
                   </Typography>
-                  <Typography variant="pi" style={{ marginBottom: '4px', display: 'block' }}>
-                    👤 {adminUser.firstname || 'Admin'} {adminUser.lastname || 'User'}
-                  </Typography>
-                  <Typography variant="pi" textColor="neutral600">
-                    📧 {adminUser.email || 'Loading...'}
-                  </Typography>
+                  <Flex alignItems="center" gap={2} style={{ marginBottom: '4px' }}>
+                    <User fill="neutral700" width="14px" height="14px" />
+                    <Typography variant="pi">{adminUser.firstname || 'Admin'} {adminUser.lastname || 'User'}</Typography>
+                  </Flex>
+                  <Flex alignItems="center" gap={2}>
+                    <Mail fill="neutral600" width="14px" height="14px" />
+                    <Typography variant="pi" textColor="neutral600">{adminUser.email || 'Loading...'}</Typography>
+                  </Flex>
                 </Box>
               ) : (
                 // Manual Create License Fields

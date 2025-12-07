@@ -644,7 +644,7 @@ Language automatically follows your Strapi admin interface setting.
 
 ## 🙏 Acknowledgments
 
-Built with ❤️ for the Strapi community.
+Built for the Strapi community.
 
 Special thanks to:
 - Strapi team for the amazing CMS

@@ -251,5 +251,29 @@ export default ({ strapi }: any) => ({
       return ctx.badRequest('Error validating license key');
     }
   },
+
+  /**
+   * Get license limits and feature flags for current user
+   */
+  async getLimits(ctx: any) {
+    try {
+      const user = ctx.state.user;
+      if (!user) {
+        return ctx.unauthorized('User not authenticated');
+      }
+
+      const userId = user.documentId || String(user.id);
+      const licenseGuard = strapi.plugin('magic-mark').service('license-guard');
+      const limits = await licenseGuard.getLicenseLimits(userId);
+
+      return ctx.send({
+        success: true,
+        data: limits,
+      });
+    } catch (error) {
+      strapi.log.error('Error getting license limits:', error);
+      return ctx.badRequest('Error getting license limits');
+    }
+  },
 });
 

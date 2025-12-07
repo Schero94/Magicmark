@@ -302,20 +302,26 @@ const licenseGuardService = ({ strapi }: { strapi: Core.Strapi }) => ({
   },
 
   /**
-   * Get online statistics
+   * Get current license data from store (fetches fresh from server)
+   * This is the correct way to get license data with all feature flags
    */
-  async getOnlineStats(): Promise<any> {
+  async getCurrentLicense(): Promise<LicenseData | null> {
     try {
-      const licenseServerUrl = this.getLicenseServerUrl();
-      const response = await fetch(`${licenseServerUrl}/api/licenses/stats/online`);
-      const data = await response.json() as ApiResponse;
+      const pluginStore = strapi.store({ 
+        type: 'plugin', 
+        name: 'magic-mark' 
+      });
+      const licenseKey = await pluginStore.get({ key: 'licenseKey' }) as string | undefined;
 
-      if (data.success) {
-        return data.data;
+      if (!licenseKey) {
+        return null;
       }
-      return null;
+
+      // Fetch fresh license data from server (includes featurePremium, featureAdvanced, etc.)
+      const license = await this.getLicenseByKey(licenseKey);
+      return license;
     } catch (error) {
-      strapi.log.error('[ERROR] Error fetching online stats:', error);
+      strapi.log.error('[LICENSE] Error loading current license:', error);
       return null;
     }
   },
@@ -453,6 +459,211 @@ const licenseGuardService = ({ strapi }: { strapi: Core.Strapi }) => ({
     } catch (error) {
       strapi.log.error('[ERROR] Error storing license key:', error);
       return false;
+    }
+  },
+
+  /**
+   * Get bookmark limit based on license tier
+   * @returns Bookmark limit: 10 (free), 50 (premium), -1 (advanced/unlimited)
+   */
+  async getBookmarkLimit(): Promise<number> {
+    try {
+      const licenseGuard = (strapi as any).licenseGuard;
+      const licenseData = licenseGuard?.data;
+      
+      if (licenseData?.featureAdvanced) {
+        return -1; // Unlimited
+      }
+      if (licenseData?.featurePremium) {
+        return 50;
+      }
+      return 10; // Free tier
+    } catch (error) {
+      strapi.log.debug('[LICENSE] Error getting bookmark limit, using free tier');
+      return 10;
+    }
+  },
+
+  /**
+   * Check if user can create more bookmarks
+   * @param userId - User's documentId
+   * @returns Object with canCreate boolean and current/max counts
+   */
+  async canCreateBookmark(userId: string): Promise<{ canCreate: boolean; current: number; max: number; message?: string }> {
+    try {
+      const limit = await this.getBookmarkLimit();
+      
+      // Unlimited for advanced tier
+      if (limit === -1) {
+        return { canCreate: true, current: 0, max: -1 };
+      }
+      
+      // Count user's current bookmarks
+      const BOOKMARK_UID = 'plugin::magic-mark.bookmark';
+      const bookmarks = await strapi.documents(BOOKMARK_UID).findMany({
+        filters: { creatorId: userId }
+      });
+      const currentCount = bookmarks?.length || 0;
+      
+      if (currentCount >= limit) {
+        return {
+          canCreate: false,
+          current: currentCount,
+          max: limit,
+          message: `Bookmark limit reached (${currentCount}/${limit}). Upgrade to create more bookmarks.`
+        };
+      }
+      
+      return { canCreate: true, current: currentCount, max: limit };
+    } catch (error) {
+      strapi.log.error('[LICENSE] Error checking bookmark limit:', error);
+      // Allow creation on error to not block users
+      return { canCreate: true, current: 0, max: 10 };
+    }
+  },
+
+  /**
+   * Get current license limits and feature flags
+   * @param userId - User's documentId for bookmark count
+   * @returns License limits object
+   */
+  async getLicenseLimits(userId: string): Promise<{
+    maxBookmarks: number;
+    currentBookmarks: number;
+    canCreate: boolean;
+    tier: string;
+    features: {
+      queryHistory: boolean;
+      export: boolean;
+      analytics: boolean;
+      bulkOperations: boolean;
+      customIntegrations: boolean;
+    };
+  }> {
+    try {
+      // Get fresh license data from server (like Magic Mail does)
+      const license = await this.getCurrentLicense();
+      
+      // Debug log
+      strapi.log.info('[LICENSE] getLicenseLimits - license exists:', !!license);
+      if (license) {
+        strapi.log.info('[LICENSE] getLicenseLimits - featurePremium:', license.featurePremium);
+        strapi.log.info('[LICENSE] getLicenseLimits - featureAdvanced:', license.featureAdvanced);
+      }
+      
+      // Get tier info - check both formats (like Magic Mail)
+      let tier = 'free';
+      if (license?.featureEnterprise === true) tier = 'enterprise';
+      else if (license?.featureAdvanced === true) tier = 'advanced';
+      else if (license?.featurePremium === true) tier = 'premium';
+      
+      const isPremium = tier === 'premium' || tier === 'advanced' || tier === 'enterprise';
+      const isAdvanced = tier === 'advanced' || tier === 'enterprise';
+      
+      strapi.log.info('[LICENSE] getLicenseLimits - detected tier:', tier);
+      
+      // Get bookmark counts
+      const bookmarkCheck = await this.canCreateBookmark(userId);
+      
+      return {
+        maxBookmarks: bookmarkCheck.max,
+        currentBookmarks: bookmarkCheck.current,
+        canCreate: bookmarkCheck.canCreate,
+        tier,
+        features: {
+          queryHistory: isPremium || isAdvanced,
+          export: isPremium || isAdvanced,
+          analytics: isAdvanced,
+          bulkOperations: isAdvanced,
+          customIntegrations: isAdvanced,
+        }
+      };
+    } catch (error) {
+      strapi.log.error('[LICENSE] Error getting license limits:', error);
+      return {
+        maxBookmarks: 10,
+        currentBookmarks: 0,
+        canCreate: true,
+        tier: 'free',
+        features: {
+          queryHistory: false,
+          export: false,
+          analytics: false,
+          bulkOperations: false,
+          customIntegrations: false,
+        }
+      };
+    }
+  },
+
+  /**
+   * Check if a specific feature is available based on license
+   * @param feature - Feature key to check
+   * @returns Boolean indicating if feature is available
+   */
+  hasFeature(feature: string): boolean {
+    try {
+      const licenseGuard = (strapi as any).licenseGuard;
+      const licenseData = licenseGuard?.data;
+      
+      const isPremium = licenseData?.featurePremium || false;
+      const isAdvanced = licenseData?.featureAdvanced || false;
+
+      // Feature mapping
+      const featureRequirements: Record<string, 'free' | 'premium' | 'advanced'> = {
+        // Free tier
+        basicBookmarks: 'free',
+        basicFilters: 'free',
+        
+        // Premium tier
+        extendedBookmarks: 'premium',
+        queryHistory: 'premium',
+        exportBookmarks: 'premium',
+        sharedBookmarks: 'premium',
+        
+        // Advanced tier
+        unlimitedBookmarks: 'advanced',
+        advancedFilters: 'advanced',
+        subGroups: 'advanced',
+        bulkOperations: 'advanced',
+        analytics: 'advanced',
+        customIntegrations: 'advanced',
+      };
+
+      const requiredTier = featureRequirements[feature] || 'free';
+      
+      // Determine current tier level
+      let currentTierLevel = 0; // free
+      if (isAdvanced) currentTierLevel = 2;
+      else if (isPremium) currentTierLevel = 1;
+
+      const tierLevels: Record<string, number> = {
+        free: 0,
+        premium: 1,
+        advanced: 2,
+      };
+
+      return currentTierLevel >= tierLevels[requiredTier];
+    } catch (error) {
+      strapi.log.debug('[LICENSE] Error checking feature:', feature);
+      return false;
+    }
+  },
+
+  /**
+   * Get current tier name
+   * @returns 'free' | 'premium' | 'advanced'
+   */
+  getCurrentTier(): 'free' | 'premium' | 'advanced' {
+    try {
+      const licenseGuard = (strapi as any).licenseGuard;
+      const licenseData = licenseGuard?.data;
+      
+      if (licenseData?.featureAdvanced) return 'advanced';
+      if (licenseData?.featurePremium) return 'premium';
+      return 'free';
+    } catch (error) {
+      return 'free';
     }
   },
 

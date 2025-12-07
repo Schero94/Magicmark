@@ -19,6 +19,8 @@ import {
   ChartBubble,
   Duplicate,
   Download,
+  Check,
+  Cross,
 } from '@strapi/icons';
 import styled, { keyframes } from 'styled-components';
 
@@ -419,25 +421,34 @@ Generated:   ${new Date().toLocaleString()}
                       <Typography variant="sigma" textColor="neutral600" textTransform="uppercase" style={{ marginBottom: '8px', display: 'block' }}>
                         Premium Features
                       </Typography>
-                      <Typography variant="omega" fontWeight="semiBold">
-                        {data.features?.premium ? '✓ Enabled' : '✗ Disabled'}
-                      </Typography>
+                      <Flex alignItems="center" gap={1}>
+                        {data.features?.premium ? <Check fill="success600" /> : <Cross fill="danger600" />}
+                        <Typography variant="omega" fontWeight="semiBold">
+                          {data.features?.premium ? 'Enabled' : 'Disabled'}
+                        </Typography>
+                      </Flex>
                     </Box>
                     <Box style={{ flex: '1', minWidth: '180px' }}>
                       <Typography variant="sigma" textColor="neutral600" textTransform="uppercase" style={{ marginBottom: '8px', display: 'block' }}>
                         Advanced Features
                       </Typography>
-                      <Typography variant="omega" fontWeight="semiBold">
-                        {data.features?.advanced ? '✓ Enabled' : '✗ Disabled'}
-                      </Typography>
+                      <Flex alignItems="center" gap={1}>
+                        {data.features?.advanced ? <Check fill="success600" /> : <Cross fill="danger600" />}
+                        <Typography variant="omega" fontWeight="semiBold">
+                          {data.features?.advanced ? 'Enabled' : 'Disabled'}
+                        </Typography>
+                      </Flex>
                     </Box>
                     <Box style={{ flex: '1', minWidth: '180px' }}>
                       <Typography variant="sigma" textColor="neutral600" textTransform="uppercase" style={{ marginBottom: '8px', display: 'block' }}>
                         Enterprise Features
                       </Typography>
-                      <Typography variant="omega" fontWeight="semiBold">
-                        {data.features?.enterprise ? '✓ Enabled' : '✗ Disabled'}
-                      </Typography>
+                      <Flex alignItems="center" gap={1}>
+                        {data.features?.enterprise ? <Check fill="success600" /> : <Cross fill="danger600" />}
+                        <Typography variant="omega" fontWeight="semiBold">
+                          {data.features?.enterprise ? 'Enabled' : 'Disabled'}
+                        </Typography>
+                      </Flex>
                     </Box>
                   </Flex>
                 </Box>

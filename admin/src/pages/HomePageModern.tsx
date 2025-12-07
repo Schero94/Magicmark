@@ -37,6 +37,8 @@ import { useFetchClient } from '@strapi/strapi/admin';
 import pluginId from '../pluginId';
 import CreateEditModal from '../components/CreateEditModal';
 import FilterPreview from '../components/FilterPreview';
+import { useLicenseInfo } from '../hooks/useFeatureGate';
+import UpgradePrompt from '../components/UpgradePrompt';
 
 // ================ THEME ================
 const theme = {
@@ -463,6 +465,7 @@ const HomePageModern: React.FC = () => {
   const { formatMessage } = useIntl();
   const navigate = useNavigate();
   const { get, post, del } = useFetchClient();
+  const { isPremium, isAdvanced, tier, canUseFeature } = useLicenseInfo();
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [loading, setLoading] = useState(false);
@@ -473,12 +476,20 @@ const HomePageModern: React.FC = () => {
   const [entriesPerPage, setEntriesPerPage] = useState('10');
   const [availableRoles, setAvailableRoles] = useState<any[]>([]);
   const [availableUsers, setAvailableUsers] = useState<any[]>([]);
+  const [licenseLimits, setLicenseLimits] = useState<any>({
+    maxBookmarks: 10,
+    currentBookmarks: 0,
+    canCreate: true,
+    tier: 'free',
+    features: {}
+  });
 
   useEffect(() => {
     fetchBookmarks();
     fetchCurrentUser();
     fetchRoles();
     fetchUsers();
+    fetchLicenseLimits();
   }, []);
 
   const fetchRoles = async () => {
@@ -534,6 +545,21 @@ const HomePageModern: React.FC = () => {
     }
   };
 
+  /**
+   * Fetch license limits and feature flags
+   */
+  const fetchLicenseLimits = async () => {
+    try {
+      const response = await get(`/${pluginId}/license/limits`);
+      if (response.data?.success) {
+        setLicenseLimits(response.data.data);
+        console.log('[Magic-Mark] License limits loaded:', response.data.data);
+      }
+    } catch (error) {
+      console.error('[Magic-Mark] Error fetching license limits:', error);
+    }
+  };
+
   const fetchBookmarks = async () => {
     setLoading(true);
     try {
@@ -583,6 +609,12 @@ const HomePageModern: React.FC = () => {
   };
 
   const handleCreate = () => {
+    // Check if bookmark limit is reached
+    if (!licenseLimits.canCreate && licenseLimits.maxBookmarks !== -1) {
+      alert(`Bookmark limit reached (${licenseLimits.currentBookmarks}/${licenseLimits.maxBookmarks}). Please upgrade to create more bookmarks.`);
+      navigate(`/settings/${pluginId}/upgrade`);
+      return;
+    }
     setEditingBookmark(null);
     setShowModal(true);
   };
@@ -596,6 +628,7 @@ const HomePageModern: React.FC = () => {
     setShowModal(false);
     setEditingBookmark(null);
     fetchBookmarks();
+    fetchLicenseLimits(); // Update limits after bookmark changes
   };
 
   const handleBookmarkClick = (bookmark: Bookmark) => {
@@ -667,7 +700,7 @@ const HomePageModern: React.FC = () => {
             <Sparkle />
           </StatIcon>
           <StatValue className="stat-value">{sharedWithMe.length}</StatValue>
-          <StatLabel>Shared with Me</StatLabel>
+          <StatLabel>{formatMessage({ id: `${pluginId}.stats.shared`, defaultMessage: 'Shared with Me' })}</StatLabel>
         </StatCard>
 
         <StatCard $delay="0.3s" $color={theme.colors.warning[500]}>
@@ -675,22 +708,38 @@ const HomePageModern: React.FC = () => {
             <Pin />
           </StatIcon>
           <StatValue className="stat-value">{pinnedBookmarks.length}</StatValue>
-          <StatLabel>Pinned</StatLabel>
+          <StatLabel>{formatMessage({ id: `${pluginId}.stats.pinned`, defaultMessage: 'Pinned' })}</StatLabel>
         </StatCard>
 
-        <StatCard $delay="0.4s" $color={theme.colors.neutral[600]}>
-          <StatIcon className="stat-icon" $bg={theme.colors.neutral[100]} $color={theme.colors.neutral[600]}>
+        <StatCard 
+          $delay="0.4s" 
+          $color={licenseLimits.canCreate ? theme.colors.neutral[600] : theme.colors.danger[500]}
+          onClick={() => !licenseLimits.canCreate && navigate(`/settings/${pluginId}/upgrade`)}
+          style={{ cursor: !licenseLimits.canCreate ? 'pointer' : 'default' }}
+        >
+          <StatIcon 
+            className="stat-icon" 
+            $bg={licenseLimits.canCreate ? theme.colors.neutral[100] : theme.colors.danger[100]} 
+            $color={licenseLimits.canCreate ? theme.colors.neutral[600] : theme.colors.danger[600]}
+          >
             <LinkIcon />
           </StatIcon>
-          <StatValue className="stat-value">{bookmarks.length}</StatValue>
-          <StatLabel>Total Available</StatLabel>
+          <StatValue className="stat-value">
+            {licenseLimits.currentBookmarks}/{licenseLimits.maxBookmarks === -1 ? '∞' : licenseLimits.maxBookmarks}
+          </StatValue>
+          <StatLabel>
+            {licenseLimits.canCreate 
+              ? formatMessage({ id: `${pluginId}.stats.limit`, defaultMessage: 'Bookmark Limit' })
+              : formatMessage({ id: `${pluginId}.stats.limitReached`, defaultMessage: 'Limit Reached - Upgrade' })
+            }
+          </StatLabel>
         </StatCard>
       </StatsGrid>
 
       {/* Loading */}
       {loading && (
         <Flex justifyContent="center" padding={8}>
-          <Loader>Loading bookmarks...</Loader>
+          <Loader>{formatMessage({ id: `${pluginId}.loading`, defaultMessage: 'Loading bookmarks...' })}</Loader>
         </Flex>
       )}
 
@@ -704,10 +753,13 @@ const HomePageModern: React.FC = () => {
             border: `1px solid ${theme.colors.primary[200]}`
           }}>
             <Typography variant="beta" style={{ marginBottom: theme.spacing.sm, color: theme.colors.primary[700] }}>
-              🤝 Shared with You
+              {formatMessage({ id: `${pluginId}.shared.title`, defaultMessage: '🤝 Shared with You' })}
             </Typography>
             <Typography variant="pi" style={{ color: theme.colors.primary[600] }}>
-              {sharedWithMe.length} bookmark{sharedWithMe.length > 1 ? 's' : ''} have been shared with you
+              {sharedWithMe.length > 1 
+                ? formatMessage({ id: `${pluginId}.shared.countPlural`, defaultMessage: '{count} bookmarks have been shared with you' }, { count: sharedWithMe.length })
+                : formatMessage({ id: `${pluginId}.shared.count`, defaultMessage: '{count} bookmark has been shared with you' }, { count: sharedWithMe.length })
+              }
             </Typography>
             <Box marginTop={2}>
               {[...new Map(sharedWithMe.map(b => [b.createdBy?.id, b.createdBy])).values()].map(creator => {
@@ -715,10 +767,13 @@ const HomePageModern: React.FC = () => {
                 return creator && (
                   <Flex key={creator.id} alignItems="center" marginTop={1}>
                     <Typography variant="pi" fontWeight="semiBold">
-                      {creator.firstname || 'Unknown'} {creator.lastname || ''}: 
+                      {creator.firstname || formatMessage({ id: `${pluginId}.bookmark.unknown`, defaultMessage: 'Unknown' })} {creator.lastname || ''}: 
                     </Typography>
                     <Typography variant="pi" marginLeft={1}>
-                      {creatorBookmarks.length} bookmark{creatorBookmarks.length > 1 ? 's' : ''}
+                      {creatorBookmarks.length > 1 
+                        ? formatMessage({ id: `${pluginId}.shared.byCreatorPlural`, defaultMessage: '{count} bookmarks' }, { count: creatorBookmarks.length })
+                        : formatMessage({ id: `${pluginId}.shared.byCreator`, defaultMessage: '{count} bookmark' }, { count: creatorBookmarks.length })
+                      }
                     </Typography>
                   </Flex>
                 );
@@ -733,7 +788,7 @@ const HomePageModern: React.FC = () => {
         <Box>
           <Box style={{ marginBottom: theme.spacing.md }}>
             <Typography variant="delta" style={{ marginBottom: theme.spacing.md, color: theme.colors.neutral[700] }}>
-              🔖 All Available Bookmarks
+              {formatMessage({ id: `${pluginId}.allBookmarks.title`, defaultMessage: '🔖 All Available Bookmarks' })}
             </Typography>
           </Box>
           
@@ -744,7 +799,7 @@ const HomePageModern: React.FC = () => {
               <StyledSearchInput
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by name, description..."
+                placeholder={formatMessage({ id: `${pluginId}.search.placeholder`, defaultMessage: 'Search by name, description...' })}
                 type="text"
               />
             </SearchInputWrapper>
@@ -752,25 +807,25 @@ const HomePageModern: React.FC = () => {
               <SingleSelect
                 value={filterType}
                 onChange={setFilterType}
-                placeholder="Filter"
+                placeholder={formatMessage({ id: `${pluginId}.filter.placeholder`, defaultMessage: 'Filter' })}
                 size="S"
               >
-                <SingleSelectOption value="all">Show All</SingleSelectOption>
-                <SingleSelectOption value="pinned">Pinned Only</SingleSelectOption>
-                <SingleSelectOption value="unpinned">Unpinned Only</SingleSelectOption>
+                <SingleSelectOption value="all">{formatMessage({ id: `${pluginId}.filter.all`, defaultMessage: 'Show All' })}</SingleSelectOption>
+                <SingleSelectOption value="pinned">{formatMessage({ id: `${pluginId}.filter.pinned`, defaultMessage: 'Pinned Only' })}</SingleSelectOption>
+                <SingleSelectOption value="unpinned">{formatMessage({ id: `${pluginId}.filter.unpinned`, defaultMessage: 'Unpinned Only' })}</SingleSelectOption>
               </SingleSelect>
             </FilterSelect>
             <FilterSelect>
               <SingleSelect
                 value={entriesPerPage}
                 onChange={setEntriesPerPage}
-                placeholder="Entries"
+                placeholder={formatMessage({ id: `${pluginId}.entries.placeholder`, defaultMessage: 'Entries' })}
                 size="S"
               >
-                <SingleSelectOption value="10">10 entries</SingleSelectOption>
-                <SingleSelectOption value="25">25 entries</SingleSelectOption>
-                <SingleSelectOption value="50">50 entries</SingleSelectOption>
-                <SingleSelectOption value="100">100 entries</SingleSelectOption>
+                <SingleSelectOption value="10">{formatMessage({ id: `${pluginId}.entries.10`, defaultMessage: '10 entries' })}</SingleSelectOption>
+                <SingleSelectOption value="25">{formatMessage({ id: `${pluginId}.entries.25`, defaultMessage: '25 entries' })}</SingleSelectOption>
+                <SingleSelectOption value="50">{formatMessage({ id: `${pluginId}.entries.50`, defaultMessage: '50 entries' })}</SingleSelectOption>
+                <SingleSelectOption value="100">{formatMessage({ id: `${pluginId}.entries.100`, defaultMessage: '100 entries' })}</SingleSelectOption>
               </SingleSelect>
             </FilterSelect>
           </FilterBar>
@@ -826,16 +881,16 @@ const HomePageModern: React.FC = () => {
                           <Flex gap={1} alignItems="center">
                             {(bookmark.createdBy?.id && currentUser?.id && bookmark.createdBy.id === currentUser.id) ? (
                               <Typography variant="pi" style={{ fontSize: '0.75rem', color: theme.colors.primary[600], fontWeight: 500 }}>
-                                • My Bookmark
+                                • {formatMessage({ id: `${pluginId}.bookmark.myBookmark`, defaultMessage: 'My Bookmark' })}
                               </Typography>
                             ) : (
                               <Typography variant="pi" style={{ fontSize: '0.75rem', color: theme.colors.neutral[600] }}>
-                                • Shared by {bookmark.createdBy?.firstname || 'Unknown'}
+                                • {formatMessage({ id: `${pluginId}.bookmark.sharedBy`, defaultMessage: 'Shared by {name}' }, { name: bookmark.createdBy?.firstname || formatMessage({ id: `${pluginId}.bookmark.unknown`, defaultMessage: 'Unknown' }) })}
                               </Typography>
                             )}
                             {bookmark.isPublic && (
                               <Typography variant="pi" style={{ fontSize: '0.75rem', color: theme.colors.success[600], marginLeft: '8px' }}>
-                                • Public
+                                • {formatMessage({ id: `${pluginId}.bookmark.public`, defaultMessage: 'Public' })}
                               </Typography>
                             )}
                             {bookmark.sharedWithRoles && bookmark.sharedWithRoles.length > 0 && !bookmark.isPublic && (
@@ -964,9 +1019,9 @@ const HomePageModern: React.FC = () => {
             }}
           />
           
-          {/* Floating Emoji */}
+          {/* Floating Icon */}
           <FloatingEmoji>
-            ✨
+            <Sparkle fill="warning500" />
           </FloatingEmoji>
           
           {/* Content */}
@@ -997,7 +1052,7 @@ const HomePageModern: React.FC = () => {
                 marginBottom: '8px',
               }}
             >
-              No bookmarks yet
+              {formatMessage({ id: `${pluginId}.empty.title`, defaultMessage: 'No bookmarks yet' })}
             </Typography>
             
             <Typography 
@@ -1009,7 +1064,7 @@ const HomePageModern: React.FC = () => {
                 lineHeight: '1.6',
               }}
             >
-              Navigate to any Content Manager view, apply filters, and click <strong>"Save Bookmark"</strong> to create quick access shortcuts
+              {formatMessage({ id: `${pluginId}.empty.description`, defaultMessage: 'Navigate to any Content Manager view, apply filters, and click "Save Bookmark" to create quick access shortcuts' })}
             </Typography>
           </Flex>
         </Box>

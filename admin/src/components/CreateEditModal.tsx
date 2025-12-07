@@ -9,7 +9,7 @@ import {
   Textarea,
   Typography,
 } from '@strapi/design-system';
-import { Cross } from '@strapi/icons';
+import { Cross, Lightbulb } from '@strapi/icons';
 import { useFetchClient } from '@strapi/strapi/admin';
 import styled from 'styled-components';
 import FilterPreview from './FilterPreview';
@@ -19,7 +19,7 @@ const EmojiPicker = styled.div`
   grid-template-columns: repeat(8, 1fr);
   gap: 8px;
   padding: 12px;
-  background: #f7f8fa;
+  background: ${props => props.theme.colors.neutral100};
   border-radius: 4px;
   max-height: 200px;
   overflow-y: auto;
@@ -28,15 +28,15 @@ const EmojiPicker = styled.div`
 const EmojiButton = styled.button<{ isSelected?: boolean }>`
   padding: 8px;
   font-size: 24px;
-  border: 2px solid ${props => props.isSelected ? '#3945C9' : '#e0e0e0'};
-  background: white;
+  border: 2px solid ${props => props.isSelected ? props.theme.colors.primary600 : props.theme.colors.neutral200};
+  background: ${props => props.theme.colors.neutral0};
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s ease;
   
   &:hover {
-    border-color: #3945C9;
-    background: #f7f8fa;
+    border-color: ${props => props.theme.colors.primary600};
+    background: ${props => props.theme.colors.neutral100};
   }
 `;
 
@@ -113,9 +113,11 @@ const CreateEditModal: React.FC<CreateEditModalProps> = ({
     try {
       // First get current user
       const meResponse = await get('/admin/users/me');
-      const currentUser = meResponse.data || meResponse;
+      const currentUser = meResponse.data?.data || meResponse.data || meResponse;
       const currentUserId = currentUser?.id;
       const currentUserEmail = currentUser?.email;
+      
+      console.log('[CreateEditModal] Current user:', { currentUserId, currentUserEmail, fullResponse: currentUser });
       
       // Then get all users
       const response = await get('/admin/users?pageSize=100&page=1&sort=firstname');
@@ -123,16 +125,21 @@ const CreateEditModal: React.FC<CreateEditModalProps> = ({
       // Extract users from response - they are in response.data.data.results
       const allUsers = response.data?.data?.results || response.data?.results || [];
       
+      console.log('[CreateEditModal] All users:', allUsers.map(u => ({ id: u.id, email: u.email })));
+      
       // Filter out current user - check both ID and email to be sure
       const users = Array.isArray(allUsers) ? allUsers.filter(u => {
         const matchById = u.id === currentUserId || u.id === Number(currentUserId) || String(u.id) === String(currentUserId);
-        const matchByEmail = u.email === currentUserEmail;
+        const matchByEmail = u.email?.toLowerCase() === currentUserEmail?.toLowerCase();
         const shouldExclude = matchById || matchByEmail;
         
         if (shouldExclude) {
+          console.log('[CreateEditModal] Excluding current user:', u.email);
         }
         return !shouldExclude;
       }) : [];
+      
+      console.log('[CreateEditModal] Filtered users (without current):', users.map(u => ({ id: u.id, email: u.email })));
       
       setAvailableUsers(users);
     } catch (error) {
@@ -229,8 +236,8 @@ const CreateEditModal: React.FC<CreateEditModalProps> = ({
     >
       <Box
         padding={6}
+        background="neutral0"
         style={{
-          backgroundColor: 'white',
           borderRadius: '8px',
           maxHeight: '90vh',
           overflow: 'auto',
@@ -284,7 +291,8 @@ const CreateEditModal: React.FC<CreateEditModalProps> = ({
                   as="button"
                   padding={3}
                   borderRadius="4px"
-                  border="1px solid #e0e0e0"
+                  border="1px solid"
+                  borderColor="neutral200"
                   fontSize="32px"
                   onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                   type="button"
@@ -360,16 +368,19 @@ const CreateEditModal: React.FC<CreateEditModalProps> = ({
                     </Typography>
                   )}
                 </Flex>
-                <Box style={{ 
-                  maxHeight: '150px', 
-                  overflowY: 'auto',
-                  border: '1px solid #e0e0e0',
-                  borderRadius: '4px',
-                  padding: '12px',
-                  background: isPublic ? '#f9f9f9' : '#fff'
-                }}>
+                <Box 
+                  background={isPublic ? "neutral100" : "neutral0"}
+                  borderColor="neutral200"
+                  style={{ 
+                    maxHeight: '150px', 
+                    overflowY: 'auto',
+                    border: '1px solid',
+                    borderRadius: '4px',
+                    padding: '12px',
+                  }}
+                >
                   {loadingRoles ? (
-                    <Typography variant="pi">Loading roles...</Typography>
+                    <Typography variant="pi">{formatMessage({ id: `${pluginId}.form.loadingRoles`, defaultMessage: 'Loading roles...' })}</Typography>
                   ) : availableRoles.length > 0 ? (
                     availableRoles.map(role => (
                       <Box key={role.id} marginBottom={2}>
@@ -415,13 +426,13 @@ const CreateEditModal: React.FC<CreateEditModalProps> = ({
                     ))
                   ) : (
                     <Typography variant="pi" textColor="neutral600">
-                      No roles available. Check console for errors.
+                      {formatMessage({ id: `${pluginId}.form.noRoles`, defaultMessage: 'No roles available' })}
                     </Typography>
                   )}
                 </Box>
                 {isPublic && (
                   <Typography variant="pi" textColor="neutral600" style={{ marginTop: '4px', fontSize: '0.75rem' }}>
-                    Role selection disabled when bookmark is public
+                    {formatMessage({ id: `${pluginId}.form.roleDisabled`, defaultMessage: 'Role selection disabled when bookmark is public' })}
                   </Typography>
                 )}
               </Box>
@@ -441,16 +452,19 @@ const CreateEditModal: React.FC<CreateEditModalProps> = ({
                     </Typography>
                   )}
                 </Flex>
-                <Box style={{ 
-                  maxHeight: '150px', 
-                  overflowY: 'auto',
-                  border: '1px solid #e0e0e0',
-                  borderRadius: '4px',
-                  padding: '12px',
-                  background: isPublic ? '#f9f9f9' : '#fff'
-                }}>
+                <Box 
+                  background={isPublic ? "neutral100" : "neutral0"}
+                  borderColor="neutral200"
+                  style={{ 
+                    maxHeight: '150px', 
+                    overflowY: 'auto',
+                    border: '1px solid',
+                    borderRadius: '4px',
+                    padding: '12px',
+                  }}
+                >
                   {loadingUsers ? (
-                    <Typography variant="pi">Loading users...</Typography>
+                    <Typography variant="pi">{formatMessage({ id: `${pluginId}.form.loadingUsers`, defaultMessage: 'Loading users...' })}</Typography>
                   ) : availableUsers.length > 0 ? (
                     availableUsers.map(user => (
                       <Box key={user.id} marginBottom={2}>
@@ -495,13 +509,13 @@ const CreateEditModal: React.FC<CreateEditModalProps> = ({
                     ))
                   ) : (
                     <Typography variant="pi" textColor="neutral600">
-                      No other users available
+                      {formatMessage({ id: `${pluginId}.form.noUsers`, defaultMessage: 'No other users available' })}
                     </Typography>
                   )}
                 </Box>
                 {isPublic && (
                   <Typography variant="pi" textColor="neutral600" style={{ marginTop: '4px', fontSize: '0.75rem' }}>
-                    User selection disabled when bookmark is public
+                    {formatMessage({ id: `${pluginId}.form.userDisabled`, defaultMessage: 'User selection disabled when bookmark is public' })}
                   </Typography>
                 )}
               </Box>
@@ -518,7 +532,7 @@ const CreateEditModal: React.FC<CreateEditModalProps> = ({
               <TextInput
                 id="name"
                 type="text"
-                placeholder="e.g., Published Articles"
+                placeholder={formatMessage({ id: `${pluginId}.form.namePlaceholder`, defaultMessage: 'e.g., Published Articles' })}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
@@ -557,12 +571,15 @@ const CreateEditModal: React.FC<CreateEditModalProps> = ({
                 })}
               </Typography>
               <FilterPreview query={query} />
-              <Typography variant="pi" textColor="neutral600" style={{ marginTop: '8px', display: 'block' }}>
-                💡 {formatMessage({
-                  id: `${pluginId}.form.queryHelp`,
-                  defaultMessage: 'These filters will be restored when you click this bookmark'
-                })}
-              </Typography>
+              <Flex alignItems="center" gap={1} style={{ marginTop: '8px' }}>
+                <Lightbulb fill="neutral600" width="14px" height="14px" />
+                <Typography variant="pi" textColor="neutral600">
+                  {formatMessage({
+                    id: `${pluginId}.form.queryHelp`,
+                    defaultMessage: 'These filters will be restored when you click this bookmark'
+                  })}
+                </Typography>
+              </Flex>
             </Box>
 
             {/* Description */}
@@ -575,7 +592,7 @@ const CreateEditModal: React.FC<CreateEditModalProps> = ({
               </Typography>
               <Textarea
                 id="description"
-                placeholder="Add a description..."
+                placeholder={formatMessage({ id: `${pluginId}.form.descriptionPlaceholder`, defaultMessage: 'Add a description...' })}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
               />

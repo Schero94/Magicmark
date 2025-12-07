@@ -9,10 +9,10 @@ const SelectContainer = styled.div`
   width: 100%;
 `;
 
-const SelectButton = styled.button<{ isOpen: boolean }>`
+const SelectButton = styled.button<{ $isOpen: boolean }>`
   width: 100%;
   padding: 10px 36px 10px 12px;
-  border: 1px solid ${props => props.isOpen ? '#4945ff' : '#dcdce4'};
+  border: 1px solid ${props => props.$isOpen ? '#4945ff' : '#dcdce4'};
   border-radius: 4px;
   background: white;
   font-size: 14px;
@@ -58,7 +58,7 @@ const IconWrapper = styled.span<{ $isOpen: boolean }>`
   color: #8e8ea9;
 `;
 
-const DropdownList = styled.div<{ isOpen: boolean; top: number; left: number; width: number }>`
+const DropdownList = styled.div<{ $isOpen: boolean; top: number; left: number; width: number }>`
   position: fixed;
   top: ${props => props.top}px;
   left: ${props => props.left}px;
@@ -70,7 +70,7 @@ const DropdownList = styled.div<{ isOpen: boolean; top: number; left: number; wi
   border-radius: 4px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   z-index: 10000;
-  display: ${props => props.isOpen ? 'block' : 'none'};
+  display: ${props => props.$isOpen ? 'block' : 'none'};
   
   @media (max-width: 768px) {
     max-height: 250px;
@@ -210,7 +210,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 
   const dropdownContent = (
     <DropdownList 
-      isOpen={isOpen}
+      $isOpen={isOpen}
       top={dropdownPos.top}
       left={dropdownPos.left}
       width={dropdownPos.width}
@@ -254,7 +254,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
         ref={buttonRef}
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        isOpen={isOpen}
+        $isOpen={isOpen}
       >
         <SelectText $isPlaceholder={!value}>
           {selectedOption?.label || placeholder}

@@ -1,7 +1,7 @@
 // @ts-nocheck
 import React, { useState, useEffect } from 'react';
 import { Button } from '@strapi/design-system';
-import { Filter } from '@strapi/icons';
+import { Filter, Check } from '@strapi/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useFetchClient } from '@strapi/strapi/admin';
 import SimpleAdvancedFilterModal from './SimpleAdvancedFilterModal';
@@ -12,7 +12,7 @@ const AdvancedFilterButton: React.FC = () => {
   const location = useLocation();
   const { get } = useFetchClient();
   const [availableFields, setAvailableFields] = useState<Array<{ name: string; type: string }>>([]);
-  const [availableRelations, setAvailableRelations] = useState<Array<{ name: string }>>([]);
+  const [availableRelations, setAvailableRelations] = useState<Array<{ name: string; target: string }>>([]);
   const [hasActiveFilters, setHasActiveFilters] = useState(false);
 
   // Check if URL has filters
@@ -34,7 +34,9 @@ const AdvancedFilterButton: React.FC = () => {
     return match ? match[1] : null;
   };
 
-  // Fetch schema for current content type
+  /**
+   * Fetches schema for current content type and extracts fields + relations
+   */
   useEffect(() => {
     const fetchSchema = async () => {
       const uid = extractContentTypeUid();
@@ -46,106 +48,85 @@ const AdvancedFilterButton: React.FC = () => {
       try {
         console.log('[AdvancedFilter] Fetching schema for:', uid);
         
-        // Try to get the actual content type schema
-        let schemaData;
+        // Step 1: Get the REAL schema from content-type-builder (has correct attribute types)
+        let realAttributes: Record<string, any> = {};
         try {
-          const response = await get(`/content-manager/content-types/${uid}/configuration`);
-          schemaData = response.data;
-          console.log('[AdvancedFilter] Configuration response:', schemaData);
+          const schemaResponse = await get(`/content-type-builder/content-types/${uid}`);
+          const schemaInfo = schemaResponse.data?.data?.schema || schemaResponse.data?.schema || {};
+          realAttributes = schemaInfo.attributes || {};
+          console.log('[AdvancedFilter] Real schema attributes:', realAttributes);
         } catch (e) {
-          console.log('[AdvancedFilter] Configuration endpoint failed, trying direct strapi schema');
+          console.log('[AdvancedFilter] Content-type-builder endpoint failed:', e);
         }
         
-        // Extract attributes from the layout/metadatas
-        // The structure is: response.data.data.contentType
-        const contentTypeData = schemaData?.data?.contentType || schemaData?.contentType || {};
-        const metadatas = contentTypeData.metadatas || {};
-        const layouts = contentTypeData.layouts || {};
+        // Step 2: Also get configuration for field metadata (labels, etc.)
+        let metadatas: Record<string, any> = {};
+        try {
+          const configResponse = await get(`/content-manager/content-types/${uid}/configuration`);
+          const contentTypeData = configResponse.data?.data?.contentType || configResponse.data?.contentType || {};
+          metadatas = contentTypeData.metadatas || {};
+          console.log('[AdvancedFilter] Configuration metadatas:', metadatas);
+        } catch (e) {
+          console.log('[AdvancedFilter] Configuration endpoint failed:', e);
+        }
         
-        console.log('[AdvancedFilter] Metadatas:', metadatas);
-        console.log('[AdvancedFilter] Layouts:', layouts);
+        // Step 3: Extract fields and relations from REAL attributes
+        const fields: Array<{ name: string; type: string }> = [];
+        const relations: Array<{ name: string; target: string }> = [];
+        const fieldNames = new Set<string>();
         
-        // Get fields from edit layout
-        let allFieldNames = new Set<string>();
-        
-        // From metadatas (most reliable)
-        Object.keys(metadatas).forEach(key => allFieldNames.add(key));
-        
-        // From edit layout
-        if (layouts.edit) {
-          layouts.edit.forEach((row: any) => {
-            row.forEach((field: any) => {
-              if (field.name) allFieldNames.add(field.name);
+        // Process real attributes (this has correct types!)
+        Object.keys(realAttributes).forEach((key) => {
+          const attr = realAttributes[key];
+          const attrType = attr.type;
+          
+          // Skip internal fields
+          if (['createdBy', 'updatedBy', 'localizations', 'locale'].includes(key)) {
+            return;
+          }
+          
+          // Check if it's a relation
+          if (attrType === 'relation') {
+            relations.push({ name: key, target: attr.target });
+            console.log('[AdvancedFilter] Found relation:', key, '-> target:', attr.target);
+          } else if (attrType === 'component' || attrType === 'dynamiczone') {
+            // Skip components and dynamic zones for filtering
+            console.log('[AdvancedFilter] Skipping component/dynamiczone:', key);
+          } else if (attrType === 'media') {
+            // Skip media for now (complex filtering)
+            console.log('[AdvancedFilter] Skipping media:', key);
+          } else if (!fieldNames.has(key)) {
+            // Regular field
+            fieldNames.add(key);
+            fields.push({ 
+              name: key, 
+              type: attrType || 'string' 
             });
-          });
-        }
-        
-        // From list layout
-        if (layouts.list) {
-          layouts.list.forEach((fieldName: string) => allFieldNames.add(fieldName));
-        }
-        
-        const attributes = {};
-        allFieldNames.forEach(name => {
-          const metadata = metadatas[name];
-          attributes[name] = {
-            type: metadata?.edit?.type || 'string',
-          };
+          }
         });
-        
-        console.log('[AdvancedFilter] Reconstructed attributes:', attributes);
-        
-        if (attributes && Object.keys(attributes).length > 0) {
-          // Extract filterable fields
-          const fields: Array<{ name: string; type: string }> = [];
-          const relations: Array<{ name: string }> = [];
-          const fieldNames = new Set<string>();
-          
-          Object.keys(attributes).forEach((key) => {
-            const attr = attributes[key];
-            
-            // Check if it's a relation
-            if (attr.type === 'relation') {
-              relations.push({ name: key });
-            } else if (!fieldNames.has(key)) {
-              // Regular field - add only once
-              fieldNames.add(key);
-              fields.push({ 
-                name: key, 
-                type: attr.type || 'string' 
-              });
-            }
-          });
 
-          // Add default fields if not already present
-          ['id', 'createdAt', 'updatedAt'].forEach(defaultField => {
-            if (!fieldNames.has(defaultField)) {
-              fields.unshift({ 
-                name: defaultField, 
-                type: defaultField === 'id' ? 'integer' : 'datetime' 
-              });
-            }
-          });
+        // Add default fields if not already present
+        ['id', 'documentId', 'createdAt', 'updatedAt'].forEach(defaultField => {
+          if (!fieldNames.has(defaultField)) {
+            let type = 'string';
+            if (defaultField === 'id') type = 'integer';
+            if (defaultField === 'createdAt' || defaultField === 'updatedAt') type = 'datetime';
+            fields.unshift({ name: defaultField, type });
+          }
+        });
 
-          setAvailableFields(fields);
-          setAvailableRelations(relations);
-          
-          console.log('[AdvancedFilter] Extracted fields:', fields);
-          console.log('[AdvancedFilter] Extracted relations:', relations);
-        } else {
-          console.warn('[AdvancedFilter] No attributes found in schema response');
-          // Use fallback
-          setAvailableFields([
-            { name: 'id', type: 'integer' },
-            { name: 'createdAt', type: 'datetime' },
-            { name: 'updatedAt', type: 'datetime' },
-          ]);
-        }
+        setAvailableFields(fields);
+        setAvailableRelations(relations);
+        
+        console.log('[AdvancedFilter] Final fields:', fields);
+        console.log('[AdvancedFilter] Final relations:', relations);
+        
       } catch (error) {
         console.error('[AdvancedFilter] Error fetching schema:', error);
         // Fallback to basic fields
         setAvailableFields([
           { name: 'id', type: 'integer' },
+          { name: 'documentId', type: 'string' },
           { name: 'createdAt', type: 'datetime' },
           { name: 'updatedAt', type: 'datetime' },
         ]);
@@ -178,8 +159,19 @@ const AdvancedFilterButton: React.FC = () => {
       cleanParams.set(key, value);
     });
     
-    // Navigate with new query
-    navigate(`${currentPath}?${cleanParams.toString()}`);
+    // Reset to page 1 when applying filters
+    cleanParams.set('page', '1');
+    
+    const finalUrl = `${currentPath}?${cleanParams.toString()}`;
+    console.log('[AdvancedFilter] Final URL:', finalUrl);
+    
+    // Navigate first, then reload to ensure Strapi CM picks up the filters
+    navigate(finalUrl);
+    
+    // Small delay then reload to ensure the URL is updated before reload
+    setTimeout(() => {
+      window.location.reload();
+    }, 100);
   };
 
   const handleClearFilters = () => {
@@ -194,7 +186,13 @@ const AdvancedFilterButton: React.FC = () => {
       }
     });
     
-    navigate(`${currentPath}${cleanParams.toString() ? '?' + cleanParams.toString() : ''}`);
+    const finalUrl = `${currentPath}${cleanParams.toString() ? '?' + cleanParams.toString() : ''}`;
+    navigate(finalUrl);
+    
+    // Small delay then reload
+    setTimeout(() => {
+      window.location.reload();
+    }, 100);
   };
 
   // Extract current filters from URL
@@ -213,7 +211,7 @@ const AdvancedFilterButton: React.FC = () => {
         onClick={() => setShowModal(true)}
         size="S"
       >
-        {hasActiveFilters ? '🔍 Filters Active' : 'Advanced Filters'}
+        {hasActiveFilters ? 'Filters Active' : 'Advanced Filters'}
       </Button>
 
       {hasActiveFilters && (

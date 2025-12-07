@@ -114,5 +114,13 @@ export default {
         policies: [],
       },
     },
+    {
+      method: 'GET',
+      path: '/license/limits',
+      handler: 'license.getLimits',
+      config: {
+        policies: [],
+      },
+    },
   ],
 };

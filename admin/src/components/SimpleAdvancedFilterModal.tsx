@@ -1,11 +1,13 @@
 // @ts-nocheck
 import React, { useState } from 'react';
 import { Box, Button, Flex, Typography } from '@strapi/design-system';
-import { Cross } from '@strapi/icons';
+import { Cross, Search, Filter, Link as LinkIcon, Check, Stack, Lightbulb } from '@strapi/icons';
 import styled from 'styled-components';
 import QueryBuilder from './QueryBuilder';
 import { parseQueryToStructure, type ConditionGroup } from '../utils/queryToStructure';
 import { generateQueryString } from '../utils/queryGenerator';
+import { useLicenseInfo } from '../hooks/useFeatureGate';
+import UpgradePrompt from './UpgradePrompt';
 
 const ModalOverlay = styled.div`
   position: fixed;
@@ -55,7 +57,8 @@ interface SimpleAdvancedFilterModalProps {
   onClose: () => void;
   onApply: (queryString: string) => void;
   availableFields: Array<{ name: string; type: string }>;
-  availableRelations?: Array<{ name: string }>;
+  /** Relations with their target UIDs for deep filtering */
+  availableRelations?: Array<{ name: string; target?: string }>;
   currentQuery?: string;
 }
 
@@ -66,23 +69,34 @@ const SimpleAdvancedFilterModal: React.FC<SimpleAdvancedFilterModalProps> = ({
   availableRelations = [],
   currentQuery = '',
 }) => {
+  const { isPremium, isAdvanced, tier, isLoading } = useLicenseInfo();
+  
+  // Debug log for license status
+  React.useEffect(() => {
+    console.log('[SimpleAdvancedFilter] License status:', { isPremium, isAdvanced, tier, isLoading });
+  }, [isPremium, isAdvanced, tier, isLoading]);
   const [queryStructure, setQueryStructure] = useState<ConditionGroup | null>(null);
   const [initialStructure, setInitialStructure] = useState<ConditionGroup | null>(null);
   const [initialFiltersLoaded, setInitialFiltersLoaded] = useState(false);
   const [sortField, setSortField] = useState('');
   const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('ASC');
-  const [populateFields, setPopulateFields] = useState<PopulateField[]>(
-    availableRelations.map(rel => ({
-      name: rel.name,
-      enabled: false,
-      deep: false,
-    }))
-  );
+  const [populateFields, setPopulateFields] = useState<PopulateField[]>([]);
 
   // Load current filters from URL when modal opens
   React.useEffect(() => {
     if (!initialFiltersLoaded) {
       console.log('[SimpleAdvancedFilter] Loading current query:', currentQuery);
+      
+      // Initialize populateFields from availableRelations
+      if (availableRelations.length > 0) {
+        const initialFields = availableRelations.map(rel => ({
+          name: rel.name,
+          enabled: false,
+          deep: false,
+        }));
+        console.log('[SimpleAdvancedFilter] Initializing populateFields:', initialFields);
+        setPopulateFields(initialFields);
+      }
       
       // Parse filters into structure
       if (currentQuery) {
@@ -92,7 +106,11 @@ const SimpleAdvancedFilterModal: React.FC<SimpleAdvancedFilterModalProps> = ({
         
         // Parse populate and sort from URL
         const params = new URLSearchParams(currentQuery);
-        const updatedPopulate = [...populateFields];
+        const updatedPopulate = availableRelations.map(rel => ({
+          name: rel.name,
+          enabled: false,
+          deep: false,
+        }));
         
         params.forEach((value, key) => {
           // Parse populate
@@ -131,16 +149,40 @@ const SimpleAdvancedFilterModal: React.FC<SimpleAdvancedFilterModalProps> = ({
     }
   }, [currentQuery]);
 
-  const togglePopulate = (name: string) => {
-    setPopulateFields(populateFields.map(p => 
-      p.name === name ? { ...p, enabled: !p.enabled } : p
-    ));
-  };
-
-  const toggleDeepPopulate = (name: string) => {
-    setPopulateFields(populateFields.map(p => 
-      p.name === name ? { ...p, deep: !p.deep, enabled: true } : p
-    ));
+  /**
+   * Handle query changes and automatically enable populates for filtered relations
+   */
+  const handleQueryChange = (newStructure: ConditionGroup) => {
+    setQueryStructure(newStructure);
+    
+    // Auto-enable populate for relations used in filters
+    const relationsInFilter = new Set<string>();
+    
+    const findRelationsInConditions = (conditions: any[]) => {
+      conditions.forEach(item => {
+        if (item.isGroup && item.conditions) {
+          findRelationsInConditions(item.conditions);
+        } else if (item.fieldPath && item.fieldPath.length > 1) {
+          // First element of fieldPath is the relation name
+          relationsInFilter.add(item.fieldPath[0]);
+        }
+      });
+    };
+    
+    if (newStructure?.conditions) {
+      findRelationsInConditions(newStructure.conditions);
+    }
+    
+    // Auto-enable populates for relations used in filters
+    if (relationsInFilter.size > 0) {
+      setPopulateFields(prev => prev.map(p => {
+        if (relationsInFilter.has(p.name) && !p.enabled) {
+          console.log('[SimpleAdvancedFilter] Auto-enabling populate for:', p.name);
+          return { ...p, enabled: true };
+        }
+        return p;
+      }));
+    }
   };
 
   const handleApply = () => {
@@ -166,9 +208,10 @@ const SimpleAdvancedFilterModal: React.FC<SimpleAdvancedFilterModalProps> = ({
       <ModalContent padding={6} onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <Flex justifyContent="space-between" alignItems="center" marginBottom={4}>
-          <Typography as="h2" variant="beta">
-            🔍 Advanced Filters
-          </Typography>
+          <Flex alignItems="center" gap={2}>
+            <Search fill="primary600" />
+            <Typography as="h2" variant="beta">Advanced Filters</Typography>
+          </Flex>
           <Button onClick={onClose} variant="ghost" type="button">
             <Cross />
           </Button>
@@ -182,16 +225,32 @@ const SimpleAdvancedFilterModal: React.FC<SimpleAdvancedFilterModalProps> = ({
         <Box marginBottom={4}>
           <QueryBuilder 
             availableFields={availableFields}
-            onQueryChange={setQueryStructure}
+            availableRelations={availableRelations}
+            onQueryChange={handleQueryChange}
             initialStructure={initialStructure}
+            isPremium={isPremium || isAdvanced}
+            enableDeepFiltering={isPremium || isAdvanced}
           />
         </Box>
 
+        {/* Upgrade prompt for non-premium users */}
+        {!isPremium && !isAdvanced && (
+          <Box marginBottom={4}>
+            <UpgradePrompt
+              feature="Sub-Groups & Drag & Drop"
+              tier="premium"
+              variant="inline"
+              description="Upgrade to Premium to unlock nested query groups, drag & drop reordering, and more advanced filter options."
+            />
+          </Box>
+        )}
+
         {/* Sorting Section */}
         <Box marginBottom={4} padding={3} background="warning100" borderRadius="4px">
-          <Typography variant="pi" fontWeight="bold" style={{ marginBottom: '12px', display: 'block' }}>
-            📊 Sorting:
-          </Typography>
+          <Flex alignItems="center" gap={2} style={{ marginBottom: '12px' }}>
+            <Filter fill="warning600" />
+            <Typography variant="pi" fontWeight="bold">Sorting:</Typography>
+          </Flex>
           <Flex gap={2} alignItems="center" style={{ flexWrap: 'wrap' }}>
             <Box style={{ flex: 2, minWidth: '200px' }}>
               <Typography variant="pi" style={{ marginBottom: '4px', display: 'block' }}>
@@ -244,52 +303,14 @@ const SimpleAdvancedFilterModal: React.FC<SimpleAdvancedFilterModalProps> = ({
             )}
           </Flex>
           {sortField && (
-            <Typography variant="pi" textColor="warning700" style={{ marginTop: '8px', display: 'block', fontSize: '12px' }}>
-              📊 Results will be sorted by <strong>{sortField}</strong> in <strong>{sortOrder}</strong> order
-            </Typography>
+            <Flex alignItems="center" gap={1} style={{ marginTop: '8px' }}>
+              <Filter fill="warning700" width="12px" height="12px" />
+              <Typography variant="pi" textColor="warning700" style={{ fontSize: '12px' }}>
+                Results will be sorted by <strong>{sortField}</strong> in <strong>{sortOrder}</strong> order
+              </Typography>
+            </Flex>
           )}
         </Box>
-
-        {/* Population Section */}
-        {availableRelations.length > 0 && (
-          <Box marginBottom={4} padding={3} background="neutral100" borderRadius="4px">
-            <Typography variant="pi" fontWeight="bold" style={{ marginBottom: '12px', display: 'block' }}>
-              🔗 Populate Relations:
-            </Typography>
-            {populateFields.map((field) => (
-              <Flex 
-                key={field.name} 
-                gap={2} 
-                alignItems="center" 
-                marginBottom={2}
-                style={{ flexWrap: 'wrap' }}
-              >
-                <Box style={{ flex: 1, minWidth: '120px' }}>
-                  <Typography variant="pi">{field.name}</Typography>
-                </Box>
-                <Flex gap={2}>
-                  <Button
-                    variant={field.enabled && !field.deep ? 'default' : 'secondary'}
-                    size="S"
-                    onClick={() => togglePopulate(field.name)}
-                  >
-                    {field.enabled && !field.deep ? '✓ On' : 'Enable'}
-                  </Button>
-                  <Button
-                    variant={field.deep ? 'default' : 'tertiary'}
-                    size="S"
-                    onClick={() => toggleDeepPopulate(field.name)}
-                  >
-                    {field.deep ? '🌲' : 'Deep'}
-                  </Button>
-                </Flex>
-              </Flex>
-            ))}
-            <Typography variant="pi" textColor="neutral600" style={{ marginTop: '12px', display: 'block', fontSize: '12px' }}>
-              💡 <strong>Deep populate</strong> loads all nested relations recursively
-            </Typography>
-          </Box>
-        )}
 
         {/* Preview */}
         <Box marginBottom={4} padding={3} background="neutral100" borderRadius="4px">

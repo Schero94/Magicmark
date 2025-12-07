@@ -24,7 +24,7 @@ import styled from 'styled-components';
 
 const BookmarkRow = styled(Tr)`
   &:hover {
-    background-color: #f7f8fa;
+    background-color: ${props => props.theme.colors.primary100};
   }
 `;
 
@@ -35,7 +35,7 @@ const EmojiCell = styled.div`
 `;
 
 const PinIcon = styled(Pin)<{ isPinned?: boolean }>`
-  color: ${props => props.isPinned ? '#3945C9' : '#8890B2'};
+  color: ${props => props.isPinned ? props.theme.colors.primary600 : props.theme.colors.neutral500};
 `;
 
 interface Bookmark {
@@ -132,7 +132,7 @@ const HomePage: React.FC = () => {
       <Box marginBottom={6}>
         <Flex justifyContent="space-between" alignItems="center">
           <Box>
-            <Typography as="h1" variant="alpha">
+            <Typography as="h1" variant="alpha" textColor="neutral800">
               {formatMessage({
                 id: `${pluginId}.title`,
                 defaultMessage: '🔖 MagicMark'
@@ -164,7 +164,7 @@ const HomePage: React.FC = () => {
                 defaultMessage: 'Pinned'
               })}
             </Typography>
-            <Typography as="h2" variant="alpha" marginTop={1}>
+            <Typography as="h2" variant="alpha" textColor="neutral800" marginTop={1}>
               {pinnedCount}
             </Typography>
           </Box>
@@ -175,7 +175,7 @@ const HomePage: React.FC = () => {
                 defaultMessage: 'Total'
               })}
             </Typography>
-            <Typography as="h2" variant="alpha" marginTop={1}>
+            <Typography as="h2" variant="alpha" textColor="neutral800" marginTop={1}>
               {bookmarks.length}
             </Typography>
           </Box>
@@ -263,7 +263,7 @@ const HomePage: React.FC = () => {
                     <EmojiCell>{bookmark.emoji}</EmojiCell>
                   </Td>
                   <Td>
-                    <Typography fontWeight="bold">{bookmark.name}</Typography>
+                    <Typography fontWeight="bold" textColor="neutral800">{bookmark.name}</Typography>
                   </Td>
                   <Td>
                     <FilterPreview query={bookmark.query} />

@@ -8,7 +8,7 @@ import {
   TextInput,
   Typography,
 } from '@strapi/design-system';
-import { Cross, Plus, Trash } from '@strapi/icons';
+import { Cross, Plus, Trash, Search, Link as LinkIcon, Check, Stack, Lightbulb } from '@strapi/icons';
 import styled from 'styled-components';
 
 const ModalOverlay = styled.div`
@@ -109,13 +109,21 @@ const AdvancedFilterModal: React.FC<AdvancedFilterModalProps> = ({
       ? currentFilters
       : [{ id: '1', field: '', operator: 'eq', value: '' }]
   );
-  const [populateFields, setPopulateFields] = useState<PopulateField[]>(
-    availableRelations.map(rel => ({
-      name: rel.name,
-      enabled: false,
-      deep: false,
-    }))
-  );
+  const [populateFields, setPopulateFields] = useState<PopulateField[]>([]);
+
+  // Update populateFields when availableRelations changes (async fetch)
+  React.useEffect(() => {
+    if (availableRelations.length > 0) {
+      console.log('[AdvancedFilter] Updating populateFields with relations:', availableRelations);
+      setPopulateFields(
+        availableRelations.map(rel => ({
+          name: rel.name,
+          enabled: false,
+          deep: false,
+        }))
+      );
+    }
+  }, [availableRelations]);
 
   const addFilter = () => {
     setFilters([
@@ -132,9 +140,30 @@ const AdvancedFilterModal: React.FC<AdvancedFilterModalProps> = ({
     setFilters(filters.map(f => (f.id === id ? { ...f, [key]: value } : f)));
   };
 
+  /**
+   * Cycles through populate states: OFF -> ON -> DEEP -> OFF
+   */
+  const cyclePopulateState = (name: string) => {
+    setPopulateFields(populateFields.map(p => {
+      if (p.name !== name) return p;
+      
+      // Cycle: OFF -> ON -> DEEP -> OFF
+      if (!p.enabled && !p.deep) {
+        // OFF -> ON
+        return { ...p, enabled: true, deep: false };
+      } else if (p.enabled && !p.deep) {
+        // ON -> DEEP
+        return { ...p, enabled: true, deep: true };
+      } else {
+        // DEEP -> OFF
+        return { ...p, enabled: false, deep: false };
+      }
+    }));
+  };
+
   const togglePopulate = (name: string) => {
     setPopulateFields(populateFields.map(p => 
-      p.name === name ? { ...p, enabled: !p.enabled } : p
+      p.name === name ? { ...p, enabled: !p.enabled, deep: false } : p
     ));
   };
 
@@ -184,9 +213,10 @@ const AdvancedFilterModal: React.FC<AdvancedFilterModalProps> = ({
       <ModalContent padding={6} onClick={(e) => e.stopPropagation()}>
         {/* Header */}
         <Flex justifyContent="space-between" alignItems="center" marginBottom={6}>
-          <Typography as="h2" variant="beta">
-            🔍 Advanced Filters
-          </Typography>
+          <Flex alignItems="center" gap={2}>
+            <Search fill="primary600" />
+            <Typography as="h2" variant="beta">Advanced Filters</Typography>
+          </Flex>
           <Button onClick={onClose} variant="ghost" type="button">
             <Cross />
           </Button>
@@ -308,38 +338,86 @@ const AdvancedFilterModal: React.FC<AdvancedFilterModalProps> = ({
           </Button>
         </Box>
 
-        {/* Population Section */}
-        {availableRelations.length > 0 && (
-          <Box marginBottom={4}>
-            <Typography variant="pi" fontWeight="bold" style={{ marginBottom: '12px', display: 'block' }}>
-              🔗 Populate Relations:
-            </Typography>
-            <Box padding={3} background="neutral100" borderRadius="4px">
-              {populateFields.map((field) => (
-                <Flex key={field.name} gap={3} alignItems="center" marginBottom={2}>
-                  <Box style={{ flex: 1 }}>
-                    <Typography variant="pi">{field.name}</Typography>
-                  </Box>
-                  <Button
-                    variant={field.enabled && !field.deep ? 'default' : 'secondary'}
-                    size="S"
-                    onClick={() => togglePopulate(field.name)}
-                  >
-                    {field.enabled && !field.deep ? '✓ Enabled' : 'Enable'}
-                  </Button>
-                  <Button
-                    variant={field.deep ? 'default' : 'tertiary'}
-                    size="S"
-                    onClick={() => toggleDeepPopulate(field.name)}
-                  >
-                    {field.deep ? '🌲 Deep' : 'Deep'}
-                  </Button>
-                </Flex>
-              ))}
-              <Typography variant="pi" textColor="neutral600" style={{ marginTop: '12px', display: 'block' }}>
-                💡 <strong>Deep populate</strong> loads all nested relations recursively
+        {/* Population Section - Only show if there are relations */}
+        {populateFields.length > 0 && (
+          <Box marginBottom={4} padding={4} background="neutral100" style={{ borderRadius: '12px' }}>
+            <Flex alignItems="center" gap={2} style={{ marginBottom: '16px' }}>
+              <LinkIcon fill="primary600" />
+              <Typography variant="delta" fontWeight="bold">Load Related Data</Typography>
+              <Typography variant="pi" textColor="neutral500" style={{ marginLeft: 'auto' }}>
+                {populateFields.filter(f => f.enabled || f.deep).length} of {populateFields.length} selected
               </Typography>
+            </Flex>
+            
+            {/* Relation Cards Grid */}
+            <Box style={{ 
+              display: 'grid', 
+              gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', 
+              gap: '12px' 
+            }}>
+              {populateFields.map((field) => (
+                <Box 
+                  key={field.name}
+                  padding={3}
+                  onClick={() => cyclePopulateState(field.name)}
+                  style={{
+                    background: field.deep 
+                      ? 'linear-gradient(135deg, #DBEAFE 0%, #BFDBFE 100%)' 
+                      : field.enabled 
+                        ? 'linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%)'
+                        : 'white',
+                    borderRadius: '10px',
+                    border: field.deep 
+                      ? '2px solid #3B82F6'
+                      : field.enabled
+                        ? '2px solid #10B981'
+                        : '2px solid #E5E7EB',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    textAlign: 'center',
+                  }}
+                >
+                  {/* Icon based on state */}
+                  <Box style={{ 
+                    fontSize: '24px', 
+                    marginBottom: '8px',
+                    color: field.deep ? '#3B82F6' : field.enabled ? '#10B981' : '#9CA3AF'
+                  }}>
+                    {field.deep ? <Stack /> : field.enabled ? <Check /> : <LinkIcon />}
+                  </Box>
+                  
+                  {/* Field Name */}
+                  <Typography 
+                    variant="omega" 
+                    fontWeight="bold" 
+                    style={{ 
+                      display: 'block',
+                      marginBottom: '4px',
+                      color: field.deep ? '#1E40AF' : field.enabled ? '#047857' : '#374151'
+                    }}
+                  >
+                    {field.name}
+                  </Typography>
+                  
+                  {/* Status Text */}
+                  <Typography 
+                    variant="pi" 
+                    style={{ 
+                      fontSize: '11px',
+                      color: field.deep ? '#3B82F6' : field.enabled ? '#10B981' : '#9CA3AF',
+                      fontWeight: '600',
+                    }}
+                  >
+                    {field.deep ? 'DEEP LOAD' : field.enabled ? 'LOADED' : 'Click to load'}
+                  </Typography>
+                </Box>
+              ))}
             </Box>
+            
+            {/* Helper Text */}
+            <Typography variant="pi" textColor="neutral500" style={{ marginTop: '12px', display: 'block', fontSize: '11px' }}>
+              Click once = Load direct data | Click twice = Load all nested data | Click again = Turn off
+            </Typography>
           </Box>
         )}
 

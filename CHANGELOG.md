@@ -1,3 +1,10 @@
+## [3.0.2](https://github.com/Schero94/Magicmark/compare/v3.0.1...v3.0.2) (2025-12-08)
+
+
+### Bug Fixes
+
+* add GitHub templates for better open-source collaboration ([2477e70](https://github.com/Schero94/Magicmark/commit/2477e706c924a925a66435121a0a1bee31cad14b))
+
 ## [3.0.1](https://github.com/Schero94/Magicmark/compare/v3.0.0...v3.0.1) (2025-12-04)
 
 

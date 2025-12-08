@@ -1,39 +1,136 @@
-name: Bug Report
-description: File a bug report
+name: 🐛 Bug Report
+description: Report a bug or issue with MagicMark
 title: '[Bug]: '
+labels: ['bug', 'needs-triage']
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for taking the time to fill out this bug report!
+        ## Thanks for taking the time to report a bug!
+        
   - type: textarea
-    id: issue-experiencing
+    id: bug-description
     attributes:
-      label: What issue are you experiencing?
-      description: A detailed explanation of the issue
+      label: 🐛 Bug Description
+      description: A clear and concise description of what the bug is
     validations:
       required: true
+      
+  - type: textarea
+    id: expected-behavior
+    attributes:
+      label: ✅ Expected Behavior
+    validations:
+      required: true
+      
+  - type: textarea
+    id: actual-behavior
+    attributes:
+      label: ❌ Actual Behavior
+    validations:
+      required: true
+      
   - type: textarea
     id: reproduction-steps
     attributes:
-      label: Steps To Reproduce
-      description: Steps to reproduce the behavior.
+      label: 🔄 Steps To Reproduce
       placeholder: |
-        1. In this environment...
-        2. With this config...
-        3. Run '...'
+        1. Open Content Manager...
+        2. Create/Apply filter...
+        3. Save as MagicMark...
         4. See error...
     validations:
+      required: true
+      
+  - type: dropdown
+    id: feature-area
+    attributes:
+      label: 📦 Feature Area
+      options:
+        - Creating Bookmarks/Marks
+        - Applying Filters
+        - Advanced Query Builder
+        - Sharing with Users/Roles
+        - Filter Preview
+        - Relation Field Filters
+        - Admin UI
+        - Content Manager Integration
+        - Other
+    validations:
+      required: true
+      
+  - type: dropdown
+    id: content-type
+    attributes:
+      label: 📄 Content Type
+      description: Which type of content are you filtering?
+      options:
+        - Collection Type
+        - Single Type
+        - Component
+        - Multiple Types
+        - Other
+    validations:
       required: false
+      
   - type: input
     id: plugin-version
     attributes:
-      label: What version of the plugin are you using?
+      label: 📦 Plugin Version
+      placeholder: e.g. 3.0.2
     validations:
       required: true
+      
   - type: input
     id: strapi-version
     attributes:
-      label: What strapi version are you using?
+      label: 🚀 Strapi Version
+      placeholder: e.g. 5.29.0
     validations:
       required: true
+      
+  - type: input
+    id: node-version
+    attributes:
+      label: 🟢 Node Version
+      placeholder: e.g. 20.19.4
+    validations:
+      required: true
+      
+  - type: dropdown
+    id: database
+    attributes:
+      label: 🗄️ Database
+      options:
+        - PostgreSQL
+        - MySQL
+        - MariaDB
+        - SQLite
+        - Other
+    validations:
+      required: false
+      
+  - type: textarea
+    id: error-logs
+    attributes:
+      label: 📋 Error Logs
+      render: shell
+    validations:
+      required: false
+      
+  - type: textarea
+    id: filter-query
+    attributes:
+      label: 🔍 Filter Query
+      description: The query/filter that causes the issue (if applicable)
+      render: json
+    validations:
+      required: false
+      
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: ✔️ Checklist
+      options:
+        - label: I have searched for similar issues
+          required: true

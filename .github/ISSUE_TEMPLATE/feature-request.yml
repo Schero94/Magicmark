@@ -1,0 +1,59 @@
+name: 💡 Feature Request
+description: Suggest a new feature or enhancement for MagicMark
+title: '[Feature]: '
+labels: ['enhancement', 'needs-triage']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Thanks for suggesting a feature!
+        
+  - type: dropdown
+    id: feature-area
+    attributes:
+      label: 📦 Feature Area
+      options:
+        - Query Builder UI
+        - Filter Types / Operators
+        - Bookmark/Mark Management
+        - Sharing & Permissions
+        - Advanced Filters
+        - Relation Filters
+        - Date/Time Filters
+        - Search & Discovery
+        - Import/Export
+        - Admin UI
+        - Documentation
+        - Other
+    validations:
+      required: true
+      
+  - type: textarea
+    id: problem
+    attributes:
+      label: 🤔 Problem / Use Case
+    validations:
+      required: true
+      
+  - type: textarea
+    id: solution
+    attributes:
+      label: 💡 Proposed Solution
+    validations:
+      required: true
+      
+  - type: textarea
+    id: example
+    attributes:
+      label: 📝 Example
+      description: Show example queries or UI mockups
+    validations:
+      required: false
+      
+  - type: checkboxes
+    id: terms
+    attributes:
+      label: ✔️ Checklist
+      options:
+        - label: I have searched for similar feature requests
+          required: true

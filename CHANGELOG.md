@@ -1,3 +1,10 @@
+# [3.2.0](https://github.com/Schero94/Magicmark/compare/v3.1.0...v3.2.0) (2025-12-08)
+
+
+### Features
+
+* enhance pull request template with query builder specific sections and filter testing checklist ([4c45c89](https://github.com/Schero94/Magicmark/commit/4c45c896e488cdfdb901bcb1d350b90749e36759))
+
 # [3.1.0](https://github.com/Schero94/Magicmark/compare/v3.0.3...v3.1.0) (2025-12-08)
 
 

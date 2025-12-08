@@ -1,3 +1,10 @@
+# [3.1.0](https://github.com/Schero94/Magicmark/compare/v3.0.3...v3.1.0) (2025-12-08)
+
+
+### Features
+
+* enhance GitHub issue templates with query builder specific fields and feature request template ([468275b](https://github.com/Schero94/Magicmark/commit/468275b15fcf6faf3691b3c5fb33020cb706b370))
+
 ## [3.0.3](https://github.com/Schero94/Magicmark/compare/v3.0.2...v3.0.3) (2025-12-08)
 
 

@@ -1,3 +1,10 @@
+## [3.0.3](https://github.com/Schero94/Magicmark/compare/v3.0.2...v3.0.3) (2025-12-08)
+
+
+### Bug Fixes
+
+* update CI workflow to use Node.js 22 for compatibility with dependencies ([bc20bd0](https://github.com/Schero94/Magicmark/commit/bc20bd008d499840fe20f9148a82071edb6d494f))
+
 ## [3.0.2](https://github.com/Schero94/Magicmark/compare/v3.0.1...v3.0.2) (2025-12-08)
 
 

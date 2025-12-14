@@ -1,3 +1,10 @@
+## [3.2.3](https://github.com/Schero94/Magicmark/compare/v3.2.2...v3.2.3) (2025-12-14)
+
+
+### Bug Fixes
+
+* enable npm provenance with OIDC trusted publishing ([9b72e83](https://github.com/Schero94/Magicmark/commit/9b72e8324ebb953f9efd8bf2459d9d8b9b031e2d))
+
 ## [3.2.2](https://github.com/Schero94/Magicmark/compare/v3.2.1...v3.2.2) (2025-12-14)
 
 

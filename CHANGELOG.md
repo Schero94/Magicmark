@@ -1,3 +1,10 @@
+## [3.2.6](https://github.com/Schero94/Magicmark/compare/v3.2.5...v3.2.6) (2025-12-14)
+
+
+### Bug Fixes
+
+* update package-lock.json for CI compatibility ([92b2d0d](https://github.com/Schero94/Magicmark/commit/92b2d0d2bd4e9eb3458358fb1af1baffe25b92e8))
+
 ## [3.2.5](https://github.com/Schero94/Magicmark/compare/v3.2.4...v3.2.5) (2025-12-14)
 
 

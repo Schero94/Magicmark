@@ -1,7 +1,10 @@
 import type { Core } from '@strapi/strapi';
+import { createLogger } from './utils/logger';
 
 export default ({ strapi }: { strapi: Core.Strapi }) => {
-  strapi.log.info('[Magic-Mark] Plugin bootstrapping...');
+  const log = createLogger(strapi);
+  
+  log.info('Plugin bootstrapping...');
   
   // Initialize License Guard
   try {
@@ -12,16 +15,16 @@ export default ({ strapi }: { strapi: Core.Strapi }) => {
       const licenseStatus = await licenseGuardService.initialize();
       
       if (!licenseStatus.valid) {
-        strapi.log.error('╔════════════════════════════════════════════════════════════════╗');
-        strapi.log.error('║  [ERROR] MAGICMARK PLUGIN - NO VALID LICENSE                  ║');
-        strapi.log.error('║                                                                ║');
-        strapi.log.error('║  This plugin requires a valid license to operate.             ║');
-        strapi.log.error('║  Please activate your license via Admin UI:                   ║');
-        strapi.log.error('║  Go to Settings → MagicMark → License                         ║');
-        strapi.log.error('║                                                                ║');
-        strapi.log.error('║  The plugin will run with limited functionality until         ║');
-        strapi.log.error('║  a valid license is activated.                                ║');
-        strapi.log.error('╚════════════════════════════════════════════════════════════════╝');
+        log.error('╔════════════════════════════════════════════════════════════════╗');
+        log.error('║  [ERROR] MAGICMARK PLUGIN - NO VALID LICENSE                  ║');
+        log.error('║                                                                ║');
+        log.error('║  This plugin requires a valid license to operate.             ║');
+        log.error('║  Please activate your license via Admin UI:                   ║');
+        log.error('║  Go to Settings → MagicMark → License                         ║');
+        log.error('║                                                                ║');
+        log.error('║  The plugin will run with limited functionality until         ║');
+        log.error('║  a valid license is activated.                                ║');
+        log.error('╚════════════════════════════════════════════════════════════════╝');
       } else if (licenseStatus.valid) {
         // Get license key from store if data is not available (grace period)
         const pluginStore = strapi.store({
@@ -30,27 +33,27 @@ export default ({ strapi }: { strapi: Core.Strapi }) => {
         });
         const storedKey = await pluginStore.get({ key: 'licenseKey' }) as string | undefined;
         
-        strapi.log.info('╔════════════════════════════════════════════════════════════════╗');
-        strapi.log.info('║  [SUCCESS] MAGICMARK PLUGIN LICENSE ACTIVE                    ║');
-        strapi.log.info('║                                                                ║');
+        log.info('╔════════════════════════════════════════════════════════════════╗');
+        log.info('║  [SUCCESS] MAGICMARK PLUGIN LICENSE ACTIVE                    ║');
+        log.info('║                                                                ║');
         
         if (licenseStatus.data) {
-          strapi.log.info(`║  License: ${licenseStatus.data.licenseKey}                    ║`);
-          strapi.log.info(`║  User: ${licenseStatus.data.firstName} ${licenseStatus.data.lastName}`.padEnd(66) + '║');
-          strapi.log.info(`║  Email: ${licenseStatus.data.email}`.padEnd(66) + '║');
+          log.info(`║  License: ${licenseStatus.data.licenseKey}                    ║`);
+          log.info(`║  User: ${licenseStatus.data.firstName} ${licenseStatus.data.lastName}`.padEnd(66) + '║');
+          log.info(`║  Email: ${licenseStatus.data.email}`.padEnd(66) + '║');
         } else if (storedKey) {
-          strapi.log.info(`║  License: ${storedKey} (Offline Mode)                         ║`);
-          strapi.log.info(`║  Status: Grace Period Active                                  ║`);
+          log.info(`║  License: ${storedKey} (Offline Mode)                         ║`);
+          log.info(`║  Status: Grace Period Active                                  ║`);
         }
         
-        strapi.log.info('║                                                                ║');
-        strapi.log.info('║  [PING] Auto-pinging every 15 minutes                         ║');
-        strapi.log.info('╚════════════════════════════════════════════════════════════════╝');
+        log.info('║                                                                ║');
+        log.info('║  [PING] Auto-pinging every 15 minutes                         ║');
+        log.info('╚════════════════════════════════════════════════════════════════╝');
       }
     }, 3000); // Wait 3 seconds for API to be ready
   } catch (error) {
-    strapi.log.error('[ERROR] Error initializing License Guard:', error);
+    log.error('[ERROR] Error initializing License Guard:', error);
   }
   
-  strapi.log.info('[Magic-Mark] Plugin bootstrapped successfully');
+  log.info('Plugin bootstrapped successfully');
 };

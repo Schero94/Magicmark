@@ -1,14 +1,17 @@
 import type { Core } from '@strapi/strapi';
+import { createLogger } from './utils/logger';
 
 export default ({ strapi }: { strapi: Core.Strapi }) => {
+  const log = createLogger(strapi);
+  
   // Cleanup License Guard ping interval
   try {
     const licenseGuardService = strapi.plugin('magic-mark')?.service('license-guard');
     if (licenseGuardService) {
       licenseGuardService.cleanup();
-      strapi.log.info('[SUCCESS] License Guard cleanup completed');
+      log.info('[SUCCESS] License Guard cleanup completed');
     }
   } catch (error) {
-    strapi.log.error('[ERROR] Error during License Guard cleanup:', error);
+    log.error('[ERROR] Error during License Guard cleanup:', error);
   }
 };

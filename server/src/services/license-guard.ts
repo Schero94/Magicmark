@@ -8,6 +8,7 @@ import crypto from 'crypto';
 import os from 'os';
 import { readFileSync } from 'fs';
 import { join } from 'path';
+import { createLogger } from '../utils/logger';
 
 // Read plugin version from package.json
 let pluginVersion = '2.0.0'; // Fallback
@@ -64,7 +65,10 @@ interface ApiResponse {
   message?: string;
 }
 
-const licenseGuardService = ({ strapi }: { strapi: Core.Strapi }) => ({
+const licenseGuardService = ({ strapi }: { strapi: Core.Strapi }) => {
+  const log = createLogger(strapi);
+  
+  return {
   /**
    * Get license server URL (hardcoded and immutable for security)
    * @returns The fixed license server URL - cannot be overridden
@@ -95,7 +99,7 @@ const licenseGuardService = ({ strapi }: { strapi: Core.Strapi }) => ({
       const identifier = `${macAddresses.join('-')}-${os.hostname()}`;
       return crypto.createHash('sha256').update(identifier).digest('hex').substring(0, 32);
     } catch (error) {
-      strapi.log.error('Error generating device ID:', error);
+      log.error('Error generating device ID:', error);
       // Fallback to random ID
       return crypto.randomBytes(16).toString('hex');
     }
@@ -175,14 +179,14 @@ const licenseGuardService = ({ strapi }: { strapi: Core.Strapi }) => ({
       const data = await response.json() as ApiResponse;
 
       if (data.success) {
-        strapi.log.info('[SUCCESS] License created successfully:', data.data.licenseKey);
+        log.info('[SUCCESS] License created successfully:', data.data.licenseKey);
         return data.data as LicenseData;
       } else {
-        strapi.log.error('[ERROR] License creation failed:', data);
+        log.error('[ERROR] License creation failed:', data);
         return null;
       }
     } catch (error) {
-      strapi.log.error('[ERROR] Error creating license:', error);
+      log.error('[ERROR] Error creating license:', error);
       return null;
     }
   },
@@ -217,7 +221,7 @@ const licenseGuardService = ({ strapi }: { strapi: Core.Strapi }) => ({
       if (data.success) {
         const isValid = data.data.isActive && !data.data.isExpired;
         const statusInfo = data.data.isExpired ? 'EXPIRED' : (data.data.isActive ? 'ACTIVE' : 'INACTIVE');
-        strapi.log.info(`[SUCCESS] License verified online: ${statusInfo} (Key: ${licenseKey?.substring(0, 8)}...)`);
+        log.info(`[SUCCESS] License verified online: ${statusInfo} (Key: ${licenseKey?.substring(0, 8)}...)`);
         
         // Store last validation timestamp
         if (isValid) {
@@ -233,18 +237,18 @@ const licenseGuardService = ({ strapi }: { strapi: Core.Strapi }) => ({
           data: data.data as LicenseData,
         };
       } else {
-        strapi.log.warn(`[WARN] License verification failed: ${data.message || 'Unknown error'} (Key: ${licenseKey?.substring(0, 8)}...)`);
+        log.warn(`[WARN] License verification failed: ${data.message || 'Unknown error'} (Key: ${licenseKey?.substring(0, 8)}...)`);
         return { valid: false, data: null };
       }
     } catch (error: any) {
       // If grace period is allowed, accept the key anyway
       if (allowGracePeriod) {
-        strapi.log.warn(`[WARN] Cannot verify license online: ${error.message} (Key: ${licenseKey?.substring(0, 8)}...)`);
-        strapi.log.info(`[GRACE] Grace period active - accepting stored license key`);
+        log.warn(`[WARN] Cannot verify license online: ${error.message} (Key: ${licenseKey?.substring(0, 8)}...)`);
+        log.info(`[GRACE] Grace period active - accepting stored license key`);
         return { valid: true, data: null, gracePeriod: true };
       }
       
-      strapi.log.error(`[ERROR] Error verifying license: ${error.message} (Key: ${licenseKey?.substring(0, 8)}...)`);
+      log.error(`[ERROR] Error verifying license: ${error.message} (Key: ${licenseKey?.substring(0, 8)}...)`);
       return { valid: false, data: null };
     }
   },
@@ -270,14 +274,14 @@ const licenseGuardService = ({ strapi }: { strapi: Core.Strapi }) => ({
       const data = await response.json() as ApiResponse;
 
       if (data.success) {
-        strapi.log.debug(`[PING] License ping successful: ${data.data?.isActive ? 'ACTIVE' : 'INACTIVE'} (Key: ${licenseKey?.substring(0, 8)}...)`);
+        log.debug(`[PING] License ping successful: ${data.data?.isActive ? 'ACTIVE' : 'INACTIVE'} (Key: ${licenseKey?.substring(0, 8)}...)`);
         return data.data;
       } else {
-        strapi.log.debug(`[WARN] License ping failed: ${data.message || 'Unknown error'} (Key: ${licenseKey?.substring(0, 8)}...)`);
+        log.debug(`[WARN] License ping failed: ${data.message || 'Unknown error'} (Key: ${licenseKey?.substring(0, 8)}...)`);
         return null;
       }
     } catch (error: any) {
-      strapi.log.debug(`License ping error: ${error.message} (Key: ${licenseKey?.substring(0, 8)}...)`);
+      log.debug(`License ping error: ${error.message} (Key: ${licenseKey?.substring(0, 8)}...)`);
       return null;
     }
   },
@@ -296,7 +300,7 @@ const licenseGuardService = ({ strapi }: { strapi: Core.Strapi }) => ({
       }
       return null;
     } catch (error) {
-      strapi.log.error('[ERROR] Error fetching license by key:', error);
+      log.error('[ERROR] Error fetching license by key:', error);
       return null;
     }
   },
@@ -321,7 +325,7 @@ const licenseGuardService = ({ strapi }: { strapi: Core.Strapi }) => ({
       const license = await this.getLicenseByKey(licenseKey);
       return license;
     } catch (error) {
-      strapi.log.error('[LICENSE] Error loading current license:', error);
+      log.error('[LICENSE] Error loading current license:', error);
       return null;
     }
   },
@@ -340,7 +344,7 @@ const licenseGuardService = ({ strapi }: { strapi: Core.Strapi }) => ({
       await this.pingLicense(licenseKey);
     }, intervalMs);
 
-    strapi.log.info(`[PING] Started pinging license every ${intervalMinutes} minutes`);
+    log.info(`[PING] Started pinging license every ${intervalMinutes} minutes`);
     
     return pingInterval;
   },
@@ -351,7 +355,7 @@ const licenseGuardService = ({ strapi }: { strapi: Core.Strapi }) => ({
    */
   async initialize(): Promise<LicenseStatus> {
     try {
-      strapi.log.info('[LICENSE] Initializing License Guard...');
+      log.info('[LICENSE] Initializing License Guard...');
 
       // Check if license key exists in plugin store
       const pluginStore = strapi.store({ 
@@ -372,34 +376,34 @@ const licenseGuardService = ({ strapi }: { strapi: Core.Strapi }) => ({
         withinGracePeriod = hoursSinceValidation < gracePeriodHours;
       }
 
-      strapi.log.info('──────────────────────────────────────────────────────────');
-      strapi.log.info(`[STORE] Plugin Store Check:`);
+      log.info('──────────────────────────────────────────────────────────');
+      log.info(`[STORE] Plugin Store Check:`);
       if (licenseKey) {
-        strapi.log.info(`   [OK] License Key found: ${licenseKey}`);
-        strapi.log.info(`   [KEY] Key (short): ${licenseKey.substring(0, 8)}...`);
+        log.info(`   [OK] License Key found: ${licenseKey}`);
+        log.info(`   [KEY] Key (short): ${licenseKey.substring(0, 8)}...`);
         if (lastValidated) {
           const lastValidatedDate = new Date(lastValidated);
           const hoursAgo = Math.floor((now.getTime() - lastValidatedDate.getTime()) / (1000 * 60 * 60));
-          strapi.log.info(`   [TIME] Last validated: ${hoursAgo}h ago (Grace: ${withinGracePeriod ? 'ACTIVE' : 'EXPIRED'})`);
+          log.info(`   [TIME] Last validated: ${hoursAgo}h ago (Grace: ${withinGracePeriod ? 'ACTIVE' : 'EXPIRED'})`);
         } else {
-          strapi.log.info(`   [TIME] Last validated: Never (Grace: ACTIVE for first ${gracePeriodHours}h)`);
+          log.info(`   [TIME] Last validated: Never (Grace: ACTIVE for first ${gracePeriodHours}h)`);
         }
       } else {
-        strapi.log.info(`   [NONE] No license key stored`);
+        log.info(`   [NONE] No license key stored`);
       }
-      strapi.log.info('──────────────────────────────────────────────────────────');
+      log.info('──────────────────────────────────────────────────────────');
 
       if (licenseKey) {
-        strapi.log.info('[VERIFY] Verifying stored license key...');
+        log.info('[VERIFY] Verifying stored license key...');
         
         // Always allow grace period during initialization (server might not be ready yet)
         const verification = await this.verifyLicense(licenseKey, true);
         
         if (verification.valid) {
           if (verification.gracePeriod) {
-            strapi.log.info('[SUCCESS] License accepted (offline mode / grace period)');
+            log.info('[SUCCESS] License accepted (offline mode / grace period)');
           } else {
-            strapi.log.info('[SUCCESS] License is valid and active');
+            log.info('[SUCCESS] License is valid and active');
           }
           
           // Start pinging
@@ -414,7 +418,7 @@ const licenseGuardService = ({ strapi }: { strapi: Core.Strapi }) => ({
           
           return { valid: true, data: verification.data };
         } else {
-          strapi.log.warn('[WARN] Stored license is invalid or expired');
+          log.warn('[WARN] Stored license is invalid or expired');
           // Only clear if we got a definitive rejection (not a network error during grace period)
           if (!withinGracePeriod) {
             await pluginStore.delete({ key: 'licenseKey' });
@@ -423,11 +427,11 @@ const licenseGuardService = ({ strapi }: { strapi: Core.Strapi }) => ({
         }
       }
 
-      strapi.log.warn('[WARN] No valid license found. Plugin will run with limited functionality.');
+      log.warn('[WARN] No valid license found. Plugin will run with limited functionality.');
       
       return { valid: false, demo: true };
     } catch (error: any) {
-      strapi.log.error('[ERROR] Error initializing license guard:', error);
+      log.error('[ERROR] Error initializing license guard:', error);
       return { valid: false, error: error.message };
     }
   },
@@ -437,7 +441,7 @@ const licenseGuardService = ({ strapi }: { strapi: Core.Strapi }) => ({
    */
   async storeLicenseKey(licenseKey: string): Promise<boolean> {
     try {
-      strapi.log.info(`[STORE] Storing license key: ${licenseKey}`);
+      log.info(`[STORE] Storing license key: ${licenseKey}`);
       const pluginStore = strapi.store({ 
         type: 'plugin', 
         name: 'magic-mark' 
@@ -450,14 +454,14 @@ const licenseGuardService = ({ strapi }: { strapi: Core.Strapi }) => ({
       // Verify it was stored
       const stored = await pluginStore.get({ key: 'licenseKey' }) as string | undefined;
       if (stored === licenseKey) {
-        strapi.log.info('[SUCCESS] License key stored and verified successfully');
+        log.info('[SUCCESS] License key stored and verified successfully');
         return true;
       } else {
-        strapi.log.error('[ERROR] License key storage verification failed');
+        log.error('[ERROR] License key storage verification failed');
         return false;
       }
     } catch (error) {
-      strapi.log.error('[ERROR] Error storing license key:', error);
+      log.error('[ERROR] Error storing license key:', error);
       return false;
     }
   },
@@ -479,7 +483,7 @@ const licenseGuardService = ({ strapi }: { strapi: Core.Strapi }) => ({
       }
       return 10; // Free tier
     } catch (error) {
-      strapi.log.debug('[LICENSE] Error getting bookmark limit, using free tier');
+      log.debug('[LICENSE] Error getting bookmark limit, using free tier');
       return 10;
     }
   },
@@ -516,7 +520,7 @@ const licenseGuardService = ({ strapi }: { strapi: Core.Strapi }) => ({
       
       return { canCreate: true, current: currentCount, max: limit };
     } catch (error) {
-      strapi.log.error('[LICENSE] Error checking bookmark limit:', error);
+      log.error('[LICENSE] Error checking bookmark limit:', error);
       // Allow creation on error to not block users
       return { canCreate: true, current: 0, max: 10 };
     }
@@ -545,10 +549,10 @@ const licenseGuardService = ({ strapi }: { strapi: Core.Strapi }) => ({
       const license = await this.getCurrentLicense();
       
       // Debug log
-      strapi.log.info('[LICENSE] getLicenseLimits - license exists:', !!license);
+      log.info('[LICENSE] getLicenseLimits - license exists:', !!license);
       if (license) {
-        strapi.log.info('[LICENSE] getLicenseLimits - featurePremium:', license.featurePremium);
-        strapi.log.info('[LICENSE] getLicenseLimits - featureAdvanced:', license.featureAdvanced);
+        log.info('[LICENSE] getLicenseLimits - featurePremium:', license.featurePremium);
+        log.info('[LICENSE] getLicenseLimits - featureAdvanced:', license.featureAdvanced);
       }
       
       // Get tier info - check both formats (like Magic Mail)
@@ -560,7 +564,7 @@ const licenseGuardService = ({ strapi }: { strapi: Core.Strapi }) => ({
       const isPremium = tier === 'premium' || tier === 'advanced' || tier === 'enterprise';
       const isAdvanced = tier === 'advanced' || tier === 'enterprise';
       
-      strapi.log.info('[LICENSE] getLicenseLimits - detected tier:', tier);
+      log.info('[LICENSE] getLicenseLimits - detected tier:', tier);
       
       // Get bookmark counts
       const bookmarkCheck = await this.canCreateBookmark(userId);
@@ -579,7 +583,7 @@ const licenseGuardService = ({ strapi }: { strapi: Core.Strapi }) => ({
         }
       };
     } catch (error) {
-      strapi.log.error('[LICENSE] Error getting license limits:', error);
+      log.error('[LICENSE] Error getting license limits:', error);
       return {
         maxBookmarks: 10,
         currentBookmarks: 0,
@@ -645,7 +649,7 @@ const licenseGuardService = ({ strapi }: { strapi: Core.Strapi }) => ({
 
       return currentTierLevel >= tierLevels[requiredTier];
     } catch (error) {
-      strapi.log.debug('[LICENSE] Error checking feature:', feature);
+      log.debug('[LICENSE] Error checking feature:', feature);
       return false;
     }
   },
@@ -674,10 +678,11 @@ const licenseGuardService = ({ strapi }: { strapi: Core.Strapi }) => ({
     const licenseGuard = (strapi as any).licenseGuard;
     if (licenseGuard && licenseGuard.pingInterval) {
       clearInterval(licenseGuard.pingInterval);
-      strapi.log.info('[STOP] License pinging stopped');
+      log.info('[STOP] License pinging stopped');
     }
   },
-});
+};
+};
 
 export default licenseGuardService;
 

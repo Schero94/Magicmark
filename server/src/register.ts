@@ -1,4 +1,5 @@
 import type { Core } from '@strapi/strapi';
+import { createLogger } from './utils/logger';
 
 const magicMarkActions = {
   actions: [
@@ -20,10 +21,12 @@ const magicMarkActions = {
 };
 
 export default async ({ strapi }: { strapi: Core.Strapi }) => {
+  const log = createLogger(strapi);
+  
   // Register permissions
   await strapi.admin.services.permission.actionProvider.registerMany(
     magicMarkActions.actions
   );
   
-  strapi.log.info('[Magic-Mark] Plugin registered successfully');
+  log.info('Plugin registered successfully');
 };

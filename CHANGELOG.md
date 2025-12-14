@@ -1,3 +1,10 @@
+## [3.2.5](https://github.com/Schero94/Magicmark/compare/v3.2.4...v3.2.5) (2025-12-14)
+
+
+### Bug Fixes
+
+* clean up README formatting ([fd31589](https://github.com/Schero94/Magicmark/commit/fd3158927ab3f671c70b93ff254e775d163a1d28))
+
 ## [3.2.4](https://github.com/Schero94/Magicmark/compare/v3.2.3...v3.2.4) (2025-12-14)
 
 

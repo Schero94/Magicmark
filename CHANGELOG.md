@@ -1,3 +1,10 @@
+## [3.2.2](https://github.com/Schero94/Magicmark/compare/v3.2.1...v3.2.2) (2025-12-14)
+
+
+### Bug Fixes
+
+* update release workflow for new npm token requirements ([ae2c41a](https://github.com/Schero94/Magicmark/commit/ae2c41a303f95c06219a9046e55f18a25087aa0f))
+
 ## [3.2.1](https://github.com/Schero94/Magicmark/compare/v3.2.0...v3.2.1) (2025-12-14)
 
 

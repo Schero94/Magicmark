@@ -1,3 +1,10 @@
+## [3.2.4](https://github.com/Schero94/Magicmark/compare/v3.2.3...v3.2.4) (2025-12-14)
+
+
+### Bug Fixes
+
+* update optionalDependencies for CI compatibility ([fef0c25](https://github.com/Schero94/Magicmark/commit/fef0c25681577f86e6bd9c8f390e22c3964ab5d2))
+
 ## [3.2.3](https://github.com/Schero94/Magicmark/compare/v3.2.2...v3.2.3) (2025-12-14)
 
 

@@ -6,6 +6,8 @@
 [![npm version](https://badge.fury.io/js/strapi-plugin-magic-mark.svg)](https://www.npmjs.com/package/strapi-plugin-magic-mark)
 [![GitHub release](https://img.shields.io/github/v/release/Schero94/Magicmark.svg)](https://github.com/Schero94/Magicmark/releases)
 
+> 💡 **Tip:** Set `debug: true` in plugin config to enable detailed logging
+
 ---
 
 ## 📸 Screenshots

@@ -1,3 +1,11 @@
+## [3.2.1](https://github.com/Schero94/Magicmark/compare/v3.2.0...v3.2.1) (2025-12-14)
+
+
+### Bug Fixes
+
+* add debug mode documentation to README ([f9ba17a](https://github.com/Schero94/Magicmark/commit/f9ba17a8c0aa5aa3d6357909d8db91bcccc3a5e6))
+* add debug mode for plugin logging ([3bc45ba](https://github.com/Schero94/Magicmark/commit/3bc45ba8023dc7676603b46974884c22bb68c6dd))
+
 # [3.2.0](https://github.com/Schero94/Magicmark/compare/v3.1.0...v3.2.0) (2025-12-08)
 
 

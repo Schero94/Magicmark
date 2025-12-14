@@ -1,3 +1,10 @@
+## [3.2.7](https://github.com/Schero94/Magicmark/compare/v3.2.6...v3.2.7) (2025-12-14)
+
+
+### Bug Fixes
+
+* simplify exports config like magic-sessionmanager ([487215f](https://github.com/Schero94/Magicmark/commit/487215fc0b4bdc6f8bbe3d23ceaf17db78f056fb))
+
 ## [3.2.6](https://github.com/Schero94/Magicmark/compare/v3.2.5...v3.2.6) (2025-12-14)
 
 

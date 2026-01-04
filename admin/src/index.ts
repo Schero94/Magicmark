@@ -25,8 +25,9 @@ export default {
   register(app: StrapiApp) {
     console.log(`[${pluginId}] Registering plugin...`);
     
+    // Menu link - path should be relative to root (no leading slash)
     app.addMenuLink({
-      to: `/plugins/${pluginId}`,
+      to: `plugins/${pluginId}`,
       icon: PluginIcon as any,
       intlLabel: {
         id: `${pluginId}.Admin.MainMenu.PluginName`,

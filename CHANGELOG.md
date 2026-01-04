@@ -1,3 +1,10 @@
+## [3.2.8](https://github.com/Schero94/Magicmark/compare/v3.2.7...v3.2.8) (2026-01-04)
+
+
+### Bug Fixes
+
+* use relative path for menu link ([9e1ba91](https://github.com/Schero94/Magicmark/commit/9e1ba91f3212d90e91e1dd11f26434dde5b22963))
+
 ## [3.2.7](https://github.com/Schero94/Magicmark/compare/v3.2.6...v3.2.7) (2025-12-14)
 
 

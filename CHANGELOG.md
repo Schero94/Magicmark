@@ -1,3 +1,10 @@
+# [3.3.0](https://github.com/Schero94/Magicmark/compare/v3.2.8...v3.3.0) (2026-01-28)
+
+
+### Features
+
+* modernize UI with Heroicons and improved modal design ([cc38746](https://github.com/Schero94/Magicmark/commit/cc38746cd5b59b3ab642d9a7db12d06616276249))
+
 ## [3.2.8](https://github.com/Schero94/Magicmark/compare/v3.2.7...v3.2.8) (2026-01-04)
 
 

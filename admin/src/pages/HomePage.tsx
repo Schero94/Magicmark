@@ -18,7 +18,7 @@ import {
 import { Trash, Pencil, Pin } from '@strapi/icons';
 import { useFetchClient } from '@strapi/strapi/admin';
 import pluginId from '../pluginId';
-import CreateEditModal from '../components/CreateEditModal';
+import CreateEditModal, { getIconById } from '../components/CreateEditModal';
 import FilterPreview from '../components/FilterPreview';
 import styled from 'styled-components';
 
@@ -28,10 +28,20 @@ const BookmarkRow = styled(Tr)`
   }
 `;
 
-const EmojiCell = styled.div`
-  font-size: 24px;
-  text-align: center;
-  min-width: 40px;
+const IconCell = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, #EEF0FF 0%, #E0E7FF 100%);
+  border-radius: 6px;
+  
+  svg {
+    width: 18px;
+    height: 18px;
+    color: #4945FF;
+  }
 `;
 
 const PinIcon = styled(Pin)<{ isPinned?: boolean }>`
@@ -43,7 +53,8 @@ interface Bookmark {
   name: string;
   path: string;
   query: string;
-  emoji: string;
+  icon?: string;
+  emoji?: string;
   description?: string;
   isPinned: boolean;
   order: number;
@@ -209,8 +220,8 @@ const HomePage: React.FC = () => {
                 <Th width="8%">
                   <VisuallyHidden>
                     {formatMessage({
-                      id: `${pluginId}.table.emoji`,
-                      defaultMessage: 'Emoji'
+                      id: `${pluginId}.table.icon`,
+                      defaultMessage: 'Icon'
                     })}
                   </VisuallyHidden>
                 </Th>
@@ -257,10 +268,14 @@ const HomePage: React.FC = () => {
               </Tr>
             </Thead>
             <Tbody>
-              {bookmarks.map((bookmark) => (
+              {bookmarks.map((bookmark) => {
+                const IconComponent = getIconById(bookmark.icon || bookmark.emoji || 'bookmark');
+                return (
                 <BookmarkRow key={bookmark.id}>
                   <Td>
-                    <EmojiCell>{bookmark.emoji}</EmojiCell>
+                    <IconCell>
+                      <IconComponent />
+                    </IconCell>
                   </Td>
                   <Td>
                     <Typography fontWeight="bold" textColor="neutral800">{bookmark.name}</Typography>
@@ -301,7 +316,8 @@ const HomePage: React.FC = () => {
                     </Flex>
                   </Td>
                 </BookmarkRow>
-              ))}
+              );
+              })}
             </Tbody>
           </Table>
         </Box>

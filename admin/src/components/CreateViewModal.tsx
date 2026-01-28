@@ -15,34 +15,71 @@ import {
   Stack,
 } from '@strapi/design-system';
 import styled from 'styled-components';
+import { BOOKMARK_ICONS, getIconById } from './CreateEditModal';
 
-const EmojiPicker = styled.div`
+// ================ STYLED COMPONENTS ================
+const IconPicker = styled.div`
   display: grid;
   grid-template-columns: repeat(8, 1fr);
   gap: 8px;
   padding: 12px;
-  background: #f7f8fa;
-  border-radius: 4px;
+  background: #f6f6f9;
+  border-radius: 6px;
   max-height: 200px;
   overflow-y: auto;
+  margin-top: 12px;
 `;
 
-const EmojiButton = styled.button<{ isSelected?: boolean }>`
-  padding: 8px;
-  font-size: 24px;
-  border: 2px solid ${props => props.isSelected ? '#3945C9' : '#e0e0e0'};
-  background: white;
-  border-radius: 4px;
+const IconButton = styled.button<{ $isSelected?: boolean }>`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  border: 2px solid ${props => props.$isSelected ? '#4945FF' : '#dcdce4'};
+  background: ${props => props.$isSelected ? '#EEF0FF' : '#ffffff'};
+  border-radius: 6px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
+  
+  svg {
+    width: 20px;
+    height: 20px;
+    color: ${props => props.$isSelected ? '#4945FF' : '#32324d'};
+  }
   
   &:hover {
-    border-color: #3945C9;
-    background: #f7f8fa;
+    border-color: #4945FF;
+    background: #EEF0FF;
+    
+    svg {
+      color: #4945FF;
+    }
   }
 `;
 
-const BOOKMARK_EMOJIS = ['🔖', '📌', '⭐', '💫', '❤️', '🎯', '🚀', '📝', '🔗', '🌟', '💼', '🎨', '📚', '🔔', '✅', '🎁'];
+const SelectedIconPreview = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border: 2px solid #4945FF;
+  background: linear-gradient(135deg, #EEF0FF 0%, #E0E7FF 100%);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  
+  svg {
+    width: 24px;
+    height: 24px;
+    color: #4945FF;
+  }
+  
+  &:hover {
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(73, 69, 255, 0.2);
+  }
+`;
 
 interface CreateEditModalProps {
   bookmark: any | null;
@@ -60,17 +97,17 @@ const CreateEditModal: React.FC<CreateEditModalProps> = ({
   const { formatMessage } = useIntl();
   const [name, setName] = useState('');
   const [url, setUrl] = useState('');
-  const [emoji, setEmoji] = useState('🔖');
+  const [icon, setIcon] = useState('bookmark');
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [showIconPicker, setShowIconPicker] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
     if (bookmark) {
       setName(bookmark.name);
       setUrl(bookmark.url);
-      setEmoji(bookmark.emoji);
+      setIcon(bookmark.icon || bookmark.emoji || 'bookmark');
       setDescription(bookmark.description || '');
     }
   }, [bookmark]);
@@ -119,7 +156,8 @@ const CreateEditModal: React.FC<CreateEditModalProps> = ({
         body: JSON.stringify({
           name,
           url,
-          emoji,
+          icon,
+          emoji: icon, // Backwards compatibility
           description,
         }),
       });
@@ -166,48 +204,50 @@ const CreateEditModal: React.FC<CreateEditModalProps> = ({
             </Box>
           )}
 
-          {/* Emoji Selector */}
+          {/* Icon Selector */}
           <Box>
             <Typography variant="pi" fontWeight="bold" marginBottom={2}>
               {formatMessage({
-                id: `${pluginId}.form.emoji`,
+                id: `${pluginId}.form.icon`,
                 defaultMessage: 'Choose Icon'
               })}
             </Typography>
-            <Flex gap={2} alignItems="center">
-              <Box
-                as="button"
-                padding={3}
-                borderRadius="4px"
-                border="1px solid #e0e0e0"
-                fontSize="32px"
-                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                style={{ cursor: 'pointer' }}
+            <Flex gap={3} alignItems="center">
+              <SelectedIconPreview
+                onClick={() => setShowIconPicker(!showIconPicker)}
+                title="Click to change icon"
               >
-                {emoji}
-              </Box>
+                {(() => {
+                  const IconComponent = getIconById(icon);
+                  return <IconComponent />;
+                })()}
+              </SelectedIconPreview>
               <Typography variant="pi" textColor="neutral600">
                 {formatMessage({
-                  id: `${pluginId}.form.selectEmoji`,
-                  defaultMessage: 'Click to select'
+                  id: `${pluginId}.form.selectIcon`,
+                  defaultMessage: 'Click to select an icon'
                 })}
               </Typography>
             </Flex>
-            {showEmojiPicker && (
-              <EmojiPicker>
-                {BOOKMARK_EMOJIS.map((e) => (
-                  <EmojiButton
-                    key={e}
-                    isSelected={emoji === e}
-                    onClick={() => {
-                      setEmoji(e);
-                      setShowEmojiPicker(false);
-                    }}
-                  >
-                    {e}
-                  </EmojiButton>
-                ))}
-              </EmojiPicker>
+            {showIconPicker && (
+              <IconPicker>
+                {BOOKMARK_ICONS.map((item) => {
+                  const IconComp = item.icon;
+                  return (
+                    <IconButton
+                      key={item.id}
+                      $isSelected={icon === item.id}
+                      onClick={() => {
+                        setIcon(item.id);
+                        setShowIconPicker(false);
+                      }}
+                      title={item.label}
+                    >
+                      <IconComp />
+                    </IconButton>
+                  );
+                })}
+              </IconPicker>
             )}
           </Box>
 

@@ -24,18 +24,20 @@ import {
   Trash, 
   Pencil, 
   Pin, 
-  Link as LinkIcon, 
-  Sparkle, 
-  Eye, 
-  User,
-  Calendar,
-  Clock,
-  Search,
-  Book,
+  Eye,
 } from '@strapi/icons';
+import {
+  LinkIcon,
+  SparklesIcon,
+  UserIcon,
+  CalendarIcon,
+  ClockIcon,
+  MagnifyingGlassIcon,
+  BookOpenIcon,
+} from '@heroicons/react/24/outline';
 import { useFetchClient } from '@strapi/strapi/admin';
 import pluginId from '../pluginId';
-import CreateEditModal from '../components/CreateEditModal';
+import CreateEditModal, { getIconById } from '../components/CreateEditModal';
 import FilterPreview from '../components/FilterPreview';
 import { useLicenseInfo } from '../hooks/useFeatureGate';
 import UpgradePrompt from '../components/UpgradePrompt';
@@ -372,10 +374,21 @@ const PinIndicator = styled(Box)`
   transition: all ${theme.transitions.normal};
 `;
 
-const BookmarkEmoji = styled.div`
-  font-size: 32px;
-  line-height: 1;
-  text-align: center;
+const BookmarkIconWrapper = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, ${theme.colors.primary[100]} 0%, #E0E7FF 100%);
+  border-radius: 8px;
+  flex-shrink: 0;
+  
+  svg {
+    width: 20px;
+    height: 20px;
+    color: ${theme.colors.primary[600]};
+  }
 `;
 
 const ActionButtons = styled(Flex)`
@@ -385,13 +398,18 @@ const ActionButtons = styled(Flex)`
   justify-content: flex-end;
 `;
 
-const FloatingEmoji = styled.div`
+const FloatingIcon = styled.div`
   position: absolute;
   bottom: 40px;
   right: 40px;
-  font-size: 72px;
   opacity: 0.08;
   animation: ${float} 4s ease-in-out infinite;
+  
+  svg {
+    width: 72px;
+    height: 72px;
+    color: ${theme.colors.warning[500]};
+  }
 `;
 
 const FilterBar = styled(Flex)`
@@ -416,7 +434,7 @@ const SearchInputWrapper = styled.div`
   align-items: center;
 `;
 
-const SearchIcon = styled(Search)`
+const SearchIconStyled = styled(MagnifyingGlassIcon)`
   position: absolute;
   left: 12px;
   width: 16px;
@@ -448,6 +466,7 @@ const StyledSearchInput = styled.input`
 
 interface Bookmark {
   id: string;
+  documentId?: string;  // Strapi v5 Document Service ID
   name: string;
   path: string;
   query: string;
@@ -546,6 +565,30 @@ const HomePageModern: React.FC = () => {
   };
 
   /**
+   * Compare user IDs - handles both numeric IDs and documentIds
+   */
+  const isCurrentUserOwner = (bookmark: Bookmark): boolean => {
+    if (!bookmark.createdBy || !currentUser) return false;
+    
+    // Compare by documentId first (preferred in Strapi v5)
+    if (bookmark.createdBy.documentId && currentUser.documentId) {
+      return bookmark.createdBy.documentId === currentUser.documentId;
+    }
+    
+    // Fallback: compare by id (convert to string for safety)
+    if (bookmark.createdBy.id && currentUser.id) {
+      return String(bookmark.createdBy.id) === String(currentUser.id);
+    }
+    
+    // Additional fallback: compare createdBy.id with currentUser.documentId
+    if (bookmark.createdBy.id && currentUser.documentId) {
+      return String(bookmark.createdBy.id) === String(currentUser.documentId);
+    }
+    
+    return false;
+  };
+
+  /**
    * Fetch license limits and feature flags
    */
   const fetchLicenseLimits = async () => {
@@ -574,7 +617,10 @@ const HomePageModern: React.FC = () => {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  /**
+   * Deletes a bookmark by documentId
+   */
+  const handleDelete = async (bookmark: Bookmark) => {
     if (!confirm(formatMessage({ 
       id: `${pluginId}.confirm.delete`,
       defaultMessage: 'Are you sure you want to delete this bookmark?'
@@ -582,21 +628,30 @@ const HomePageModern: React.FC = () => {
       return;
     }
 
+    // Use documentId for Strapi v5 Document Service API
+    const deleteId = bookmark.documentId || bookmark.id;
+    
     try {
-      await del(`/${pluginId}/bookmarks/${id}`);
-      console.log('[Magic-Mark HomePage] Bookmark deleted:', id);
+      await del(`/${pluginId}/bookmarks/${deleteId}`);
+      console.log('[Magic-Mark HomePage] Bookmark deleted:', deleteId);
       fetchBookmarks();
     } catch (error) {
       console.error('[Magic-Mark HomePage] Error deleting bookmark:', error);
     }
   };
 
+  /**
+   * Pins or unpins a bookmark
+   */
   const handlePin = async (bookmark: Bookmark) => {
+    // Use documentId for Strapi v5 Document Service API
+    const pinId = bookmark.documentId || bookmark.id;
+    
     try {
-      await post(`/${pluginId}/bookmarks/${bookmark.id}/pin`, {
+      await post(`/${pluginId}/bookmarks/${pinId}/pin`, {
         isPinned: !bookmark.isPinned
       });
-      console.log('[Magic-Mark HomePage] Bookmark pinned:', bookmark.id);
+      console.log('[Magic-Mark HomePage] Bookmark pinned:', pinId);
       fetchBookmarks();
     } catch (error) {
       console.error('[Magic-Mark HomePage] Error pinning bookmark:', error);
@@ -668,8 +723,8 @@ const HomePageModern: React.FC = () => {
     .slice(0, parseInt(entriesPerPage));
 
   const pinnedBookmarks = bookmarks.filter(b => b.isPinned);
-  const myBookmarks = bookmarks.filter(b => b.createdBy?.id === currentUser?.id);
-  const sharedWithMe = bookmarks.filter(b => b.createdBy?.id !== currentUser?.id && b.createdBy?.id);
+  const myBookmarks = bookmarks.filter(b => isCurrentUserOwner(b));
+  const sharedWithMe = bookmarks.filter(b => !isCurrentUserOwner(b) && b.createdBy);
 
   return (
     <Container padding={8}>
@@ -677,7 +732,7 @@ const HomePageModern: React.FC = () => {
       <Header>
         <HeaderContent direction="column" alignItems="flex-start" gap={2}>
           <Title>
-            <Book /> MagicMark
+            <BookOpenIcon /> MagicMark
           </Title>
           <Subtitle>
             Save filtered views and navigate with one click
@@ -689,7 +744,7 @@ const HomePageModern: React.FC = () => {
       <StatsGrid>
         <StatCard $delay="0.1s" $color={theme.colors.primary[500]}>
           <StatIcon className="stat-icon" $bg={theme.colors.primary[100]} $color={theme.colors.primary[600]}>
-            <User />
+            <UserIcon />
           </StatIcon>
           <StatValue className="stat-value">{myBookmarks.length}</StatValue>
           <StatLabel>My Bookmarks</StatLabel>
@@ -697,7 +752,7 @@ const HomePageModern: React.FC = () => {
 
         <StatCard $delay="0.2s" $color={theme.colors.success[500]}>
           <StatIcon className="stat-icon" $bg={theme.colors.success[100]} $color={theme.colors.success[600]}>
-            <Sparkle />
+            <SparklesIcon />
           </StatIcon>
           <StatValue className="stat-value">{sharedWithMe.length}</StatValue>
           <StatLabel>{formatMessage({ id: `${pluginId}.stats.shared`, defaultMessage: 'Shared with Me' })}</StatLabel>
@@ -795,7 +850,7 @@ const HomePageModern: React.FC = () => {
           {/* Search Bar */}
           <FilterBar>
             <SearchInputWrapper style={{ flex: 1 }}>
-              <SearchIcon />
+              <SearchIconStyled />
               <StyledSearchInput
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
@@ -856,30 +911,23 @@ const HomePageModern: React.FC = () => {
                   <Tr key={bookmark.id} style={{ 
                     background: bookmark.isPinned ? theme.colors.warning[50] : 'transparent'
                   }}>
-                    {/* Name with Emoji */}
+                    {/* Name with Icon */}
                     <Td onClick={() => handleBookmarkClick(bookmark)} style={{ cursor: 'pointer' }}>
                       <Flex alignItems="center" gap={3}>
-                        {/* Emoji */}
-                        <Box
-                          style={{
-                            width: '36px',
-                            height: '36px',
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            flexShrink: 0,
-                            fontSize: '24px',
-                          }}
-                        >
-                          {bookmark.emoji}
-                        </Box>
+                        {/* Icon */}
+                        <BookmarkIconWrapper>
+                          {(() => {
+                            const IconComponent = getIconById(bookmark.icon || bookmark.emoji || 'bookmark');
+                            return <IconComponent />;
+                          })()}
+                        </BookmarkIconWrapper>
                         <Flex direction="column" alignItems="flex-start" gap={0}>
                           <Typography fontWeight="semiBold" ellipsis style={{ fontSize: '1.125rem', lineHeight: '1.4' }}>
                             {bookmark.name}
                           </Typography>
                           {/* Ownership/Sharing Indicators */}
                           <Flex gap={1} alignItems="center">
-                            {(bookmark.createdBy?.id && currentUser?.id && bookmark.createdBy.id === currentUser.id) ? (
+                            {isCurrentUserOwner(bookmark) ? (
                               <Typography variant="pi" style={{ fontSize: '0.75rem', color: theme.colors.primary[600], fontWeight: 500 }}>
                                 • {formatMessage({ id: `${pluginId}.bookmark.myBookmark`, defaultMessage: 'My Bookmark' })}
                               </Typography>
@@ -950,28 +998,26 @@ const HomePageModern: React.FC = () => {
                         >
                           <Eye />
                         </Button>
-                        {/* Show edit button for owned bookmarks */}
-                        {bookmark.createdBy && (
-                          <Button
-                            variant="ghost"
-                            size="S"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleEdit(bookmark);
-                            }}
-                            disabled={bookmark.createdBy?.id !== currentUser?.id}
-                          >
-                            <Pencil />
-                          </Button>
-                        )}
+                        {/* Edit button - always visible, enabled only for owner */}
+                        <Button
+                          variant="ghost"
+                          size="S"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEdit(bookmark);
+                          }}
+                          disabled={!isCurrentUserOwner(bookmark)}
+                        >
+                          <Pencil />
+                        </Button>
                         {/* Show delete for owned bookmarks */}
-                        {(bookmark.createdBy?.id && currentUser?.id && bookmark.createdBy.id === currentUser.id) && (
+                        {isCurrentUserOwner(bookmark) && (
                           <Button
                             variant="ghost"
                             size="S"
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleDelete(bookmark.id);
+                              handleDelete(bookmark);
                             }}
                           >
                             <Trash />
@@ -1020,9 +1066,9 @@ const HomePageModern: React.FC = () => {
           />
           
           {/* Floating Icon */}
-          <FloatingEmoji>
-            <Sparkle fill="warning500" />
-          </FloatingEmoji>
+          <FloatingIcon>
+            <SparklesIcon />
+          </FloatingIcon>
           
           {/* Content */}
           <Flex direction="column" alignItems="center" gap={6} style={{ position: 'relative', zIndex: 1 }}>
@@ -1039,7 +1085,7 @@ const HomePageModern: React.FC = () => {
                 boxShadow: theme.shadows.xl,
               }}
             >
-              <Sparkle style={{ width: '60px', height: '60px', color: theme.colors.primary[600] }} />
+              <SparklesIcon style={{ width: '60px', height: '60px', color: theme.colors.primary[600] }} />
             </Box>
             
             {/* Text */}

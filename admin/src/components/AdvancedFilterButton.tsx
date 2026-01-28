@@ -1,10 +1,89 @@
 // @ts-nocheck
 import React, { useState, useEffect } from 'react';
-import { Button } from '@strapi/design-system';
-import { Filter, Check } from '@strapi/icons';
+import { Filter, Cross } from '@strapi/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useFetchClient } from '@strapi/strapi/admin';
+import styled from 'styled-components';
 import SimpleAdvancedFilterModal from './SimpleAdvancedFilterModal';
+
+// ================ STYLED COMPONENTS ================
+const FilterButtonGroup = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 6px;
+`;
+
+const FilterButton = styled.button<{ $isActive?: boolean }>`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid ${props => props.$isActive ? '#4945FF' : '#dcdce4'};
+  border-radius: 4px;
+  background: ${props => props.$isActive 
+    ? '#EEF0FF' 
+    : '#ffffff'};
+  color: ${props => props.$isActive ? '#4945FF' : '#32324d'};
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+  
+  &:hover {
+    background: ${props => props.$isActive ? '#E0E7FF' : '#f6f6f9'};
+    border-color: ${props => props.$isActive ? '#4945FF' : '#c0c0cf'};
+  }
+  
+  &:active {
+    transform: scale(0.98);
+  }
+  
+  svg {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+  }
+`;
+
+const ClearButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid #fecaca;
+  border-radius: 4px;
+  background: #fef2f2;
+  color: #dc2626;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  
+  &:hover {
+    background: #fee2e2;
+    border-color: #fca5a5;
+  }
+  
+  &:active {
+    transform: scale(0.98);
+  }
+  
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+`;
+
+const ActiveDot = styled.span`
+  width: 6px;
+  height: 6px;
+  background: #22c55e;
+  border-radius: 50%;
+  margin-left: 2px;
+`;
 
 const AdvancedFilterButton: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
@@ -204,24 +283,24 @@ const AdvancedFilterButton: React.FC = () => {
   };
 
   return (
-    <>
-      <Button
-        variant={hasActiveFilters ? 'default' : 'secondary'}
-        startIcon={<Filter />}
+    <FilterButtonGroup>
+      <FilterButton
+        $isActive={hasActiveFilters}
         onClick={() => setShowModal(true)}
-        size="S"
+        title="Open advanced filter builder"
       >
-        {hasActiveFilters ? 'Filters Active' : 'Advanced Filters'}
-      </Button>
+        <Filter />
+        Filters
+        {hasActiveFilters && <ActiveDot />}
+      </FilterButton>
 
       {hasActiveFilters && (
-        <Button
-          variant="danger-light"
+        <ClearButton
           onClick={handleClearFilters}
-          size="S"
+          title="Clear all filters"
         >
-          Clear All
-        </Button>
+          <Cross />
+        </ClearButton>
       )}
 
       {showModal && (
@@ -233,7 +312,7 @@ const AdvancedFilterButton: React.FC = () => {
           currentQuery={getCurrentFilters()}
         />
       )}
-    </>
+    </FilterButtonGroup>
   );
 };
 

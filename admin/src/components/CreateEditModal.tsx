@@ -9,39 +9,599 @@ import {
   Textarea,
   Typography,
 } from '@strapi/design-system';
-import { Cross, Lightbulb } from '@strapi/icons';
+import { Cross } from '@strapi/icons';
 import { useFetchClient } from '@strapi/strapi/admin';
-import styled from 'styled-components';
+import styled, { keyframes, css } from 'styled-components';
 import FilterPreview from './FilterPreview';
 
-const EmojiPicker = styled.div`
+// Heroicons (Outline style - 24x24)
+import {
+  BookmarkIcon,
+  BookOpenIcon,
+  StarIcon,
+  HeartIcon,
+  BoltIcon,
+  RocketLaunchIcon,
+  PencilIcon,
+  LinkIcon,
+  SparklesIcon,
+  BriefcaseIcon,
+  PhotoIcon,
+  DocumentIcon,
+  BellIcon,
+  CheckCircleIcon,
+  GiftIcon,
+  UserIcon,
+  UserGroupIcon,
+  EnvelopeIcon,
+  CalendarIcon,
+  ClockIcon,
+  FolderIcon,
+  MagnifyingGlassIcon,
+  FunnelIcon,
+  GlobeAltIcon,
+  TagIcon,
+  FlagIcon,
+  FireIcon,
+  CubeIcon,
+  HomeIcon,
+  CogIcon,
+  WrenchIcon,
+  CommandLineIcon,
+  ChartBarIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+  LightBulbIcon,
+  ShareIcon,
+  SwatchIcon,
+  InformationCircleIcon,
+} from '@heroicons/react/24/outline';
+
+// ================ THEME ================
+const theme = {
+  colors: {
+    primary: { 500: '#4945FF', 600: '#3B38E0', 100: '#EEF0FF', 200: '#D9D8FF' },
+    secondary: { 500: '#7B79FF', 100: '#F0F0FF' },
+    success: { 500: '#328048', 100: '#EAFBE7', 600: '#2E7D32' },
+    warning: { 500: '#D9822F', 100: '#FDF4DC' },
+    danger: { 500: '#D02B20', 100: '#FCECEA' },
+    neutral: { 0: '#FFFFFF', 100: '#F6F6F9', 200: '#DCDCE4', 400: '#A5A5BA', 600: '#666687', 800: '#32324D', 900: '#212134' },
+  },
+  shadows: {
+    sm: '0 1px 2px rgba(0, 0, 0, 0.05)',
+    md: '0 4px 6px -1px rgba(0, 0, 0, 0.1)',
+    lg: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+    xl: '0 20px 25px -5px rgba(0, 0, 0, 0.15)',
+  },
+  gradients: {
+    primary: 'linear-gradient(135deg, #4945FF 0%, #7B79FF 100%)',
+    header: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+  }
+};
+
+// ================ ICON DEFINITIONS ================
+export const BOOKMARK_ICONS = [
+  { id: 'bookmark', icon: BookmarkIcon, label: 'Bookmark' },
+  { id: 'book', icon: BookOpenIcon, label: 'Book' },
+  { id: 'star', icon: StarIcon, label: 'Star' },
+  { id: 'heart', icon: HeartIcon, label: 'Heart' },
+  { id: 'bolt', icon: BoltIcon, label: 'Lightning' },
+  { id: 'rocket', icon: RocketLaunchIcon, label: 'Rocket' },
+  { id: 'pencil', icon: PencilIcon, label: 'Pencil' },
+  { id: 'link', icon: LinkIcon, label: 'Link' },
+  { id: 'sparkles', icon: SparklesIcon, label: 'Sparkles' },
+  { id: 'briefcase', icon: BriefcaseIcon, label: 'Briefcase' },
+  { id: 'photo', icon: PhotoIcon, label: 'Photo' },
+  { id: 'document', icon: DocumentIcon, label: 'Document' },
+  { id: 'bell', icon: BellIcon, label: 'Bell' },
+  { id: 'check', icon: CheckCircleIcon, label: 'Check' },
+  { id: 'gift', icon: GiftIcon, label: 'Gift' },
+  { id: 'user', icon: UserIcon, label: 'User' },
+  { id: 'users', icon: UserGroupIcon, label: 'Users' },
+  { id: 'mail', icon: EnvelopeIcon, label: 'Mail' },
+  { id: 'calendar', icon: CalendarIcon, label: 'Calendar' },
+  { id: 'clock', icon: ClockIcon, label: 'Clock' },
+  { id: 'folder', icon: FolderIcon, label: 'Folder' },
+  { id: 'search', icon: MagnifyingGlassIcon, label: 'Search' },
+  { id: 'filter', icon: FunnelIcon, label: 'Filter' },
+  { id: 'globe', icon: GlobeAltIcon, label: 'Globe' },
+  { id: 'tag', icon: TagIcon, label: 'Tag' },
+  { id: 'flag', icon: FlagIcon, label: 'Flag' },
+  { id: 'fire', icon: FireIcon, label: 'Fire' },
+  { id: 'cube', icon: CubeIcon, label: 'Cube' },
+  { id: 'home', icon: HomeIcon, label: 'Home' },
+  { id: 'cog', icon: CogIcon, label: 'Settings' },
+  { id: 'wrench', icon: WrenchIcon, label: 'Wrench' },
+  { id: 'terminal', icon: CommandLineIcon, label: 'Terminal' },
+  { id: 'chart', icon: ChartBarIcon, label: 'Chart' },
+];
+
+/**
+ * Returns the icon component for a given icon ID
+ */
+export const getIconById = (iconId: string) => {
+  const found = BOOKMARK_ICONS.find(i => i.id === iconId);
+  return found ? found.icon : BookmarkIcon;
+};
+
+// ================ ANIMATIONS ================
+const fadeIn = keyframes`
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+`;
+
+const slideDown = keyframes`
+  from { opacity: 0; max-height: 0; }
+  to { opacity: 1; max-height: 500px; }
+`;
+
+// ================ STYLED COMPONENTS ================
+const Overlay = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+`;
+
+const ModalContainer = styled.div`
+  background: ${theme.colors.neutral[0]};
+  border-radius: 16px;
+  max-height: 90vh;
+  overflow: hidden;
+  max-width: 580px;
+  width: 95%;
+  box-shadow: ${theme.shadows.xl};
+  animation: ${fadeIn} 0.2s ease-out;
+  display: flex;
+  flex-direction: column;
+`;
+
+const ModalHeader = styled.div`
+  background: ${theme.gradients.header};
+  padding: 24px 28px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+`;
+
+const HeaderTitle = styled.h2`
+  color: white;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  
+  svg {
+    width: 24px;
+    height: 24px;
+  }
+`;
+
+const CloseButton = styled.button`
+  background: rgba(255, 255, 255, 0.2);
+  border: none;
+  border-radius: 8px;
+  padding: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  
+  svg {
+    width: 20px;
+    height: 20px;
+    color: white;
+  }
+  
+  &:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: scale(1.05);
+  }
+`;
+
+const ModalBody = styled.div`
+  padding: 24px 28px;
+  overflow-y: auto;
+  flex: 1;
+`;
+
+const ModalFooter = styled.div`
+  padding: 16px 28px;
+  background: ${theme.colors.neutral[100]};
+  border-top: 1px solid ${theme.colors.neutral[200]};
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+`;
+
+const Section = styled.div<{ $collapsed?: boolean }>`
+  margin-bottom: 20px;
+  border: 1px solid ${theme.colors.neutral[200]};
+  border-radius: 12px;
+  overflow: hidden;
+  background: ${theme.colors.neutral[0]};
+  transition: all 0.2s ease;
+  
+  &:hover {
+    border-color: ${theme.colors.primary[200]};
+  }
+`;
+
+const SectionHeader = styled.button<{ $hasIcon?: boolean }>`
+  width: 100%;
+  padding: 14px 16px;
+  background: ${theme.colors.neutral[100]};
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.15s ease;
+  
+  &:hover {
+    background: ${theme.colors.neutral[200]};
+  }
+`;
+
+const SectionTitle = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: ${theme.colors.neutral[800]};
+  
+  svg {
+    width: 18px;
+    height: 18px;
+    color: ${theme.colors.primary[500]};
+  }
+`;
+
+const SectionContent = styled.div<{ $collapsed?: boolean }>`
+  padding: ${props => props.$collapsed ? '0' : '16px'};
+  max-height: ${props => props.$collapsed ? '0' : '500px'};
+  opacity: ${props => props.$collapsed ? '0' : '1'};
+  overflow: hidden;
+  transition: all 0.25s ease;
+`;
+
+const ChevronIcon = styled.div<{ $collapsed?: boolean }>`
+  transform: rotate(${props => props.$collapsed ? '0' : '180deg'});
+  transition: transform 0.2s ease;
+  
+  svg {
+    width: 18px;
+    height: 18px;
+    color: ${theme.colors.neutral[600]};
+  }
+`;
+
+const IconPicker = styled.div`
   display: grid;
   grid-template-columns: repeat(8, 1fr);
   gap: 8px;
   padding: 12px;
-  background: ${props => props.theme.colors.neutral100};
-  border-radius: 4px;
-  max-height: 200px;
+  background: ${theme.colors.neutral[100]};
+  border-radius: 8px;
+  max-height: 180px;
   overflow-y: auto;
-`;
-
-const EmojiButton = styled.button<{ isSelected?: boolean }>`
-  padding: 8px;
-  font-size: 24px;
-  border: 2px solid ${props => props.isSelected ? props.theme.colors.primary600 : props.theme.colors.neutral200};
-  background: ${props => props.theme.colors.neutral0};
-  border-radius: 4px;
-  cursor: pointer;
-  transition: all 0.2s ease;
   
-  &:hover {
-    border-color: ${props => props.theme.colors.primary600};
-    background: ${props => props.theme.colors.neutral100};
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: ${theme.colors.neutral[400]};
+    border-radius: 3px;
   }
 `;
 
-const BOOKMARK_EMOJIS = ['🔖', '📌', '⭐', '💫', '❤️', '🎯', '🚀', '📝', '🔗', '🌟', '💼', '🎨', '📚', '🔔', '✅', '🎁'];
+const IconButton = styled.button<{ $isSelected?: boolean }>`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  border: 2px solid ${props => props.$isSelected ? theme.colors.primary[500] : 'transparent'};
+  background: ${props => props.$isSelected ? theme.colors.primary[100] : theme.colors.neutral[0]};
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  
+  svg {
+    width: 20px;
+    height: 20px;
+    color: ${props => props.$isSelected ? theme.colors.primary[500] : theme.colors.neutral[600]};
+  }
+  
+  &:hover {
+    border-color: ${theme.colors.primary[500]};
+    background: ${theme.colors.primary[100]};
+    transform: scale(1.08);
+    
+    svg {
+      color: ${theme.colors.primary[500]};
+    }
+  }
+`;
 
+const SelectedIconDisplay = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, ${theme.colors.primary[100]} 0%, ${theme.colors.secondary[100]} 100%);
+  border-radius: 10px;
+  margin-bottom: 12px;
+`;
+
+const SelectedIconCircle = styled.div`
+  width: 52px;
+  height: 52px;
+  border-radius: 12px;
+  background: ${theme.colors.neutral[0]};
+  border: 2px solid ${theme.colors.primary[500]};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: ${theme.shadows.md};
+  
+  svg {
+    width: 26px;
+    height: 26px;
+    color: ${theme.colors.primary[500]};
+  }
+`;
+
+const PublicToggleContainer = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: ${theme.colors.neutral[100]};
+  border-radius: 10px;
+  margin-bottom: 16px;
+`;
+
+const PublicToggleInfo = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  
+  svg {
+    width: 20px;
+    height: 20px;
+    color: ${theme.colors.primary[500]};
+  }
+`;
+
+const SwitchContainer = styled.label`
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+`;
+
+const SwitchInput = styled.input`
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+`;
+
+const SwitchSlider = styled.span<{ $checked?: boolean }>`
+  position: relative;
+  width: 44px;
+  height: 24px;
+  background: ${props => props.$checked ? theme.colors.primary[500] : theme.colors.neutral[300]};
+  border-radius: 24px;
+  transition: all 0.2s ease;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    left: ${props => props.$checked ? '23px' : '3px'};
+    top: 3px;
+    background: white;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+  
+  &:hover {
+    background: ${props => props.$checked ? theme.colors.primary[600] : theme.colors.neutral[400]};
+  }
+`;
+
+const SelectionList = styled.div<{ $disabled?: boolean }>`
+  max-height: 140px;
+  overflow-y: auto;
+  border: 1px solid ${theme.colors.neutral[200]};
+  border-radius: 8px;
+  background: ${props => props.$disabled ? theme.colors.neutral[100] : theme.colors.neutral[0]};
+  opacity: ${props => props.$disabled ? 0.6 : 1};
+  pointer-events: ${props => props.$disabled ? 'none' : 'auto'};
+  
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: ${theme.colors.neutral[400]};
+    border-radius: 3px;
+  }
+`;
+
+const SelectionItem = styled.label<{ $selected?: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  cursor: pointer;
+  border-bottom: 1px solid ${theme.colors.neutral[200]};
+  background: ${props => props.$selected ? theme.colors.primary[100] : 'transparent'};
+  transition: all 0.15s ease;
+  
+  &:last-child {
+    border-bottom: none;
+  }
+  
+  &:hover {
+    background: ${props => props.$selected ? theme.colors.primary[100] : theme.colors.neutral[100]};
+  }
+`;
+
+const CustomCheckbox = styled.div<{ $checked?: boolean }>`
+  width: 20px;
+  height: 20px;
+  border-radius: 4px;
+  border: 2px solid ${props => props.$checked ? theme.colors.primary[500] : theme.colors.neutral[400]};
+  background: ${props => props.$checked ? theme.colors.primary[500] : 'transparent'};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  
+  svg {
+    width: 14px;
+    height: 14px;
+    color: white;
+    opacity: ${props => props.$checked ? 1 : 0};
+  }
+`;
+
+const ItemLabel = styled.span<{ $selected?: boolean }>`
+  font-size: 0.875rem;
+  color: ${props => props.$selected ? theme.colors.primary[600] : theme.colors.neutral[800]};
+  font-weight: ${props => props.$selected ? 600 : 400};
+`;
+
+const ItemBadge = styled.span<{ $type?: 'custom' | 'count' }>`
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: ${props => props.$type === 'custom' ? '#F3E8FF' : theme.colors.neutral[200]};
+  color: ${props => props.$type === 'custom' ? '#8B5CF6' : theme.colors.neutral[600]};
+  font-weight: 500;
+`;
+
+const FormField = styled.div`
+  margin-bottom: 16px;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+`;
+
+const Label = styled.label`
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: ${theme.colors.neutral[800]};
+  margin-bottom: 8px;
+`;
+
+const HintText = styled.p`
+  font-size: 0.75rem;
+  color: ${theme.colors.neutral[600]};
+  margin-top: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  
+  svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+  }
+`;
+
+const PathDisplay = styled.div`
+  padding: 12px 14px;
+  background: ${theme.colors.neutral[100]};
+  border: 1px solid ${theme.colors.neutral[200]};
+  border-radius: 8px;
+  font-family: 'Monaco', 'Menlo', monospace;
+  font-size: 0.8rem;
+  color: ${theme.colors.neutral[600]};
+  word-break: break-all;
+`;
+
+const ErrorBox = styled.div`
+  padding: 12px 16px;
+  background: ${theme.colors.danger[100]};
+  border: 1px solid ${theme.colors.danger[500]};
+  border-radius: 8px;
+  margin-bottom: 16px;
+  
+  p {
+    color: ${theme.colors.danger[500]};
+    font-size: 0.875rem;
+    margin: 0;
+  }
+`;
+
+const SectionLabel = styled.div`
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: ${theme.colors.neutral[600]};
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+  margin-top: 12px;
+  
+  &:first-child {
+    margin-top: 0;
+  }
+`;
+
+const StyledTextInput = styled(TextInput)`
+  input {
+    border-radius: 8px;
+    border: 1px solid ${theme.colors.neutral[200]};
+    
+    &:focus {
+      border-color: ${theme.colors.primary[500]};
+      box-shadow: 0 0 0 3px ${theme.colors.primary[100]};
+    }
+  }
+`;
+
+const StyledTextarea = styled(Textarea)`
+  textarea {
+    border-radius: 8px;
+    border: 1px solid ${theme.colors.neutral[200]};
+    min-height: 80px;
+    
+    &:focus {
+      border-color: ${theme.colors.primary[500]};
+      box-shadow: 0 0 0 3px ${theme.colors.primary[100]};
+    }
+  }
+`;
+
+// ================ COMPONENT ================
 interface CreateEditModalProps {
   bookmark: any | null;
   onClose: () => void;
@@ -61,14 +621,17 @@ const CreateEditModal: React.FC<CreateEditModalProps> = ({
 }) => {
   const { formatMessage } = useIntl();
   const { post, put, get } = useFetchClient();
+  
+  // Form state
   const [name, setName] = useState('');
   const [path, setPath] = useState(currentPath || '');
   const [query, setQuery] = useState(currentQuery || '');
-  const [emoji, setEmoji] = useState('🔖');
+  const [icon, setIcon] = useState('bookmark');
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [error, setError] = useState('');
+  
+  // Sharing state
   const [isPublic, setIsPublic] = useState(false);
   const [sharedWithRoles, setSharedWithRoles] = useState<number[]>([]);
   const [sharedWithUsers, setSharedWithUsers] = useState<number[]>([]);
@@ -77,24 +640,30 @@ const CreateEditModal: React.FC<CreateEditModalProps> = ({
   const [loadingRoles, setLoadingRoles] = useState(false);
   const [loadingUsers, setLoadingUsers] = useState(false);
   
+  // Collapsed sections
+  const [iconSectionOpen, setIconSectionOpen] = useState(true);
+  const [sharingSectionOpen, setSharingSectionOpen] = useState(false);
+  const [filtersSectionOpen, setFiltersSectionOpen] = useState(false);
 
   useEffect(() => {
     if (bookmark) {
       setName(bookmark.name);
       setPath(bookmark.path);
       setQuery(bookmark.query || '');
-      setEmoji(bookmark.emoji);
+      setIcon(bookmark.icon || bookmark.emoji || 'bookmark');
       setDescription(bookmark.description || '');
       setIsPublic(bookmark.isPublic || false);
       setSharedWithRoles(bookmark.sharedWithRoles || []);
       setSharedWithUsers(bookmark.sharedWithUsers || []);
     }
     
-    // Fetch available roles and users
     fetchRoles();
     fetchUsers();
   }, [bookmark]);
 
+  /**
+   * Fetches available admin roles
+   */
   const fetchRoles = async () => {
     setLoadingRoles(true);
     try {
@@ -108,49 +677,34 @@ const CreateEditModal: React.FC<CreateEditModalProps> = ({
     }
   };
 
+  /**
+   * Fetches available admin users
+   */
   const fetchUsers = async () => {
     setLoadingUsers(true);
     try {
-      // First get current user
       const meResponse = await get('/admin/users/me');
       const currentUser = meResponse.data?.data || meResponse.data || meResponse;
       const currentUserId = currentUser?.id;
       const currentUserEmail = currentUser?.email;
       
-      console.log('[CreateEditModal] Current user:', { currentUserId, currentUserEmail, fullResponse: currentUser });
-      
-      // Then get all users
       const response = await get('/admin/users?pageSize=100&page=1&sort=firstname');
-      
-      // Extract users from response - they are in response.data.data.results
       const allUsers = response.data?.data?.results || response.data?.results || [];
       
-      console.log('[CreateEditModal] All users:', allUsers.map(u => ({ id: u.id, email: u.email })));
-      
-      // Filter out current user - check both ID and email to be sure
       const users = Array.isArray(allUsers) ? allUsers.filter(u => {
         const matchById = u.id === currentUserId || u.id === Number(currentUserId) || String(u.id) === String(currentUserId);
         const matchByEmail = u.email?.toLowerCase() === currentUserEmail?.toLowerCase();
-        const shouldExclude = matchById || matchByEmail;
-        
-        if (shouldExclude) {
-          console.log('[CreateEditModal] Excluding current user:', u.email);
-        }
-        return !shouldExclude;
+        return !(matchById || matchByEmail);
       }) : [];
-      
-      console.log('[CreateEditModal] Filtered users (without current):', users.map(u => ({ id: u.id, email: u.email })));
       
       setAvailableUsers(users);
     } catch (error) {
       console.error('[Magic-Mark] Error fetching users:', error);
-      // Fallback to custom endpoint if admin API fails
       try {
         const response = await get(`/${pluginId}/users`);
         const users = response.data?.data?.data || response.data?.data || response.data || [];
         setAvailableUsers(users);
       } catch (fallbackError) {
-        console.warn('[Magic-Mark] Both user endpoints failed, feature disabled');
         setAvailableUsers([]);
       }
     } finally {
@@ -158,474 +712,320 @@ const CreateEditModal: React.FC<CreateEditModalProps> = ({
     }
   };
 
+  /**
+   * Validates the form before submission
+   */
   const validateForm = () => {
     setError('');
     if (!name.trim()) {
-      setError(formatMessage({
-        id: `${pluginId}.error.nameRequired`,
-        defaultMessage: 'Name is required'
-      }));
+      setError(formatMessage({ id: `${pluginId}.error.nameRequired`, defaultMessage: 'Name is required' }));
       return false;
     }
     if (!path.trim()) {
-      setError(formatMessage({
-        id: `${pluginId}.error.pathRequired`,
-        defaultMessage: 'Path is required'
-      }));
+      setError(formatMessage({ id: `${pluginId}.error.pathRequired`, defaultMessage: 'Path is required' }));
       return false;
     }
     return true;
   };
 
+  /**
+   * Handles form submission
+   */
   const handleSubmit = async () => {
     if (!validateForm()) return;
 
     setIsSubmitting(true);
     try {
+      // Use documentId for Strapi v5 Document Service API
+      const bookmarkId = bookmark?.documentId || bookmark?.id;
       const endpoint = bookmark
-        ? `/${pluginId}/bookmarks/${bookmark.id}`
+        ? `/${pluginId}/bookmarks/${bookmarkId}`
         : `/${pluginId}/bookmarks`;
 
       const body = {
         name,
         path,
         query,
-        emoji,
+        icon,
+        emoji: icon,
         description,
         isPublic,
         sharedWithRoles,
         sharedWithUsers,
       };
 
-
-      let result;
       if (bookmark) {
-        result = await put(endpoint, body);
+        await put(endpoint, body);
       } else {
-        result = await post(endpoint, body);
+        await post(endpoint, body);
       }
 
       onSuccess();
     } catch (error) {
       console.error('[Magic-Mark] Error saving bookmark:', error);
-      setError(formatMessage({
-        id: `${pluginId}.error.save`,
-        defaultMessage: 'Failed to save bookmark'
-      }));
+      setError(formatMessage({ id: `${pluginId}.error.save`, defaultMessage: 'Failed to save bookmark' }));
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  /**
+   * Toggles role selection
+   */
+  const toggleRole = (roleId: number) => {
+    setSharedWithRoles(prev => 
+      prev.includes(roleId) ? prev.filter(id => id !== roleId) : [...prev, roleId]
+    );
+  };
+
+  /**
+   * Toggles user selection
+   */
+  const toggleUser = (userId: number) => {
+    setSharedWithUsers(prev => 
+      prev.includes(userId) ? prev.filter(id => id !== userId) : [...prev, userId]
+    );
+  };
+
   const isEditing = !!bookmark;
+  const SelectedIcon = getIconById(icon);
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 999,
-      }}
-    >
-      <Box
-        padding={6}
-        background="neutral0"
-        style={{
-          borderRadius: '8px',
-          maxHeight: '90vh',
-          overflow: 'auto',
-          maxWidth: '600px',
-          width: '90%',
-        }}
-      >
+    <Overlay onClick={onClose}>
+      <ModalContainer onClick={e => e.stopPropagation()}>
         {/* Header */}
-        <Flex justifyContent="space-between" alignItems="center" marginBottom={6}>
-          <Typography as="h2" variant="beta">
+        <ModalHeader>
+          <HeaderTitle>
+            <BookmarkIcon />
             {isEditing
-              ? formatMessage({
-                  id: `${pluginId}.modal.edit`,
-                  defaultMessage: 'Edit Bookmark'
-                })
-              : formatMessage({
-                  id: `${pluginId}.modal.create`,
-                  defaultMessage: 'Save as Bookmark'
-                })}
-          </Typography>
-          <Button onClick={onClose} variant="ghost" type="button">
+              ? formatMessage({ id: `${pluginId}.modal.edit`, defaultMessage: 'Edit Bookmark' })
+              : formatMessage({ id: `${pluginId}.modal.create`, defaultMessage: 'Save as Bookmark' })}
+          </HeaderTitle>
+          <CloseButton onClick={onClose}>
             <Cross />
-          </Button>
-        </Flex>
+          </CloseButton>
+        </ModalHeader>
 
         {/* Body */}
-        <Box marginBottom={6}>
-          <Box
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '16px',
-            }}
-          >
-            {error && (
-              <Box padding={3} background="danger100" borderRadius="4px">
-                <Typography textColor="danger600">{error}</Typography>
-              </Box>
-            )}
+        <ModalBody>
+          {error && (
+            <ErrorBox>
+              <p>{error}</p>
+            </ErrorBox>
+          )}
 
-            {/* Emoji Selector */}
-            <Box>
-              <Typography variant="pi" fontWeight="bold" style={{ marginBottom: '8px', display: 'block' }}>
-                {formatMessage({
-                  id: `${pluginId}.form.emoji`,
-                  defaultMessage: 'Choose Icon'
-                })}
-              </Typography>
-              <Flex gap={2} alignItems="center">
-                <Box
-                  as="button"
-                  padding={3}
-                  borderRadius="4px"
-                  border="1px solid"
-                  borderColor="neutral200"
-                  fontSize="32px"
-                  onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                  type="button"
-                  style={{ cursor: 'pointer' }}
-                >
-                  {emoji}
-                </Box>
-                <Typography variant="pi" textColor="neutral600">
-                  {formatMessage({
-                    id: `${pluginId}.form.selectEmoji`,
-                    defaultMessage: 'Click to select'
-                  })}
-                </Typography>
-              </Flex>
-              {showEmojiPicker && (
-                <EmojiPicker>
-                  {BOOKMARK_EMOJIS.map((e) => (
-                    <EmojiButton
-                      key={e}
-                      isSelected={emoji === e}
-                      onClick={() => {
-                        setEmoji(e);
-                        setShowEmojiPicker(false);
-                      }}
+          {/* Name Field - Always visible */}
+          <FormField>
+            <Label>
+              {formatMessage({ id: `${pluginId}.form.name`, defaultMessage: 'Bookmark Name' })} *
+            </Label>
+            <StyledTextInput
+              type="text"
+              placeholder={formatMessage({ id: `${pluginId}.form.namePlaceholder`, defaultMessage: 'e.g., Published Articles' })}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+          </FormField>
+
+          {/* Icon Section */}
+          <Section>
+            <SectionHeader onClick={() => setIconSectionOpen(!iconSectionOpen)}>
+              <SectionTitle>
+                <SwatchIcon />
+                {formatMessage({ id: `${pluginId}.form.icon`, defaultMessage: 'Choose Icon' })}
+              </SectionTitle>
+              <ChevronIcon $collapsed={!iconSectionOpen}>
+                <ChevronDownIcon />
+              </ChevronIcon>
+            </SectionHeader>
+            <SectionContent $collapsed={!iconSectionOpen}>
+              <SelectedIconDisplay>
+                <SelectedIconCircle>
+                  <SelectedIcon />
+                </SelectedIconCircle>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                  <Typography variant="pi" fontWeight="semiBold" style={{ color: theme.colors.neutral[800], display: 'block' }}>
+                    {BOOKMARK_ICONS.find(i => i.id === icon)?.label || 'Bookmark'}
+                  </Typography>
+                  <Typography variant="pi" textColor="neutral600" style={{ fontSize: '0.75rem', display: 'block' }}>
+                    Click below to change
+                  </Typography>
+                </div>
+              </SelectedIconDisplay>
+              <IconPicker>
+                {BOOKMARK_ICONS.map((item) => {
+                  const IconComp = item.icon;
+                  return (
+                    <IconButton
+                      key={item.id}
+                      $isSelected={icon === item.id}
+                      onClick={() => setIcon(item.id)}
                       type="button"
+                      title={item.label}
                     >
-                      {e}
-                    </EmojiButton>
-                  ))}
-                </EmojiPicker>
-              )}
-            </Box>
-
-            {/* Sharing Options */}
-            <Box>
-              <Typography variant="pi" fontWeight="bold" style={{ marginBottom: '8px', display: 'block' }}>
-                {formatMessage({
-                  id: `${pluginId}.form.sharing`,
-                  defaultMessage: 'Sharing Options'
+                      <IconComp />
+                    </IconButton>
+                  );
                 })}
-              </Typography>
-              
-              {/* Public Checkbox */}
-              <Box marginBottom={3}>
-                <label style={{ display: 'flex', alignItems: 'center', cursor: 'pointer' }}>
-                  <input
+              </IconPicker>
+            </SectionContent>
+          </Section>
+
+          {/* Sharing Section */}
+          <Section>
+            <SectionHeader onClick={() => setSharingSectionOpen(!sharingSectionOpen)}>
+              <SectionTitle>
+                <ShareIcon />
+                {formatMessage({ id: `${pluginId}.form.sharing`, defaultMessage: 'Sharing Options' })}
+                {(isPublic || sharedWithRoles.length > 0 || sharedWithUsers.length > 0) && (
+                  <ItemBadge>
+                    {isPublic ? 'Public' : `${sharedWithRoles.length + sharedWithUsers.length} shared`}
+                  </ItemBadge>
+                )}
+              </SectionTitle>
+              <ChevronIcon $collapsed={!sharingSectionOpen}>
+                <ChevronDownIcon />
+              </ChevronIcon>
+            </SectionHeader>
+            <SectionContent $collapsed={!sharingSectionOpen}>
+              {/* Public Toggle */}
+              <PublicToggleContainer>
+                <PublicToggleInfo>
+                  <GlobeAltIcon />
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                    <Typography variant="pi" fontWeight="semiBold" style={{ color: theme.colors.neutral[800], display: 'block' }}>
+                      Public Bookmark
+                    </Typography>
+                    <Typography variant="pi" style={{ fontSize: '0.75rem', color: theme.colors.neutral[600], display: 'block' }}>
+                      All admin users can see this
+                    </Typography>
+                  </div>
+                </PublicToggleInfo>
+                <SwitchContainer>
+                  <SwitchInput
                     type="checkbox"
                     checked={isPublic}
-                    onChange={(e) => setIsPublic(e.target.checked)}
-                    style={{ marginRight: '8px' }}
+                    onChange={() => setIsPublic(!isPublic)}
                   />
-                  <span style={{ fontSize: '14px' }}>
-                    {formatMessage({
-                      id: `${pluginId}.form.publicAccess`,
-                      defaultMessage: 'Public (All admin users can see this bookmark)'
-                    })}
-                  </span>
-                </label>
-              </Box>
+                  <SwitchSlider $checked={isPublic} />
+                </SwitchContainer>
+              </PublicToggleContainer>
+
+              {/* Roles */}
+              <SectionLabel>Share with Roles</SectionLabel>
+              <SelectionList $disabled={isPublic}>
+                {loadingRoles ? (
+                  <div style={{ padding: '16px', textAlign: 'center' }}>
+                    <Typography variant="pi" textColor="neutral600">Loading...</Typography>
+                  </div>
+                ) : availableRoles.length > 0 ? (
+                  availableRoles.map(role => (
+                    <SelectionItem 
+                      key={role.id} 
+                      $selected={sharedWithRoles.includes(role.id)}
+                      onClick={() => !isPublic && toggleRole(role.id)}
+                    >
+                      <CustomCheckbox $checked={sharedWithRoles.includes(role.id)}>
+                        <CheckCircleIcon />
+                      </CustomCheckbox>
+                      <ItemLabel $selected={sharedWithRoles.includes(role.id)}>
+                        {role.name || role.code}
+                      </ItemLabel>
+                      {role.isCustom && <ItemBadge $type="custom">Custom</ItemBadge>}
+                      {role.userCount > 0 && <ItemBadge $type="count">{role.userCount} users</ItemBadge>}
+                    </SelectionItem>
+                  ))
+                ) : (
+                  <div style={{ padding: '16px', textAlign: 'center' }}>
+                    <Typography variant="pi" textColor="neutral600">No roles available</Typography>
+                  </div>
+                )}
+              </SelectionList>
+
+              {/* Users */}
+              <SectionLabel>Share with Users</SectionLabel>
+              <SelectionList $disabled={isPublic}>
+                {loadingUsers ? (
+                  <div style={{ padding: '16px', textAlign: 'center' }}>
+                    <Typography variant="pi" textColor="neutral600">Loading...</Typography>
+                  </div>
+                ) : availableUsers.length > 0 ? (
+                  availableUsers.map(user => (
+                    <SelectionItem 
+                      key={user.id}
+                      $selected={sharedWithUsers.includes(user.id)}
+                      onClick={() => !isPublic && toggleUser(user.id)}
+                    >
+                      <CustomCheckbox $checked={sharedWithUsers.includes(user.id)}>
+                        <CheckCircleIcon />
+                      </CustomCheckbox>
+                      <ItemLabel $selected={sharedWithUsers.includes(user.id)}>
+                        {user.firstname || ''} {user.lastname || ''}
+                      </ItemLabel>
+                      <ItemBadge>{user.email}</ItemBadge>
+                    </SelectionItem>
+                  ))
+                ) : (
+                  <div style={{ padding: '16px', textAlign: 'center' }}>
+                    <Typography variant="pi" textColor="neutral600">No other users</Typography>
+                  </div>
+                )}
+              </SelectionList>
+            </SectionContent>
+          </Section>
+
+          {/* Filters Section */}
+          <Section>
+            <SectionHeader onClick={() => setFiltersSectionOpen(!filtersSectionOpen)}>
+              <SectionTitle>
+                <FunnelIcon />
+                {formatMessage({ id: `${pluginId}.form.filterPreview`, defaultMessage: 'Captured Filters' })}
+              </SectionTitle>
+              <ChevronIcon $collapsed={!filtersSectionOpen}>
+                <ChevronDownIcon />
+              </ChevronIcon>
+            </SectionHeader>
+            <SectionContent $collapsed={!filtersSectionOpen}>
+              <SectionLabel>Content Manager Path</SectionLabel>
+              <PathDisplay>{path || 'No path captured'}</PathDisplay>
               
-              {/* Role Selection */}
-              <Box>
-                <Flex justifyContent="space-between" alignItems="center" marginBottom={2}>
-                  <Typography variant="pi" textColor="neutral600">
-                    {formatMessage({
-                      id: `${pluginId}.form.shareWithRoles`,
-                      defaultMessage: 'Share with specific roles:'
-                    })}
-                  </Typography>
-                  {sharedWithRoles.length > 0 && (
-                    <Typography variant="pi" fontWeight="semiBold" textColor="primary600">
-                      {sharedWithRoles.length} selected
-                    </Typography>
-                  )}
-                </Flex>
-                <Box 
-                  background={isPublic ? "neutral100" : "neutral0"}
-                  borderColor="neutral200"
-                  style={{ 
-                    maxHeight: '150px', 
-                    overflowY: 'auto',
-                    border: '1px solid',
-                    borderRadius: '4px',
-                    padding: '12px',
-                  }}
-                >
-                  {loadingRoles ? (
-                    <Typography variant="pi">{formatMessage({ id: `${pluginId}.form.loadingRoles`, defaultMessage: 'Loading roles...' })}</Typography>
-                  ) : availableRoles.length > 0 ? (
-                    availableRoles.map(role => (
-                      <Box key={role.id} marginBottom={2}>
-                        <label style={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          cursor: isPublic ? 'not-allowed' : 'pointer',
-                          padding: '6px 8px',
-                          borderRadius: '4px',
-                          background: sharedWithRoles.includes(role.id) ? '#eaf5ff' : 'transparent',
-                          border: sharedWithRoles.includes(role.id) ? '1px solid #3945C9' : '1px solid transparent'
-                        }}>
-                          <input
-                            type="checkbox"
-                            checked={sharedWithRoles.includes(role.id)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setSharedWithRoles(prev => {
-                                  const newRoles = [...prev, role.id];
-                                  return newRoles;
-                                });
-                              } else {
-                                setSharedWithRoles(prev => {
-                                  const newRoles = prev.filter(id => id !== role.id);
-                                  return newRoles;
-                                });
-                              }
-                            }}
-                            style={{ marginRight: '8px' }}
-                            disabled={isPublic}
-                          />
-                          <span style={{ 
-                            fontSize: '14px',
-                            fontWeight: sharedWithRoles.includes(role.id) ? 600 : 400,
-                            color: isPublic ? '#999' : (sharedWithRoles.includes(role.id) ? '#3945C9' : '#32324d')
-                          }}>
-                            {role.name || role.code || `Role ${role.id}`}
-                            {role.isCustom && <span style={{ fontSize: '11px', marginLeft: '4px', color: '#8C4BFF' }}>(Custom)</span>}
-                            {role.userCount > 0 && <span style={{ fontSize: '11px', marginLeft: '4px', color: '#666' }}>({role.userCount} user{role.userCount > 1 ? 's' : ''})</span>}
-                          </span>
-                        </label>
-                      </Box>
-                    ))
-                  ) : (
-                    <Typography variant="pi" textColor="neutral600">
-                      {formatMessage({ id: `${pluginId}.form.noRoles`, defaultMessage: 'No roles available' })}
-                    </Typography>
-                  )}
-                </Box>
-                {isPublic && (
-                  <Typography variant="pi" textColor="neutral600" style={{ marginTop: '4px', fontSize: '0.75rem' }}>
-                    {formatMessage({ id: `${pluginId}.form.roleDisabled`, defaultMessage: 'Role selection disabled when bookmark is public' })}
-                  </Typography>
-                )}
-              </Box>
-
-              {/* User Selection */}
-              <Box marginTop={3}>
-                <Flex justifyContent="space-between" alignItems="center" marginBottom={2}>
-                  <Typography variant="pi" textColor="neutral600">
-                    {formatMessage({
-                      id: `${pluginId}.form.shareWithUsers`,
-                      defaultMessage: 'Share with specific users:'
-                    })}
-                  </Typography>
-                  {sharedWithUsers.length > 0 && (
-                    <Typography variant="pi" fontWeight="semiBold" textColor="primary600">
-                      {sharedWithUsers.length} selected
-                    </Typography>
-                  )}
-                </Flex>
-                <Box 
-                  background={isPublic ? "neutral100" : "neutral0"}
-                  borderColor="neutral200"
-                  style={{ 
-                    maxHeight: '150px', 
-                    overflowY: 'auto',
-                    border: '1px solid',
-                    borderRadius: '4px',
-                    padding: '12px',
-                  }}
-                >
-                  {loadingUsers ? (
-                    <Typography variant="pi">{formatMessage({ id: `${pluginId}.form.loadingUsers`, defaultMessage: 'Loading users...' })}</Typography>
-                  ) : availableUsers.length > 0 ? (
-                    availableUsers.map(user => (
-                      <Box key={user.id} marginBottom={2}>
-                        <label style={{ 
-                          display: 'flex', 
-                          alignItems: 'center', 
-                          cursor: isPublic ? 'not-allowed' : 'pointer',
-                          padding: '6px 8px',
-                          borderRadius: '4px',
-                          background: sharedWithUsers.includes(user.id) ? '#eaf5ff' : 'transparent',
-                          border: sharedWithUsers.includes(user.id) ? '1px solid #3945C9' : '1px solid transparent'
-                        }}>
-                          <input
-                            type="checkbox"
-                            checked={sharedWithUsers.includes(user.id)}
-                            onChange={(e) => {
-                              if (e.target.checked) {
-                                setSharedWithUsers(prev => {
-                                  const newUsers = [...prev, user.id];
-                                  return newUsers;
-                                });
-                              } else {
-                                setSharedWithUsers(prev => {
-                                  const newUsers = prev.filter(id => id !== user.id);
-                                  return newUsers;
-                                });
-                              }
-                            }}
-                            style={{ marginRight: '8px' }}
-                            disabled={isPublic}
-                          />
-                          <span style={{ 
-                            fontSize: '14px',
-                            fontWeight: sharedWithUsers.includes(user.id) ? 600 : 400,
-                            color: isPublic ? '#999' : (sharedWithUsers.includes(user.id) ? '#3945C9' : '#32324d')
-                          }}>
-                            {user.firstname || ''} {user.lastname || ''}
-                            <span style={{ fontSize: '12px', color: '#666', marginLeft: '4px' }}>({user.email || user.username || 'No email'})</span>
-                          </span>
-                        </label>
-                      </Box>
-                    ))
-                  ) : (
-                    <Typography variant="pi" textColor="neutral600">
-                      {formatMessage({ id: `${pluginId}.form.noUsers`, defaultMessage: 'No other users available' })}
-                    </Typography>
-                  )}
-                </Box>
-                {isPublic && (
-                  <Typography variant="pi" textColor="neutral600" style={{ marginTop: '4px', fontSize: '0.75rem' }}>
-                    {formatMessage({ id: `${pluginId}.form.userDisabled`, defaultMessage: 'User selection disabled when bookmark is public' })}
-                  </Typography>
-                )}
-              </Box>
-            </Box>
-
-            {/* Name */}
-            <Box>
-              <Typography variant="pi" fontWeight="bold" style={{ marginBottom: '8px', display: 'block' }} as="label" htmlFor="name">
-                {formatMessage({
-                  id: `${pluginId}.form.name`,
-                  defaultMessage: 'Bookmark Name'
-                })} *
-              </Typography>
-              <TextInput
-                id="name"
-                type="text"
-                placeholder={formatMessage({ id: `${pluginId}.form.namePlaceholder`, defaultMessage: 'e.g., Published Articles' })}
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-            </Box>
-
-            {/* Path (readonly) */}
-            <Box>
-              <Typography variant="pi" fontWeight="bold" style={{ marginBottom: '8px', display: 'block' }} as="label" htmlFor="path">
-                {formatMessage({
-                  id: `${pluginId}.form.path`,
-                  defaultMessage: 'Content Manager Path'
-                })}
-              </Typography>
-              <TextInput
-                id="path"
-                type="text"
-                placeholder="/content-manager/collection-types/api::article.article"
-                value={path}
-                readOnly
-                disabled
-              />
-              <Typography variant="pi" textColor="neutral600" style={{ marginTop: '4px', display: 'block' }}>
-                {formatMessage({
-                  id: `${pluginId}.form.pathHelp`,
-                  defaultMessage: 'Automatically captured from Content Manager'
-                })}
-              </Typography>
-            </Box>
-
-            {/* Query Preview - Beautiful! */}
-            <Box>
-              <Typography variant="pi" fontWeight="bold" style={{ marginBottom: '8px', display: 'block' }}>
-                {formatMessage({
-                  id: `${pluginId}.form.filterPreview`,
-                  defaultMessage: 'Captured Filters & Settings'
-                })}
-              </Typography>
+              <SectionLabel>Active Filters</SectionLabel>
               <FilterPreview query={query} />
-              <Flex alignItems="center" gap={1} style={{ marginTop: '8px' }}>
-                <Lightbulb fill="neutral600" width="14px" height="14px" />
-                <Typography variant="pi" textColor="neutral600">
-                  {formatMessage({
-                    id: `${pluginId}.form.queryHelp`,
-                    defaultMessage: 'These filters will be restored when you click this bookmark'
-                  })}
-                </Typography>
-              </Flex>
-            </Box>
+              
+              <HintText>
+                <LightBulbIcon />
+                These filters will be restored when you click this bookmark
+              </HintText>
+            </SectionContent>
+          </Section>
 
-            {/* Description */}
-            <Box>
-              <Typography variant="pi" fontWeight="bold" style={{ marginBottom: '8px', display: 'block' }} as="label" htmlFor="description">
-                {formatMessage({
-                  id: `${pluginId}.form.description`,
-                  defaultMessage: 'Description (Optional)'
-                })}
-              </Typography>
-              <Textarea
-                id="description"
-                placeholder={formatMessage({ id: `${pluginId}.form.descriptionPlaceholder`, defaultMessage: 'Add a description...' })}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-              />
-            </Box>
-          </Box>
-        </Box>
+          {/* Description */}
+          <FormField>
+            <Label>
+              {formatMessage({ id: `${pluginId}.form.description`, defaultMessage: 'Description' })}
+              <span style={{ fontWeight: 400, color: theme.colors.neutral[600] }}> (Optional)</span>
+            </Label>
+            <StyledTextarea
+              placeholder={formatMessage({ id: `${pluginId}.form.descriptionPlaceholder`, defaultMessage: 'Add a description...' })}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+          </FormField>
+        </ModalBody>
 
         {/* Footer */}
-        <Flex justifyContent="flex-end" gap={2}>
-          <Button onClick={onClose} variant="tertiary" type="button">
-            {formatMessage({
-              id: `${pluginId}.button.cancel`,
-              defaultMessage: 'Cancel'
-            })}
+        <ModalFooter>
+          <Button onClick={onClose} variant="tertiary">
+            {formatMessage({ id: `${pluginId}.button.cancel`, defaultMessage: 'Cancel' })}
           </Button>
-          <Button
-            onClick={handleSubmit}
-            loading={isSubmitting}
-            type="button"
-          >
+          <Button onClick={handleSubmit} loading={isSubmitting}>
             {isEditing
-              ? formatMessage({
-                  id: `${pluginId}.button.update`,
-                  defaultMessage: 'Update'
-                })
-              : formatMessage({
-                  id: `${pluginId}.button.save`,
-                  defaultMessage: 'Save Bookmark'
-                })}
+              ? formatMessage({ id: `${pluginId}.button.update`, defaultMessage: 'Update' })
+              : formatMessage({ id: `${pluginId}.button.save`, defaultMessage: 'Save Bookmark' })}
           </Button>
-        </Flex>
-      </Box>
-    </div>
+        </ModalFooter>
+      </ModalContainer>
+    </Overlay>
   );
 };
 

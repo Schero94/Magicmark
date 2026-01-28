@@ -16,7 +16,7 @@ const bookmarkService = ({ strapi }: { strapi: Core.Strapi }) => ({
   /**
    * Find all bookmarks accessible to a user
    * @param userId - The admin user's documentId
-   * @returns Array of accessible bookmarks
+   * @returns Array of accessible bookmarks with createdBy info
    */
   async findAll(userId: string) {
     try {
@@ -61,7 +61,39 @@ const bookmarkService = ({ strapi }: { strapi: Core.Strapi }) => ({
         return false;
       }) || [];
 
-      return accessibleBookmarks;
+      // Collect all unique creatorIds to fetch user info
+      const creatorIds = [...new Set(accessibleBookmarks.map((b: any) => b.creatorId).filter(Boolean))];
+      
+      // Fetch all creators in batch
+      const creatorsMap = new Map();
+      for (const creatorId of creatorIds) {
+        try {
+          const creator = await strapi.documents(ADMIN_USER_UID).findOne({
+            documentId: creatorId as string,
+            fields: ['firstname', 'lastname', 'email']
+          });
+          if (creator) {
+            creatorsMap.set(creatorId, {
+              id: creatorId,
+              documentId: creatorId,
+              firstname: creator.firstname,
+              lastname: creator.lastname,
+              email: creator.email
+            });
+          }
+        } catch (err) {
+          // User might be deleted, skip
+          strapi.log.debug(`[magic-mark] Could not fetch creator ${creatorId}`);
+        }
+      }
+
+      // Attach createdBy object to each bookmark
+      const enrichedBookmarks = accessibleBookmarks.map((bookmark: any) => ({
+        ...bookmark,
+        createdBy: creatorsMap.get(bookmark.creatorId) || null
+      }));
+
+      return enrichedBookmarks;
     } catch (error) {
       strapi.log.error('[magic-mark] Error finding bookmarks:', error);
       throw error;

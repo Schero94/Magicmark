@@ -1,3 +1,10 @@
+## [3.3.2](https://github.com/Schero94/Magicmark/compare/v3.3.1...v3.3.2) (2026-02-08)
+
+
+### Bug Fixes
+
+* remaining dark mode issues - light backgrounds and text colors ([1678432](https://github.com/Schero94/Magicmark/commit/167843286aa27ce7054d9a5589db1a4ac5840a23)), closes [#EEF0FF](https://github.com/Schero94/Magicmark/issues/EEF0FF) [#FEE2E2](https://github.com/Schero94/Magicmark/issues/FEE2E2) [#f0f0ff](https://github.com/Schero94/Magicmark/issues/f0f0ff) [#F3F4F6](https://github.com/Schero94/Magicmark/issues/F3F4F6)
+
 ## [3.3.1](https://github.com/Schero94/Magicmark/compare/v3.3.0...v3.3.1) (2026-02-08)
 
 

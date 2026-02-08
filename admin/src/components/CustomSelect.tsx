@@ -94,7 +94,7 @@ const DropdownItem = styled.button<{ $isSelected: boolean }>`
   
   &:focus {
     outline: none;
-    background: #f0f0ff;
+    background: rgba(73, 69, 255, 0.06);
   }
   
   @media (max-width: 768px) {

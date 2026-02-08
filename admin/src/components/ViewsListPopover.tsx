@@ -69,7 +69,7 @@ const BookmarksList = styled.div`
   }
   
   &::-webkit-scrollbar-track {
-    background: #f1f1f1;
+    background: rgba(128, 128, 128, 0.12);
     border-radius: 3px;
   }
   
@@ -213,7 +213,7 @@ const ViewAllLink = styled.button`
   transition: all 0.15s ease;
   
   &:hover {
-    background: #eef0ff;
+    background: rgba(73, 69, 255, 0.08);
   }
   
   svg {

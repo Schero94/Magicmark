@@ -116,7 +116,7 @@ const ClearButton = styled.button`
   width: 24px;
   height: 24px;
   border: none;
-  background: #FEE2E2;
+  background: rgba(239, 68, 68, 0.12);
   color: #DC2626;
   border-radius: 6px;
   cursor: pointer;
@@ -386,7 +386,7 @@ const RelationFieldSelector: React.FC<Props> = ({
             <MobileNestedLabel>Nested field:</MobileNestedLabel>
             <SelectWrapper $isNew={newLevel === 1} $level={1}>
               {loadingLevel === 1 ? (
-                <Box padding={3} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#F3F4F6', borderRadius: '8px', height: '40px', width: '100%' }}>
+                <Box padding={3} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(128, 128, 128, 0.08)', borderRadius: '8px', height: '40px', width: '100%' }}>
                   <Loader small /> Loading...
                 </Box>
               ) : (
@@ -416,7 +416,7 @@ const RelationFieldSelector: React.FC<Props> = ({
             <MobileNestedLabel>Deep nested:</MobileNestedLabel>
             <SelectWrapper $isNew={newLevel === 2} $level={2}>
               {loadingLevel === 2 ? (
-                <Box padding={3} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#F3F4F6', borderRadius: '8px', height: '40px', width: '100%' }}>
+                <Box padding={3} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(128, 128, 128, 0.08)', borderRadius: '8px', height: '40px', width: '100%' }}>
                   <Loader small /> Loading...
                 </Box>
               ) : (

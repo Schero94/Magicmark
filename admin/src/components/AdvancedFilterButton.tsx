@@ -25,15 +25,15 @@ const FilterButton = styled.button<{ $isActive?: boolean }>`
   border: 1px solid ${props => props.$isActive ? '#4945FF' : 'rgba(128, 128, 128, 0.25)'};
   border-radius: 4px;
   background: ${props => props.$isActive 
-    ? '#EEF0FF' 
+    ? 'rgba(73, 69, 255, 0.08)' 
     : props.theme.colors.neutral0};
-  color: ${props => props.$isActive ? '#4945FF' : '#32324d'};
+  color: ${props => props.$isActive ? '#4945FF' : props.theme.colors.neutral800};
   cursor: pointer;
   transition: all 0.15s ease;
   white-space: nowrap;
   
   &:hover {
-    background: ${props => props.$isActive ? '#E0E7FF' : '#f6f6f9'};
+    background: ${props => props.$isActive ? 'rgba(73, 69, 255, 0.12)' : props.theme.colors.neutral100};
     border-color: ${props => props.$isActive ? '#4945FF' : 'rgba(128, 128, 128, 0.3)'};
   }
   
@@ -57,13 +57,13 @@ const ClearButton = styled.button`
   padding: 0;
   border: 1px solid rgba(239, 68, 68, 0.3);
   border-radius: 4px;
-  background: #fef2f2;
+  background: rgba(239, 68, 68, 0.06);
   color: #dc2626;
   cursor: pointer;
   transition: all 0.15s ease;
   
   &:hover {
-    background: #fee2e2;
+    background: rgba(239, 68, 68, 0.12);
     border-color: rgba(239, 68, 68, 0.4);
   }
   

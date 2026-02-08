@@ -258,7 +258,7 @@ const DesktopControls = styled.div`
 const DragHandle = styled.div`
   cursor: grab;
   padding: 8px 4px;
-  color: #9CA3AF;
+  color: ${(p) => p.theme.colors.neutral500};
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -362,7 +362,7 @@ const ValueInput = styled.input`
   }
 
   &::placeholder {
-    color: #9CA3AF;
+    color: ${(p) => p.theme.colors.neutral500};
   }
 
   /* Mobile */
@@ -375,7 +375,7 @@ const ValueInput = styled.input`
 `;
 
 const DeleteButton = styled.button`
-  background: #FEE2E2;
+  background: rgba(239, 68, 68, 0.12);
   border: none;
   flex-shrink: 0;
   border-radius: 8px;

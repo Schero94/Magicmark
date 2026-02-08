@@ -97,13 +97,13 @@ const DeleteButton = styled.button`
   width: 32px;
   height: 32px;
   border: none;
-  background: #fef2f2;
+  background: rgba(239, 68, 68, 0.06);
   color: #dc2626;
   border-radius: 4px;
   cursor: pointer;
   flex-shrink: 0;
   &:hover {
-    background: #fee2e2;
+    background: rgba(239, 68, 68, 0.12);
   }
   svg {
     width: 14px;
@@ -126,7 +126,7 @@ const AddButton = styled.button`
   transition: all 0.15s ease;
   &:hover {
     border-color: #4945ff;
-    background: #f0f0ff;
+    background: rgba(73, 69, 255, 0.06);
   }
 `;
 

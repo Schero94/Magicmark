@@ -49,7 +49,7 @@ const IconButton = styled.button<{ $isSelected?: boolean }>`
   
   &:hover {
     border-color: #4945FF;
-    background: #EEF0FF;
+    background: rgba(73, 69, 255, 0.08);
     
     svg {
       color: #4945FF;

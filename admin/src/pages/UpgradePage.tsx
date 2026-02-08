@@ -169,7 +169,7 @@ const FeatureIcon = styled(Box)<FeatureIconProps>`
     background: rgba(34, 197, 94, 0.15);
     svg { color: #16A34A; }
   ` : `
-    background: #FEE2E2;
+    background: rgba(239, 68, 68, 0.12);
     svg { color: #DC2626; }
   `}
 `;

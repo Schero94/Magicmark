@@ -11,7 +11,8 @@ const SelectContainer = styled.div`
 
 const SelectButton = styled.button<{ $isOpen: boolean }>`
   width: 100%;
-  padding: 10px 36px 10px 12px;
+  height: 32px;
+  padding: 0 36px 0 12px;
   border: 1px solid ${props => props.$isOpen ? '#4945ff' : 'rgba(128, 128, 128, 0.25)'};
   border-radius: 4px;
   background: ${(p) => p.theme.colors.neutral0};
@@ -34,13 +35,14 @@ const SelectButton = styled.button<{ $isOpen: boolean }>`
   }
   
   @media (max-width: 768px) {
-    padding: 8px 32px 8px 10px;
+    height: 32px;
+    padding: 0 32px 0 10px;
     font-size: 13px;
   }
 `;
 
 const SelectText = styled.span<{ $isPlaceholder: boolean }>`
-  color: ${props => props.$isPlaceholder ? '#8e8ea9' : '#212134'};
+  color: ${props => props.$isPlaceholder ? props.theme.colors.neutral500 : props.theme.colors.neutral800};
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -63,7 +65,7 @@ const DropdownList = styled.div<{ $isOpen: boolean; top: number; left: number; w
   top: ${props => props.top}px;
   left: ${props => props.left}px;
   width: ${props => props.width}px;
-  max-height: 300px;
+  max-height: 400px;
   overflow-y: auto;
   background: ${(p) => p.theme.colors.neutral0};
   border: 1px solid rgba(128, 128, 128, 0.25);
@@ -73,7 +75,7 @@ const DropdownList = styled.div<{ $isOpen: boolean; top: number; left: number; w
   display: ${props => props.$isOpen ? 'block' : 'none'};
   
   @media (max-width: 768px) {
-    max-height: 250px;
+    max-height: 320px;
   }
 `;
 
@@ -81,7 +83,7 @@ const DropdownItem = styled.button<{ $isSelected: boolean }>`
   width: 100%;
   padding: 10px 12px;
   border: none;
-  background: ${props => props.$isSelected ? '#f0f0ff' : props.theme.colors.neutral0};
+  background: ${props => props.$isSelected ? 'rgba(73, 69, 255, 0.06)' : props.theme.colors.neutral0};
   text-align: left;
   cursor: pointer;
   font-size: 14px;
@@ -109,6 +111,8 @@ const SearchInput = styled.input`
   border: none;
   border-bottom: 1px solid rgba(128, 128, 128, 0.25);
   font-size: 14px;
+  background: ${(p) => p.theme.colors.neutral0};
+  color: ${(p) => p.theme.colors.neutral800};
   
   &:focus {
     outline: none;

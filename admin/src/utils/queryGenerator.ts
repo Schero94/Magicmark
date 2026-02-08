@@ -170,8 +170,116 @@ export const generateQueryString = (
 export interface FilterRow {
   id: string;
   field: string;    // "title" or "user.email" (dot notation for relations)
-  operator: string; // "eq", "contains", etc.
+  operator: string; // "eq", "contains", "in", "between", etc.
+  value: string;    // For single values or comma-separated for $in/$notIn
+  valueTo?: string; // For $between operator (end of range)
+  fieldType?: string; // "string", "integer", "datetime", "date", "boolean", etc.
+  negate?: boolean; // For $not negation wrapper
+}
+
+export interface FilterGroup {
+  id: string;
+  logic: 'AND' | 'OR';
+  items: Array<FilterRow | FilterGroup>; // Can contain rows or nested groups
+  isGroup?: boolean; // Marker to distinguish from rows
+}
+
+/** Operator options per field type for UI */
+export interface OperatorOption {
   value: string;
+  label: string;
+}
+
+/**
+ * Operators 1:1 from Strapi native Filters (@strapi/admin constants/filters)
+ */
+const BASE_FILTERS: OperatorOption[] = [
+  { value: 'eq', label: 'is' },
+  { value: 'ne', label: 'is not' },
+  { value: 'null', label: 'is null' },
+  { value: 'notNull', label: 'is not null' },
+];
+
+const NUMERIC_FILTERS: OperatorOption[] = [
+  { value: 'gt', label: 'is greater than' },
+  { value: 'gte', label: 'is greater than or equal to' },
+  { value: 'lt', label: 'is less than' },
+  { value: 'lte', label: 'is less than or equal to' },
+];
+
+const CONTAINS_FILTERS: OperatorOption[] = [
+  { value: 'contains', label: 'contains' },
+  { value: 'containsi', label: 'contains (case insensitive)' },
+  { value: 'notContains', label: 'not contains' },
+  { value: 'notContainsi', label: 'not contains (case insensitive)' },
+];
+
+const STRING_PARSE_FILTERS: OperatorOption[] = [
+  { value: 'startsWith', label: 'starts with' },
+  { value: 'startsWithi', label: 'starts with (case insensitive)' },
+  { value: 'endsWith', label: 'ends with' },
+  { value: 'endsWithi', label: 'ends with (case insensitive)' },
+];
+
+const IS_SENSITIVE_FILTERS: OperatorOption[] = [
+  { value: 'eqi', label: 'is (case insensitive)' },
+  { value: 'nei', label: 'is not (case insensitive)' },
+];
+
+const ARRAY_FILTERS: OperatorOption[] = [
+  { value: 'in', label: 'is in' },
+  { value: 'notIn', label: 'is not in' },
+];
+
+const RANGE_FILTERS: OperatorOption[] = [
+  { value: 'between', label: 'is between' },
+];
+
+/**
+ * Returns operators suitable for the given field type (1:1 match with Strapi native Filters + extended)
+ */
+export function getOperatorsForType(fieldType: string): OperatorOption[] {
+  const t = (fieldType || 'string').toLowerCase();
+
+  if (['string', 'text', 'email', 'uid', 'richtext'].includes(t)) {
+    return [
+      ...BASE_FILTERS,
+      ...IS_SENSITIVE_FILTERS,
+      ...CONTAINS_FILTERS,
+      ...STRING_PARSE_FILTERS,
+      ...ARRAY_FILTERS,
+    ];
+  }
+  if (['integer', 'float', 'decimal', 'biginteger'].includes(t)) {
+    return [
+      ...BASE_FILTERS,
+      ...NUMERIC_FILTERS,
+      ...ARRAY_FILTERS,
+      ...RANGE_FILTERS,
+    ];
+  }
+  if (['datetime'].includes(t)) {
+    return [
+      ...BASE_FILTERS,
+      ...NUMERIC_FILTERS,
+      ...RANGE_FILTERS,
+    ];
+  }
+  if (['date', 'time'].includes(t)) {
+    return [
+      ...BASE_FILTERS,
+      ...NUMERIC_FILTERS,
+      ...CONTAINS_FILTERS,
+      ...RANGE_FILTERS,
+    ];
+  }
+  if (['boolean'].includes(t)) {
+    return BASE_FILTERS;
+  }
+  if (['enumeration'].includes(t)) {
+    return [...BASE_FILTERS, ...ARRAY_FILTERS];
+  }
+  return [...BASE_FILTERS, ...IS_SENSITIVE_FILTERS];
 }
 
 export interface LogicConnector {
@@ -181,24 +289,46 @@ export interface LogicConnector {
 /**
  * Builds a nested filter object from a field path in dot notation
  * @param fieldPath - Path like "user.email" or "title"
- * @param operator - Strapi operator (eq, contains, etc.)
- * @param value - Filter value
+ * @param operator - Strapi operator (eq, contains, in, between, etc.)
+ * @param value - Filter value (comma-separated for $in/$notIn)
+ * @param valueTo - End value for $between operator
+ * @param negate - Wrap in $not for negation
  */
-const buildFilterFromPath = (fieldPath: string, operator: string, value: string): any => {
+const buildFilterFromPath = (fieldPath: string, operator: string, value: string, valueTo?: string, negate?: boolean): any => {
   const parts = fieldPath.split('.').filter(Boolean);
   if (parts.length === 0) return {};
 
   const opKey = operator.startsWith('$') ? operator : `$${operator}`;
-  const filterValue = ['null', 'notNull'].includes(operator) ? true : value;
-
-  if (parts.length === 1) {
-    return { [parts[0]]: { [opKey]: filterValue } };
+  
+  let filterValue: any;
+  if (['null', 'notNull'].includes(operator)) {
+    filterValue = true;
+  } else if (['in', 'notIn'].includes(operator)) {
+    // Parse comma-separated values into array
+    filterValue = value.split(',').map(v => v.trim()).filter(Boolean);
+  } else if (operator === 'between' && valueTo) {
+    // Between requires array [start, end]
+    filterValue = [value, valueTo];
+  } else {
+    filterValue = value;
   }
 
-  const [first, ...rest] = parts;
-  return {
-    [first]: buildFilterFromPath(rest.join('.'), operator, value),
-  };
+  let result: any;
+  if (parts.length === 1) {
+    result = { [parts[0]]: { [opKey]: filterValue } };
+  } else {
+    const [first, ...rest] = parts;
+    result = {
+      [first]: buildFilterFromPath(rest.join('.'), operator, value, valueTo, false),
+    };
+  }
+
+  // Wrap in $not if negation is requested
+  if (negate) {
+    return { $not: result };
+  }
+
+  return result;
 };
 
 /**
@@ -225,14 +355,14 @@ const rowsToFilterStructure = (rows: FilterRow[], connectors: LogicConnector[]):
 
   if (validRows.length === 0) return undefined;
   if (validRows.length === 1) {
-    return buildFilterFromPath(validRows[0].field, validRows[0].operator, validRows[0].value);
+    return buildFilterFromPath(validRows[0].field, validRows[0].operator, validRows[0].value, validRows[0].valueTo, validRows[0].negate);
   }
 
   const groups: any[] = [];
   let currentAndGroup: any[] = [];
 
   validRows.forEach((row, i) => {
-    const filter = buildFilterFromPath(row.field, row.operator, row.value);
+    const filter = buildFilterFromPath(row.field, row.operator, row.value, row.valueTo, row.negate);
     currentAndGroup.push(filter);
 
     const nextConnector = connectors[i];
@@ -280,6 +410,81 @@ export const generateFromRows = (
     const rel = extractRelationFromField(r.field);
     if (rel) relations.add(rel);
   });
+  if (relations.size > 0) {
+    const populate: Record<string, boolean> = {};
+    relations.forEach(rel => { populate[rel] = true; });
+    queryObject.populate = populate;
+  }
+
+  return qs.stringify(queryObject, { encodeValuesOnly: true });
+};
+
+/**
+ * Recursively builds filter structure from nested groups
+ */
+const buildFilterFromGroup = (group: FilterGroup): any => {
+  const validItems = group.items.filter(item => {
+    if ('isGroup' in item && item.isGroup) return true; // Nested group
+    const row = item as FilterRow;
+    if (!row.field) return false;
+    if (['null', 'notNull'].includes(row.operator)) return true;
+    if (row.operator === 'between') return row.value?.trim() && row.valueTo?.trim();
+    return row.value?.trim();
+  });
+
+  if (validItems.length === 0) return undefined;
+
+  const conditions = validItems.map(item => {
+    if ('isGroup' in item && item.isGroup) {
+      // Nested group - recurse
+      return buildFilterFromGroup(item as FilterGroup);
+    }
+    // Row
+    const row = item as FilterRow;
+    return buildFilterFromPath(row.field, row.operator, row.value, row.valueTo, row.negate);
+  }).filter(Boolean);
+
+  if (conditions.length === 0) return undefined;
+  if (conditions.length === 1) return conditions[0];
+
+  const logicKey = group.logic === 'AND' ? '$and' : '$or';
+  return { [logicKey]: conditions };
+};
+
+/**
+ * Extract all relations from a group recursively
+ */
+const extractRelationsFromGroup = (group: FilterGroup): Set<string> => {
+  const relations = new Set<string>();
+  
+  group.items.forEach(item => {
+    if ('isGroup' in item && item.isGroup) {
+      const nested = extractRelationsFromGroup(item as FilterGroup);
+      nested.forEach(r => relations.add(r));
+    } else {
+      const row = item as FilterRow;
+      const rel = extractRelationFromField(row.field);
+      if (rel) relations.add(rel);
+    }
+  });
+
+  return relations;
+};
+
+/**
+ * Converts nested FilterGroup into a Strapi query string with auto-populate
+ * @param group - Root filter group
+ * @returns URL query string
+ */
+export const generateFromGroup = (group: FilterGroup): string => {
+  const queryObject: any = {};
+
+  const filterStructure = buildFilterFromGroup(group);
+  if (filterStructure) {
+    queryObject.filters = filterStructure;
+  }
+
+  const relations = extractRelationsFromGroup(group);
   if (relations.size > 0) {
     const populate: Record<string, boolean> = {};
     relations.forEach(rel => { populate[rel] = true; });

@@ -5,6 +5,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useFetchClient } from '@strapi/strapi/admin';
 import styled from 'styled-components';
 import StrapiStyleFilterModal from './StrapiStyleFilterModal';
+import { useLicenseInfo } from '../hooks/useFeatureGate';
 
 // ================ STYLED COMPONENTS ================
 const FilterButtonGroup = styled.div`
@@ -90,6 +91,7 @@ const AdvancedFilterButton: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { get } = useFetchClient();
+  const { isPremium, isAdvanced } = useLicenseInfo();
   const [availableFields, setAvailableFields] = useState<Array<{ name: string; type: string }>>([]);
   const [availableRelations, setAvailableRelations] = useState<Array<{ name: string; target: string }>>([]);
   const [hasActiveFilters, setHasActiveFilters] = useState(false);
@@ -290,7 +292,7 @@ const AdvancedFilterButton: React.FC = () => {
         title="Open advanced filter builder"
       >
         <Filter />
-        Filters
+        Advanced Filter
         {hasActiveFilters && <ActiveDot />}
       </FilterButton>
 
@@ -310,6 +312,7 @@ const AdvancedFilterButton: React.FC = () => {
           availableFields={availableFields}
           availableRelations={availableRelations}
           currentQuery={getCurrentFilters()}
+          enableNestedGroups={isPremium || isAdvanced}
         />
       )}
     </FilterButtonGroup>

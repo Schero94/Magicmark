@@ -1,3 +1,10 @@
+## [3.3.1](https://github.com/Schero94/Magicmark/compare/v3.3.0...v3.3.1) (2026-02-08)
+
+
+### Bug Fixes
+
+* dark/light mode compatibility for entire admin UI ([bcc7711](https://github.com/Schero94/Magicmark/commit/bcc77112396af3fc09dac81f7726c331ade37161))
+
 # [3.3.0](https://github.com/Schero94/Magicmark/compare/v3.2.8...v3.3.0) (2026-01-28)
 
 

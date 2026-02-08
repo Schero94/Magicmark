@@ -27,17 +27,17 @@ const ActionButton = styled.button`
   padding: 0 14px;
   font-size: 13px;
   font-weight: 500;
-  border: 1px solid #dcdce4;
+  border: 1px solid rgba(128, 128, 128, 0.25);
   border-radius: 4px;
-  background: #ffffff;
-  color: #32324d;
+  background: ${(p) => p.theme.colors.neutral0};
+  color: ${(p) => p.theme.colors.neutral800};
   cursor: pointer;
   transition: all 0.15s ease;
   white-space: nowrap;
   
   &:hover {
-    background: #f6f6f9;
-    border-color: #c0c0cf;
+    background: ${(p) => p.theme.colors.neutral100};
+    border-color: rgba(128, 128, 128, 0.3);
   }
   
   &:active {
@@ -57,17 +57,17 @@ const MagicMarkButton = styled.button`
   justify-content: center;
   width: 32px;
   height: 32px;
-  border: 1px solid #dcdce4;
+  border: 1px solid rgba(128, 128, 128, 0.25);
   border-radius: 4px;
-  background: #ffffff;
-  color: #32324d;
+  background: ${(p) => p.theme.colors.neutral0};
+  color: ${(p) => p.theme.colors.neutral800};
   cursor: pointer;
   transition: all 0.15s ease;
   position: relative;
   
   &:hover {
-    background: #f6f6f9;
-    border-color: #c0c0cf;
+    background: ${(p) => p.theme.colors.neutral100};
+    border-color: rgba(128, 128, 128, 0.3);
   }
   
   &:active {
@@ -78,7 +78,7 @@ const MagicMarkButton = styled.button`
     width: 18px;
     height: 18px;
     flex-shrink: 0;
-    color: #666687;
+    color: ${(p) => p.theme.colors.neutral600};
   }
 `;
 

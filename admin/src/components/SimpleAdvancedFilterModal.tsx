@@ -28,7 +28,7 @@ const ModalOverlay = styled.div`
 `;
 
 const ModalContent = styled(Box)`
-  background: white;
+  background: ${(p) => p.theme.colors.neutral0};
   border-radius: 8px;
   max-height: 90vh;
   overflow-y: auto;
@@ -262,9 +262,9 @@ const SimpleAdvancedFilterModal: React.FC<SimpleAdvancedFilterModalProps> = ({
                 style={{
                   width: '100%',
                   padding: '8px 12px',
-                  border: '1px solid #dcdce4',
+                  border: '1px solid rgba(128, 128, 128, 0.25)',
                   borderRadius: '4px',
-                  background: 'white',
+                  background: 'transparent',
                   fontSize: '14px',
                   cursor: 'pointer',
                 }}

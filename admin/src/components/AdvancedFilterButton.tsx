@@ -4,7 +4,7 @@ import { Filter, Cross } from '@strapi/icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useFetchClient } from '@strapi/strapi/admin';
 import styled from 'styled-components';
-import SimpleAdvancedFilterModal from './SimpleAdvancedFilterModal';
+import StrapiStyleFilterModal from './StrapiStyleFilterModal';
 
 // ================ STYLED COMPONENTS ================
 const FilterButtonGroup = styled.div`
@@ -22,11 +22,11 @@ const FilterButton = styled.button<{ $isActive?: boolean }>`
   padding: 0 14px;
   font-size: 13px;
   font-weight: 500;
-  border: 1px solid ${props => props.$isActive ? '#4945FF' : '#dcdce4'};
+  border: 1px solid ${props => props.$isActive ? '#4945FF' : 'rgba(128, 128, 128, 0.25)'};
   border-radius: 4px;
   background: ${props => props.$isActive 
     ? '#EEF0FF' 
-    : '#ffffff'};
+    : props.theme.colors.neutral0};
   color: ${props => props.$isActive ? '#4945FF' : '#32324d'};
   cursor: pointer;
   transition: all 0.15s ease;
@@ -34,7 +34,7 @@ const FilterButton = styled.button<{ $isActive?: boolean }>`
   
   &:hover {
     background: ${props => props.$isActive ? '#E0E7FF' : '#f6f6f9'};
-    border-color: ${props => props.$isActive ? '#4945FF' : '#c0c0cf'};
+    border-color: ${props => props.$isActive ? '#4945FF' : 'rgba(128, 128, 128, 0.3)'};
   }
   
   &:active {
@@ -55,7 +55,7 @@ const ClearButton = styled.button`
   width: 36px;
   height: 36px;
   padding: 0;
-  border: 1px solid #fecaca;
+  border: 1px solid rgba(239, 68, 68, 0.3);
   border-radius: 4px;
   background: #fef2f2;
   color: #dc2626;
@@ -64,7 +64,7 @@ const ClearButton = styled.button`
   
   &:hover {
     background: #fee2e2;
-    border-color: #fca5a5;
+    border-color: rgba(239, 68, 68, 0.4);
   }
   
   &:active {
@@ -304,7 +304,7 @@ const AdvancedFilterButton: React.FC = () => {
       )}
 
       {showModal && (
-        <SimpleAdvancedFilterModal
+        <StrapiStyleFilterModal
           onClose={() => setShowModal(false)}
           onApply={handleApplyFilters}
           availableFields={availableFields}

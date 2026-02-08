@@ -23,8 +23,8 @@ const PopoverContainer = styled.div`
   min-width: 280px;
   max-width: 360px;
   max-height: 400px;
-  background: #ffffff;
-  border: 1px solid #dcdce4;
+  background: ${(p) => p.theme.colors.neutral0};
+  border: 1px solid rgba(128, 128, 128, 0.25);
   border-radius: 8px;
   box-shadow: 0 4px 24px rgba(0, 0, 0, 0.12);
   z-index: 1000;
@@ -35,7 +35,7 @@ const PopoverContainer = styled.div`
 const PopoverHeader = styled.div`
   padding: 12px 16px;
   background: linear-gradient(135deg, #4945FF 0%, #7B79FF 100%);
-  border-bottom: 1px solid #dcdce4;
+  border-bottom: 1px solid rgba(128, 128, 128, 0.25);
   display: flex;
   align-items: center;
   gap: 8px;
@@ -131,7 +131,7 @@ const BookmarkContent = styled.div`
 const BookmarkName = styled.div`
   font-size: 13px;
   font-weight: 500;
-  color: #32324d;
+  color: ${(p) => p.theme.colors.neutral800};
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -139,7 +139,7 @@ const BookmarkName = styled.div`
 
 const BookmarkDescription = styled.div`
   font-size: 11px;
-  color: #8e8ea9;
+  color: ${(p) => p.theme.colors.neutral500};
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -177,7 +177,7 @@ const EmptyIcon = styled.div`
   width: 48px;
   height: 48px;
   margin: 0 auto 12px;
-  background: #f6f6f9;
+  background: ${(p) => p.theme.colors.neutral100};
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -186,14 +186,14 @@ const EmptyIcon = styled.div`
   svg {
     width: 24px;
     height: 24px;
-    color: #8e8ea9;
+    color: ${(p) => p.theme.colors.neutral500};
   }
 `;
 
 const PopoverFooter = styled.div`
   padding: 10px 16px;
-  border-top: 1px solid #eaeaef;
-  background: #fafafa;
+  border-top: 1px solid rgba(128, 128, 128, 0.2);
+  background: ${(p) => p.theme.colors.neutral100};
 `;
 
 const ViewAllLink = styled.button`

@@ -129,7 +129,7 @@ const LogicToggle = styled.button<{ logic: 'AND' | 'OR'; $active: boolean }>`
   border: 2px solid ${props => props.logic === 'AND' ? theme.and.border : theme.or.border};
   background: ${props => props.$active 
     ? (props.logic === 'AND' ? theme.and.border : theme.or.border) 
-    : 'white'};
+    : props.theme.colors.neutral0};
   color: ${props => props.$active ? 'white' : (props.logic === 'AND' ? theme.and.text : theme.or.text)};
   font-weight: 600;
   font-size: 12px;
@@ -150,8 +150,8 @@ const LogicToggle = styled.button<{ logic: 'AND' | 'OR'; $active: boolean }>`
 `;
 
 const ConditionCard = styled.div<{ $isNew?: boolean; $twoRows?: boolean }>`
-  background: white;
-  border: 1px solid #E5E7EB;
+  background: ${(p) => p.theme.colors.neutral0};
+  border: 1px solid rgba(128, 128, 128, 0.2);
   border-radius: 10px;
   padding: 16px;
   margin: 8px 0;
@@ -164,7 +164,7 @@ const ConditionCard = styled.div<{ $isNew?: boolean; $twoRows?: boolean }>`
   position: relative;
 
   &:hover {
-    border-color: #A5B4FC;
+    border-color: rgba(99, 102, 241, 0.4);
     box-shadow: 0 2px 8px rgba(99, 102, 241, 0.1);
   }
 
@@ -287,7 +287,7 @@ const ReorderButtons = styled(Flex)`
 `;
 
 const ReorderButton = styled.button`
-  background: #F3F4F6;
+  background: ${(p) => p.theme.colors.neutral100};
   border: none;
   border-radius: 4px;
   padding: 4px;
@@ -296,10 +296,10 @@ const ReorderButton = styled.button`
   align-items: center;
   justify-content: center;
   transition: all 0.2s;
-  color: #6B7280;
+  color: ${(p) => p.theme.colors.neutral600};
 
   &:hover:not(:disabled) {
-    background: #E5E7EB;
+    background: ${(p) => p.theme.colors.neutral200};
     color: #4F46E5;
   }
 
@@ -350,7 +350,7 @@ const ValueInput = styled.input`
   flex: 2;
   min-width: 140px;
   padding: 10px 14px;
-  border: 1px solid #E5E7EB;
+  border: 1px solid rgba(128, 128, 128, 0.2);
   border-radius: 8px;
   font-size: 14px;
   transition: all 0.2s;
@@ -389,7 +389,7 @@ const DeleteButton = styled.button`
   flex-shrink: 0;
 
   &:hover:not(:disabled) {
-    background: #FECACA;
+    background: rgba(239, 68, 68, 0.3);
     transform: scale(1.1);
   }
 
@@ -463,7 +463,7 @@ const GroupLabel = styled(Typography)`
   display: block;
   font-size: 14px;
   font-weight: 600;
-  color: #374151;
+  color: ${(p) => p.theme.colors.neutral800};
   margin-bottom: 2px;
 
   /* Mobile */
@@ -475,7 +475,7 @@ const GroupLabel = styled(Typography)`
 const GroupDescription = styled(Typography)`
   display: block;
   font-size: 12px;
-  color: #6B7280;
+  color: ${(p) => p.theme.colors.neutral600};
 
   /* Mobile */
   @media (max-width: 480px) {

@@ -75,7 +75,7 @@ const TierCard = styled(Box)<TierCardProps>`
   background: ${props => props.theme.colors.neutral0};
   border-radius: 16px;
   padding: 32px;
-  border: 2px solid ${props => props.$featured ? '#0EA5E9' : props.theme.colors.neutral200};
+  border: 2px solid ${props => props.$featured ? 'rgba(14, 165, 233, 0.5)' : props.theme.colors.neutral200};
   position: relative;
   transition: all 0.3s ease;
   box-shadow: ${props => props.$featured
@@ -166,7 +166,7 @@ const FeatureIcon = styled(Box)<FeatureIconProps>`
   margin-top: 2px;
   
   ${props => props.$included ? `
-    background: #DCFCE7;
+    background: rgba(34, 197, 94, 0.15);
     svg { color: #16A34A; }
   ` : `
     background: #FEE2E2;
@@ -421,7 +421,7 @@ const UpgradePage: React.FC = () => {
               
               <Flex alignItems="baseline" gap={1}>
                 <TierPrice variant="alpha">{tier.price}</TierPrice>
-                <Typography variant="omega" style={{ color: '#6B7280' }}>
+                <Typography variant="omega" style={{ color: 'var(--colors-neutral600, #6B7280)' }}>
                   {tier.period}
                 </Typography>
               </Flex>
@@ -455,7 +455,7 @@ const UpgradePage: React.FC = () => {
                       variant="omega" 
                       style={{ 
                         fontSize: '14px',
-                        color: feature.included ? '#374151' : '#9CA3AF',
+                        color: feature.included ? 'var(--colors-neutral800, #374151)' : 'var(--colors-neutral500, #9CA3AF)',
                         textDecoration: feature.included ? 'none' : 'line-through'
                       }}
                     >

@@ -65,7 +65,7 @@ const NestedLevelWrapper = styled.div<{ $level: number }>`
     width: 100%;
     margin-top: 8px;
     padding-left: ${props => props.$level * 12}px;
-    border-left: 2px solid #E5E7EB;
+    border-left: 2px solid rgba(128, 128, 128, 0.2);
   }
 `;
 
@@ -75,7 +75,7 @@ const NestedLevelWrapper = styled.div<{ $level: number }>`
 const MobileNestedLabel = styled.span`
   display: none;
   font-size: 11px;
-  color: #6B7280;
+  color: ${(p) => p.theme.colors.neutral600};
   margin-bottom: 4px;
   font-weight: 500;
 
@@ -124,7 +124,7 @@ const ClearButton = styled.button`
   transition: all 0.15s ease;
 
   &:hover {
-    background: #FECACA;
+    background: rgba(239, 68, 68, 0.3);
     transform: scale(1.1);
   }
 

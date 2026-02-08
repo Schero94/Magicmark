@@ -12,9 +12,9 @@ const SelectContainer = styled.div`
 const SelectButton = styled.button<{ $isOpen: boolean }>`
   width: 100%;
   padding: 10px 36px 10px 12px;
-  border: 1px solid ${props => props.$isOpen ? '#4945ff' : '#dcdce4'};
+  border: 1px solid ${props => props.$isOpen ? '#4945ff' : 'rgba(128, 128, 128, 0.25)'};
   border-radius: 4px;
-  background: white;
+  background: ${(p) => p.theme.colors.neutral0};
   font-size: 14px;
   text-align: left;
   cursor: pointer;
@@ -55,7 +55,7 @@ const IconWrapper = styled.span<{ $isOpen: boolean }>`
   display: flex;
   align-items: center;
   pointer-events: none;
-  color: #8e8ea9;
+  color: ${(p) => p.theme.colors.neutral500};
 `;
 
 const DropdownList = styled.div<{ $isOpen: boolean; top: number; left: number; width: number }>`
@@ -65,8 +65,8 @@ const DropdownList = styled.div<{ $isOpen: boolean; top: number; left: number; w
   width: ${props => props.width}px;
   max-height: 300px;
   overflow-y: auto;
-  background: white;
-  border: 1px solid #dcdce4;
+  background: ${(p) => p.theme.colors.neutral0};
+  border: 1px solid rgba(128, 128, 128, 0.25);
   border-radius: 4px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   z-index: 10000;
@@ -81,15 +81,15 @@ const DropdownItem = styled.button<{ $isSelected: boolean }>`
   width: 100%;
   padding: 10px 12px;
   border: none;
-  background: ${props => props.$isSelected ? '#f0f0ff' : 'white'};
+  background: ${props => props.$isSelected ? '#f0f0ff' : props.theme.colors.neutral0};
   text-align: left;
   cursor: pointer;
   font-size: 14px;
-  color: ${props => props.$isSelected ? '#4945ff' : '#212134'};
+  color: ${props => props.$isSelected ? '#4945ff' : props.theme.colors.neutral800};
   transition: background 0.15s ease;
   
   &:hover {
-    background: #f7f8fa;
+    background: ${(p) => p.theme.colors.neutral100};
   }
   
   &:focus {
@@ -107,7 +107,7 @@ const SearchInput = styled.input`
   width: 100%;
   padding: 10px 12px;
   border: none;
-  border-bottom: 1px solid #dcdce4;
+  border-bottom: 1px solid rgba(128, 128, 128, 0.25);
   font-size: 14px;
   
   &:focus {

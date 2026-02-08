@@ -59,8 +59,8 @@ const StickySaveBar = styled(Box)`
   position: sticky;
   top: 0;
   z-index: 10;
-  background: white;
-  border-bottom: 1px solid ${theme.colors.neutral[200]};
+  background: ${(p) => p.theme.colors.neutral0};
+  border-bottom: 1px solid rgba(128, 128, 128, 0.2);
   box-shadow: ${theme.shadows.sm};
 `;
 

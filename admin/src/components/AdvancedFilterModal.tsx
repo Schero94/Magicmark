@@ -25,7 +25,7 @@ const ModalOverlay = styled.div`
 `;
 
 const ModalContent = styled(Box)`
-  background: white;
+  background: ${(p) => p.theme.colors.neutral0};
   border-radius: 8px;
   max-height: 90vh;
   overflow: auto;
@@ -35,7 +35,7 @@ const ModalContent = styled(Box)`
 
 const FilterRow = styled(Flex)`
   padding: 12px;
-  background: #f7f8fa;
+  background: ${(p) => p.theme.colors.neutral100};
   border-radius: 4px;
   margin-bottom: 8px;
 `;
@@ -43,9 +43,9 @@ const FilterRow = styled(Flex)`
 const StyledSelect = styled.select`
   width: 100%;
   padding: 8px 12px;
-  border: 1px solid #dcdce4;
+  border: 1px solid rgba(128, 128, 128, 0.25);
   border-radius: 4px;
-  background: white;
+  background: ${(p) => p.theme.colors.neutral0};
   font-size: 14px;
   font-family: inherit;
   cursor: pointer;
@@ -56,7 +56,7 @@ const StyledSelect = styled.select`
   }
   
   &:disabled {
-    background: #f7f8fa;
+    background: ${(p) => p.theme.colors.neutral100};
     cursor: not-allowed;
   }
 `;
@@ -365,13 +365,13 @@ const AdvancedFilterModal: React.FC<AdvancedFilterModalProps> = ({
                       ? 'linear-gradient(135deg, #DBEAFE 0%, #BFDBFE 100%)' 
                       : field.enabled 
                         ? 'linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%)'
-                        : 'white',
+                        : 'transparent',
                     borderRadius: '10px',
                     border: field.deep 
                       ? '2px solid #3B82F6'
                       : field.enabled
                         ? '2px solid #10B981'
-                        : '2px solid #E5E7EB',
+                        : '2px solid rgba(128, 128, 128, 0.2)',
                     cursor: 'pointer',
                     transition: 'all 0.2s ease',
                     textAlign: 'center',

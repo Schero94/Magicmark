@@ -47,7 +47,7 @@ const ModalOverlay = styled.div`
 `;
 
 const ModalContent = styled(Box)`
-  background: white;
+  background: ${(p) => p.theme.colors.neutral0};
   border-radius: 16px;
   width: 100%;
   max-width: 580px;
@@ -415,7 +415,7 @@ const LicenseGuard: React.FC<LicenseGuardProps> = ({ children }) => {
                 padding={4}
                 style={{
                   borderRadius: '8px',
-                  border: '2px solid #BAE6FD',
+                  border: '2px solid rgba(14, 165, 233, 0.3)',
                   width: '100%',
                 }}
               >
@@ -482,7 +482,7 @@ const LicenseGuard: React.FC<LicenseGuardProps> = ({ children }) => {
                   padding={5}
                   style={{
                     borderRadius: '8px',
-                    border: '2px solid #DCFCE7',
+                    border: '2px solid rgba(34, 197, 94, 0.15)',
                     textAlign: 'center',
                   }}
                 >

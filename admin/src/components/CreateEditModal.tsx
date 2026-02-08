@@ -151,7 +151,7 @@ const Overlay = styled.div`
 `;
 
 const ModalContainer = styled.div`
-  background: ${theme.colors.neutral[0]};
+  background: ${(p) => p.theme.colors.neutral0};
   border-radius: 16px;
   max-height: 90vh;
   overflow: hidden;
@@ -217,8 +217,8 @@ const ModalBody = styled.div`
 
 const ModalFooter = styled.div`
   padding: 16px 28px;
-  background: ${theme.colors.neutral[100]};
-  border-top: 1px solid ${theme.colors.neutral[200]};
+  background: ${(p) => p.theme.colors.neutral100};
+  border-top: 1px solid rgba(128, 128, 128, 0.25);
   display: flex;
   justify-content: flex-end;
   gap: 12px;
@@ -226,10 +226,10 @@ const ModalFooter = styled.div`
 
 const Section = styled.div<{ $collapsed?: boolean }>`
   margin-bottom: 20px;
-  border: 1px solid ${theme.colors.neutral[200]};
+  border: 1px solid rgba(128, 128, 128, 0.25);
   border-radius: 12px;
   overflow: hidden;
-  background: ${theme.colors.neutral[0]};
+  background: ${(p) => p.theme.colors.neutral0};
   transition: all 0.2s ease;
   
   &:hover {
@@ -240,7 +240,7 @@ const Section = styled.div<{ $collapsed?: boolean }>`
 const SectionHeader = styled.button<{ $hasIcon?: boolean }>`
   width: 100%;
   padding: 14px 16px;
-  background: ${theme.colors.neutral[100]};
+  background: ${(p) => p.theme.colors.neutral100};
   border: none;
   cursor: pointer;
   display: flex;
@@ -249,7 +249,7 @@ const SectionHeader = styled.button<{ $hasIcon?: boolean }>`
   transition: all 0.15s ease;
   
   &:hover {
-    background: ${theme.colors.neutral[200]};
+    background: ${(p) => p.theme.colors.neutral200};
   }
 `;
 
@@ -259,7 +259,7 @@ const SectionTitle = styled.div`
   gap: 10px;
   font-weight: 600;
   font-size: 0.875rem;
-  color: ${theme.colors.neutral[800]};
+  color: ${(p) => p.theme.colors.neutral800};
   
   svg {
     width: 18px;
@@ -283,7 +283,7 @@ const ChevronIcon = styled.div<{ $collapsed?: boolean }>`
   svg {
     width: 18px;
     height: 18px;
-    color: ${theme.colors.neutral[600]};
+    color: ${(p) => p.theme.colors.neutral600};
   }
 `;
 
@@ -292,7 +292,7 @@ const IconPicker = styled.div`
   grid-template-columns: repeat(8, 1fr);
   gap: 8px;
   padding: 12px;
-  background: ${theme.colors.neutral[100]};
+  background: ${(p) => p.theme.colors.neutral100};
   border-radius: 8px;
   max-height: 180px;
   overflow-y: auto;
@@ -317,7 +317,7 @@ const IconButton = styled.button<{ $isSelected?: boolean }>`
   justify-content: center;
   padding: 10px;
   border: 2px solid ${props => props.$isSelected ? theme.colors.primary[500] : 'transparent'};
-  background: ${props => props.$isSelected ? theme.colors.primary[100] : theme.colors.neutral[0]};
+  background: ${props => props.$isSelected ? theme.colors.primary[100] : props.theme.colors.neutral0};
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.15s ease;
@@ -325,7 +325,7 @@ const IconButton = styled.button<{ $isSelected?: boolean }>`
   svg {
     width: 20px;
     height: 20px;
-    color: ${props => props.$isSelected ? theme.colors.primary[500] : theme.colors.neutral[600]};
+    color: ${props => props.$isSelected ? theme.colors.primary[500] : props.theme.colors.neutral600};
   }
   
   &:hover {
@@ -353,7 +353,7 @@ const SelectedIconCircle = styled.div`
   width: 52px;
   height: 52px;
   border-radius: 12px;
-  background: ${theme.colors.neutral[0]};
+  background: ${(p) => p.theme.colors.neutral0};
   border: 2px solid ${theme.colors.primary[500]};
   display: flex;
   align-items: center;
@@ -372,7 +372,7 @@ const PublicToggleContainer = styled.div`
   align-items: center;
   justify-content: space-between;
   padding: 14px 16px;
-  background: ${theme.colors.neutral[100]};
+  background: ${(p) => p.theme.colors.neutral100};
   border-radius: 10px;
   margin-bottom: 16px;
 `;
@@ -432,9 +432,9 @@ const SwitchSlider = styled.span<{ $checked?: boolean }>`
 const SelectionList = styled.div<{ $disabled?: boolean }>`
   max-height: 140px;
   overflow-y: auto;
-  border: 1px solid ${theme.colors.neutral[200]};
+  border: 1px solid rgba(128, 128, 128, 0.25);
   border-radius: 8px;
-  background: ${props => props.$disabled ? theme.colors.neutral[100] : theme.colors.neutral[0]};
+  background: ${props => props.$disabled ? props.theme.colors.neutral100 : props.theme.colors.neutral0};
   opacity: ${props => props.$disabled ? 0.6 : 1};
   pointer-events: ${props => props.$disabled ? 'none' : 'auto'};
   
@@ -458,7 +458,7 @@ const SelectionItem = styled.label<{ $selected?: boolean }>`
   gap: 12px;
   padding: 10px 14px;
   cursor: pointer;
-  border-bottom: 1px solid ${theme.colors.neutral[200]};
+  border-bottom: 1px solid rgba(128, 128, 128, 0.25);
   background: ${props => props.$selected ? theme.colors.primary[100] : 'transparent'};
   transition: all 0.15s ease;
   
@@ -467,7 +467,7 @@ const SelectionItem = styled.label<{ $selected?: boolean }>`
   }
   
   &:hover {
-    background: ${props => props.$selected ? theme.colors.primary[100] : theme.colors.neutral[100]};
+    background: ${props => props.$selected ? theme.colors.primary[100] : props.theme.colors.neutral100};
   }
 `;
 
@@ -475,7 +475,7 @@ const CustomCheckbox = styled.div<{ $checked?: boolean }>`
   width: 20px;
   height: 20px;
   border-radius: 4px;
-  border: 2px solid ${props => props.$checked ? theme.colors.primary[500] : theme.colors.neutral[400]};
+  border: 2px solid ${props => props.$checked ? theme.colors.primary[500] : props.theme.colors.neutral400};
   background: ${props => props.$checked ? theme.colors.primary[500] : 'transparent'};
   display: flex;
   align-items: center;
@@ -493,7 +493,7 @@ const CustomCheckbox = styled.div<{ $checked?: boolean }>`
 
 const ItemLabel = styled.span<{ $selected?: boolean }>`
   font-size: 0.875rem;
-  color: ${props => props.$selected ? theme.colors.primary[600] : theme.colors.neutral[800]};
+  color: ${props => props.$selected ? theme.colors.primary[600] : props.theme.colors.neutral800};
   font-weight: ${props => props.$selected ? 600 : 400};
 `;
 
@@ -518,13 +518,13 @@ const Label = styled.label`
   display: block;
   font-size: 0.875rem;
   font-weight: 600;
-  color: ${theme.colors.neutral[800]};
+  color: ${(p) => p.theme.colors.neutral800};
   margin-bottom: 8px;
 `;
 
 const HintText = styled.p`
   font-size: 0.75rem;
-  color: ${theme.colors.neutral[600]};
+  color: ${(p) => p.theme.colors.neutral600};
   margin-top: 6px;
   display: flex;
   align-items: center;
@@ -539,12 +539,12 @@ const HintText = styled.p`
 
 const PathDisplay = styled.div`
   padding: 12px 14px;
-  background: ${theme.colors.neutral[100]};
-  border: 1px solid ${theme.colors.neutral[200]};
+  background: ${(p) => p.theme.colors.neutral100};
+  border: 1px solid rgba(128, 128, 128, 0.25);
   border-radius: 8px;
   font-family: 'Monaco', 'Menlo', monospace;
   font-size: 0.8rem;
-  color: ${theme.colors.neutral[600]};
+  color: ${(p) => p.theme.colors.neutral600};
   word-break: break-all;
 `;
 
@@ -565,7 +565,7 @@ const ErrorBox = styled.div`
 const SectionLabel = styled.div`
   font-size: 0.75rem;
   font-weight: 600;
-  color: ${theme.colors.neutral[600]};
+  color: ${(p) => p.theme.colors.neutral600};
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin-bottom: 8px;
@@ -579,7 +579,7 @@ const SectionLabel = styled.div`
 const StyledTextInput = styled(TextInput)`
   input {
     border-radius: 8px;
-    border: 1px solid ${theme.colors.neutral[200]};
+    border: 1px solid rgba(128, 128, 128, 0.25);
     
     &:focus {
       border-color: ${theme.colors.primary[500]};
@@ -591,7 +591,7 @@ const StyledTextInput = styled(TextInput)`
 const StyledTextarea = styled(Textarea)`
   textarea {
     border-radius: 8px;
-    border: 1px solid ${theme.colors.neutral[200]};
+    border: 1px solid rgba(128, 128, 128, 0.25);
     min-height: 80px;
     
     &:focus {
@@ -844,7 +844,7 @@ const CreateEditModal: React.FC<CreateEditModalProps> = ({
                   <SelectedIcon />
                 </SelectedIconCircle>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                  <Typography variant="pi" fontWeight="semiBold" style={{ color: theme.colors.neutral[800], display: 'block' }}>
+                  <Typography variant="pi" fontWeight="semiBold" style={{ color: 'var(--colors-neutral800, #32324D)', display: 'block' }}>
                     {BOOKMARK_ICONS.find(i => i.id === icon)?.label || 'Bookmark'}
                   </Typography>
                   <Typography variant="pi" textColor="neutral600" style={{ fontSize: '0.75rem', display: 'block' }}>
@@ -893,10 +893,10 @@ const CreateEditModal: React.FC<CreateEditModalProps> = ({
                 <PublicToggleInfo>
                   <GlobeAltIcon />
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                    <Typography variant="pi" fontWeight="semiBold" style={{ color: theme.colors.neutral[800], display: 'block' }}>
+                    <Typography variant="pi" fontWeight="semiBold" style={{ color: 'var(--colors-neutral800, #32324D)', display: 'block' }}>
                       Public Bookmark
                     </Typography>
-                    <Typography variant="pi" style={{ fontSize: '0.75rem', color: theme.colors.neutral[600], display: 'block' }}>
+                    <Typography variant="pi" style={{ fontSize: '0.75rem', color: 'var(--colors-neutral600, #666687)', display: 'block' }}>
                       All admin users can see this
                     </Typography>
                   </div>
@@ -1003,7 +1003,7 @@ const CreateEditModal: React.FC<CreateEditModalProps> = ({
           <FormField>
             <Label>
               {formatMessage({ id: `${pluginId}.form.description`, defaultMessage: 'Description' })}
-              <span style={{ fontWeight: 400, color: theme.colors.neutral[600] }}> (Optional)</span>
+              <span style={{ fontWeight: 400, color: 'var(--colors-neutral600, #666687)' }}> (Optional)</span>
             </Label>
             <StyledTextarea
               placeholder={formatMessage({ id: `${pluginId}.form.descriptionPlaceholder`, defaultMessage: 'Add a description...' })}

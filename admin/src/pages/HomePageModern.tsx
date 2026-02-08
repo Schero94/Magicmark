@@ -241,7 +241,7 @@ const StatsGrid = styled.div`
 `;
 
 const StatCard = styled(Box)`
-  background: ${theme.colors.neutral[0]};
+  background: ${(p) => p.theme.colors.neutral0};
   border-radius: ${theme.borderRadius.lg};
   padding: ${theme.spacing.lg};
   position: relative;
@@ -250,7 +250,7 @@ const StatCard = styled(Box)`
   animation: ${fadeIn} ${theme.transitions.slow} backwards;
   animation-delay: ${props => props.$delay || '0s'};
   box-shadow: ${theme.shadows.sm};
-  border: 1px solid ${theme.colors.neutral[200]};
+  border: 1px solid rgba(128, 128, 128, 0.2);
   min-width: 200px;
   flex: 1;
   text-align: center;
@@ -304,7 +304,7 @@ const StatIcon = styled(Box)`
 const StatValue = styled(Typography)`
   font-size: 2.5rem;
   font-weight: 700;
-  color: ${theme.colors.neutral[800]};
+  color: ${(p) => p.theme.colors.neutral800};
   line-height: 1;
   margin-bottom: ${theme.spacing.xs};
   transition: transform ${theme.transitions.normal};
@@ -312,29 +312,29 @@ const StatValue = styled(Typography)`
 
 const StatLabel = styled(Typography)`
   font-size: 0.875rem;
-  color: ${theme.colors.neutral[600]};
+  color: ${(p) => p.theme.colors.neutral600};
   font-weight: 500;
   letter-spacing: 0.025em;
   text-transform: capitalize;
 `;
 
 const DataTable = styled(Box)`
-  background: ${theme.colors.neutral[0]};
+  background: ${(p) => p.theme.colors.neutral0};
   border-radius: ${theme.borderRadius.lg};
   overflow: hidden;
   box-shadow: ${theme.shadows.sm};
-  border: 1px solid ${theme.colors.neutral[200]};
+  border: 1px solid rgba(128, 128, 128, 0.2);
   margin-bottom: ${theme.spacing.xl};
 `;
 
 const StyledTable = styled(Table)`
   thead {
-    background: ${theme.colors.neutral[0]};
-    border-bottom: 2px solid ${theme.colors.neutral[100]};
+    background: ${(p) => p.theme.colors.neutral0};
+    border-bottom: 2px solid rgba(128, 128, 128, 0.15);
     
     th {
       font-weight: 600;
-      color: ${theme.colors.neutral[700]};
+      color: ${(p) => p.theme.colors.neutral700};
       font-size: 0.875rem;
       text-transform: uppercase;
       letter-spacing: 0.025em;
@@ -344,14 +344,14 @@ const StyledTable = styled(Table)`
   
   tbody tr {
     transition: all ${theme.transitions.fast};
-    border-bottom: 1px solid ${theme.colors.neutral[100]};
+    border-bottom: 1px solid rgba(128, 128, 128, 0.1);
     
     &:last-child {
       border-bottom: none;
     }
     
     &:hover {
-      background: ${theme.colors.neutral[50]};
+      background: ${(p) => p.theme.colors.neutral100};
       
       .action-buttons {
         opacity: 1;
@@ -360,7 +360,7 @@ const StyledTable = styled(Table)`
     
     td {
       padding: ${theme.spacing.lg} ${theme.spacing.lg};
-      color: ${theme.colors.neutral[700]};
+      color: ${(p) => p.theme.colors.neutral700};
       vertical-align: middle;
     }
   }
@@ -413,12 +413,12 @@ const FloatingIcon = styled.div`
 `;
 
 const FilterBar = styled(Flex)`
-  background: ${theme.colors.neutral[0]};
+  background: ${(p) => p.theme.colors.neutral0};
   padding: ${theme.spacing.md} ${theme.spacing.lg};
   border-radius: ${theme.borderRadius.lg};
   margin-bottom: ${theme.spacing.lg};
   box-shadow: ${theme.shadows.sm};
-  border: 1px solid ${theme.colors.neutral[200]};
+  border: 1px solid rgba(128, 128, 128, 0.2);
   gap: ${theme.spacing.md};
   align-items: center;
 `;
@@ -439,19 +439,19 @@ const SearchIconStyled = styled(MagnifyingGlassIcon)`
   left: 12px;
   width: 16px;
   height: 16px;
-  color: ${theme.colors.neutral[600]};
+  color: ${(p) => p.theme.colors.neutral600};
   pointer-events: none;
 `;
 
 const StyledSearchInput = styled.input`
   width: 100%;
   padding: ${theme.spacing.sm} ${theme.spacing.sm} ${theme.spacing.sm} 36px;
-  border: 1px solid ${theme.colors.neutral[200]};
+  border: 1px solid rgba(128, 128, 128, 0.2);
   border-radius: ${theme.borderRadius.md};
   font-size: 0.875rem;
   transition: all ${theme.transitions.fast};
-  background: ${theme.colors.neutral[0]};
-  color: ${theme.colors.neutral[800]};
+  background: ${(p) => p.theme.colors.neutral0};
+  color: ${(p) => p.theme.colors.neutral800};
   
   &:focus {
     outline: none;
@@ -460,7 +460,7 @@ const StyledSearchInput = styled.input`
   }
   
   &::placeholder {
-    color: ${theme.colors.neutral[600]};
+    color: ${(p) => p.theme.colors.neutral600};
   }
 `;
 
@@ -842,7 +842,7 @@ const HomePageModern: React.FC = () => {
       {!loading && bookmarks.length > 0 && (
         <Box>
           <Box style={{ marginBottom: theme.spacing.md }}>
-            <Typography variant="delta" style={{ marginBottom: theme.spacing.md, color: theme.colors.neutral[700] }}>
+            <Typography variant="delta" style={{ marginBottom: theme.spacing.md, color: 'var(--colors-neutral700, #374151)' }}>
               {formatMessage({ id: `${pluginId}.allBookmarks.title`, defaultMessage: '🔖 All Available Bookmarks' })}
             </Typography>
           </Box>
@@ -932,7 +932,7 @@ const HomePageModern: React.FC = () => {
                                 • {formatMessage({ id: `${pluginId}.bookmark.myBookmark`, defaultMessage: 'My Bookmark' })}
                               </Typography>
                             ) : (
-                              <Typography variant="pi" style={{ fontSize: '0.75rem', color: theme.colors.neutral[600] }}>
+                              <Typography variant="pi" style={{ fontSize: '0.75rem', color: 'var(--colors-neutral600, #4B5563)' }}>
                                 • {formatMessage({ id: `${pluginId}.bookmark.sharedBy`, defaultMessage: 'Shared by {name}' }, { name: bookmark.createdBy?.firstname || formatMessage({ id: `${pluginId}.bookmark.unknown`, defaultMessage: 'Unknown' }) })}
                               </Typography>
                             )}
@@ -1037,9 +1037,9 @@ const HomePageModern: React.FC = () => {
       {!loading && bookmarks.length === 0 && (
         <Box
           style={{
-            background: theme.colors.neutral[0],
+            background: 'transparent',
             borderRadius: theme.borderRadius.xl,
-            border: `2px dashed ${theme.colors.neutral[200]}`,
+            border: '2px dashed rgba(128, 128, 128, 0.2)',
             padding: theme.spacing['3xl'],
             textAlign: 'center',
             position: 'relative',
@@ -1094,7 +1094,7 @@ const HomePageModern: React.FC = () => {
               style={{ 
                 fontSize: '1.75rem',
                 fontWeight: '700',
-                color: theme.colors.neutral[800],
+                color: 'var(--colors-neutral800, #1F2937)',
                 marginBottom: '8px',
               }}
             >

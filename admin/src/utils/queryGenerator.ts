@@ -165,3 +165,127 @@ export const generateQueryString = (
   return queryString;
 };
 
+// ================ Flat Row Format (Strapi-Style Filter) ================
+
+export interface FilterRow {
+  id: string;
+  field: string;    // "title" or "user.email" (dot notation for relations)
+  operator: string; // "eq", "contains", etc.
+  value: string;
+}
+
+export interface LogicConnector {
+  logic: 'AND' | 'OR'; // between row[i] and row[i+1]
+}
+
+/**
+ * Builds a nested filter object from a field path in dot notation
+ * @param fieldPath - Path like "user.email" or "title"
+ * @param operator - Strapi operator (eq, contains, etc.)
+ * @param value - Filter value
+ */
+const buildFilterFromPath = (fieldPath: string, operator: string, value: string): any => {
+  const parts = fieldPath.split('.').filter(Boolean);
+  if (parts.length === 0) return {};
+
+  const opKey = operator.startsWith('$') ? operator : `$${operator}`;
+  const filterValue = ['null', 'notNull'].includes(operator) ? true : value;
+
+  if (parts.length === 1) {
+    return { [parts[0]]: { [opKey]: filterValue } };
+  }
+
+  const [first, ...rest] = parts;
+  return {
+    [first]: buildFilterFromPath(rest.join('.'), operator, value),
+  };
+};
+
+/**
+ * Extracts relation names from field paths (first segment of dotted paths)
+ * @param field - Field path like "user.email" or "title"
+ * @returns Relation name or null if direct field
+ */
+const extractRelationFromField = (field: string): string | null => {
+  if (!field || !field.includes('.')) return null;
+  return field.split('.')[0];
+};
+
+/**
+ * Converts flat rows + connectors into a Strapi filter structure
+ * Groups consecutive AND rows into $and blocks, connects groups with $or
+ * Example: A AND B OR C AND D -> $or: [ $and: [A, B], C, $and: [D] ]
+ */
+const rowsToFilterStructure = (rows: FilterRow[], connectors: LogicConnector[]): any => {
+  const validRows = rows.filter(r => {
+    if (!r.field) return false;
+    const needsValue = !['null', 'notNull'].includes(r.operator);
+    return !needsValue || (r.value && r.value.trim() !== '');
+  });
+
+  if (validRows.length === 0) return undefined;
+  if (validRows.length === 1) {
+    return buildFilterFromPath(validRows[0].field, validRows[0].operator, validRows[0].value);
+  }
+
+  const groups: any[] = [];
+  let currentAndGroup: any[] = [];
+
+  validRows.forEach((row, i) => {
+    const filter = buildFilterFromPath(row.field, row.operator, row.value);
+    currentAndGroup.push(filter);
+
+    const nextConnector = connectors[i];
+    if (nextConnector?.logic === 'OR' || !nextConnector) {
+      if (currentAndGroup.length === 1) {
+        groups.push(currentAndGroup[0]);
+      } else {
+        groups.push({ $and: currentAndGroup });
+      }
+      currentAndGroup = [];
+    }
+  });
+
+  if (currentAndGroup.length > 0) {
+    if (currentAndGroup.length === 1) {
+      groups.push(currentAndGroup[0]);
+    } else {
+      groups.push({ $and: currentAndGroup });
+    }
+  }
+
+  if (groups.length === 1) return groups[0];
+  return { $or: groups };
+};
+
+/**
+ * Converts flat rows + connectors into a Strapi query string with auto-populate
+ * @param rows - Filter rows with field, operator, value
+ * @param connectors - Logic between rows (AND/OR)
+ * @returns URL query string
+ */
+export const generateFromRows = (
+  rows: FilterRow[],
+  connectors: LogicConnector[]
+): string => {
+  const queryObject: any = {};
+
+  const filterStructure = rowsToFilterStructure(rows, connectors);
+  if (filterStructure) {
+    queryObject.filters = filterStructure;
+  }
+
+  const relations = new Set<string>();
+  rows.forEach(r => {
+    const rel = extractRelationFromField(r.field);
+    if (rel) relations.add(rel);
+  });
+  if (relations.size > 0) {
+    const populate: Record<string, boolean> = {};
+    relations.forEach(rel => { populate[rel] = true; });
+    queryObject.populate = populate;
+  }
+
+  return qs.stringify(queryObject, { encodeValuesOnly: true });
+};
+

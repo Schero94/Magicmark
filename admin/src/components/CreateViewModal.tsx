@@ -23,7 +23,7 @@ const IconPicker = styled.div`
   grid-template-columns: repeat(8, 1fr);
   gap: 8px;
   padding: 12px;
-  background: #f6f6f9;
+  background: ${(p) => p.theme.colors.neutral100};
   border-radius: 6px;
   max-height: 200px;
   overflow-y: auto;
@@ -35,8 +35,8 @@ const IconButton = styled.button<{ $isSelected?: boolean }>`
   align-items: center;
   justify-content: center;
   padding: 10px;
-  border: 2px solid ${props => props.$isSelected ? '#4945FF' : '#dcdce4'};
-  background: ${props => props.$isSelected ? '#EEF0FF' : '#ffffff'};
+  border: 2px solid ${props => props.$isSelected ? '#4945FF' : 'rgba(128, 128, 128, 0.25)'};
+  background: ${props => props.$isSelected ? '#EEF0FF' : props.theme.colors.neutral0};
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.15s ease;

@@ -27,7 +27,7 @@ const float = keyframes`
 const PromptContainer = styled(Box)<{ variant: 'inline' | 'banner' | 'modal' }>`
   ${props => props.variant === 'inline' && `
     background: linear-gradient(135deg, #FFF7ED 0%, #FFEDD5 100%);
-    border: 1px dashed #F97316;
+    border: 1px dashed rgba(249, 115, 22, 0.5);
     border-radius: 8px;
     padding: 12px 16px;
   `}
@@ -59,7 +59,7 @@ const PromptContainer = styled(Box)<{ variant: 'inline' | 'banner' | 'modal' }>`
   `}
 
   ${props => props.variant === 'modal' && `
-    background: white;
+    background: ${(p) => p.theme.colors.neutral0};
     border-radius: 16px;
     padding: 32px;
     box-shadow: 0 25px 50px rgba(0, 0, 0, 0.15);

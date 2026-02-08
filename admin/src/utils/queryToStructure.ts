@@ -197,6 +197,85 @@ export const parseQueryToStructure = (queryString: string): ConditionGroup => {
   return rootGroup;
 };
 
+// ================ Flat Row Format (Strapi-Style Filter) ================
+
+export interface FilterRow {
+  id: string;
+  field: string;    // "title" or "user.email" (dot notation)
+  operator: string;
+  value: string;
+}
+
+export interface LogicConnector {
+  logic: 'AND' | 'OR';
+}
+
+/**
+ * Flattens a ConditionGroup into a sequence of conditions with logic
+ */
+const flattenGroup = (
+  group: ConditionGroup
+): Array<{ condition: Condition; connectorBefore: 'AND' | 'OR' | null }> => {
+  const result: Array<{ condition: Condition; connectorBefore: 'AND' | 'OR' | null }> = [];
+  const logic = group.logic;
+
+  group.conditions.forEach((item, i) => {
+    const connectorBefore = i === 0 ? null : logic;
+    if ('isGroup' in item && item.isGroup) {
+      const sub = flattenGroup(item as ConditionGroup);
+      sub.forEach((s, j) => {
+        result.push({
+          condition: s.condition,
+          connectorBefore: j === 0 ? connectorBefore : s.connectorBefore,
+        });
+      });
+    } else {
+      result.push({ condition: item as Condition, connectorBefore });
+    }
+  });
+  return result;
+};
+
+/**
+ * Parses URL query string into flat rows + connectors for StrapiStyleFilterModal
+ * @param queryString - URL query string (e.g. from location.search)
+ * @returns { rows, connectors } for re-opening modal with existing filters
+ */
+export const parseQueryToRows = (
+  queryString: string
+): { rows: FilterRow[]; connectors: LogicConnector[] } => {
+  const structure = parseQueryToStructure(queryString);
+  const flattened = flattenGroup(structure);
+
+  const rows: FilterRow[] = [];
+  const connectors: LogicConnector[] = [];
+
+  flattened.forEach((item, i) => {
+    const cond = item.condition;
+    const field = cond.fieldPath && cond.fieldPath.length > 0
+      ? cond.fieldPath.join('.')
+      : cond.field || '';
+    const needsValue = !['null', 'notNull'].includes(cond.operator);
+    if (!field && needsValue) return;
+
+    rows.push({
+      id: cond.id || `row_${i + 1}`,
+      field,
+      operator: cond.operator,
+      value: cond.value || '',
+    });
+    if (item.connectorBefore && i > 0) {
+      connectors.push({ logic: item.connectorBefore });
+    }
+  });
+
+  for (let i = connectors.length; i < Math.max(0, rows.length - 1); i++) {
+    connectors.push({ logic: 'AND' });
+  }
+
+  return { rows, connectors };
+};
+
 /**
  * Parse individual filter parameter
  * Example: filters[$and][0][blocked][$eq] = true

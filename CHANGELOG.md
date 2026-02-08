@@ -1,3 +1,10 @@
+# [3.4.0](https://github.com/Schero94/Magicmark/compare/v3.3.2...v3.4.0) (2026-02-08)
+
+
+### Features
+
+* advanced filter redesign with enhanced operators and nested groups ([110e3ae](https://github.com/Schero94/Magicmark/commit/110e3ae7708ac509ee675fff7c10e170ba411b44))
+
 ## [3.3.2](https://github.com/Schero94/Magicmark/compare/v3.3.1...v3.3.2) (2026-02-08)
 
 

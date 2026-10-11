@@ -201,10 +201,17 @@ const bookmarkService = ({ strapi }: { strapi: Core.Strapi }) => ({
   /**
    * Delete a bookmark
    * @param documentId - Bookmark's documentId
+   * @param userId - The admin user's documentId
    * @returns Deleted bookmark
    */
-  async delete(documentId: string) {
+  async delete(documentId: string, userId: string) {
     try {
+      const existingBookmark = await strapi.documents(BOOKMARK_UID).findOne({ documentId });
+      if (!existingBookmark || (existingBookmark as any).creatorId !== userId) {
+        const error = new Error('Unauthorized: You can only delete your own bookmarks');
+        (error as any).status = 403;
+        throw error;
+      }
       return await strapi.documents(BOOKMARK_UID).delete({
         documentId
       });

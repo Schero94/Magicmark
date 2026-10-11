@@ -36,12 +36,13 @@
     "pics/"
   ],
   "scripts": {
+    "test": "node --test tests/*.test.js",
     "build": "strapi-plugin build",
     "watch": "strapi-plugin watch",
     "watch:link": "strapi-plugin watch:link",
     "verify": "strapi-plugin verify",
-    "test:ts:front": "run -T tsc -p admin/tsconfig.json",
-    "test:ts:back": "run -T tsc -p server/tsconfig.json"
+    "test:ts:front": "tsc --noEmit -p admin/tsconfig.json",
+    "test:ts:back": "tsc --noEmit -p server/tsconfig.json"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",

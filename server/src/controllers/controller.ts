@@ -136,16 +136,18 @@ export default ({ strapi }: any) => ({
       }
 
       const { id } = ctx.params;
+      const userId = user.documentId || String(user.id);
       
       await strapi
         .plugin('magic-mark')
         .service('bookmarks')
-        .delete(id);
+        .delete(id, userId);
 
       ctx.body = {
         data: { success: true }
       };
     } catch (error) {
+      if ((error as any)?.status === 403) throw error;
       ctx.throw(500, `Error deleting bookmark: ${error}`);
     }
   },

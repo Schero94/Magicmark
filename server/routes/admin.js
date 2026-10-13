@@ -1,6 +1,4 @@
-module.exports = {
-  type: 'admin',
-  routes: [
+const routes = [
     // Get all bookmarks
     {
       method: 'GET',
@@ -122,5 +120,17 @@ module.exports = {
         policies: [],
       },
     },
-  ],
+];
+
+module.exports = {
+  type: 'admin',
+  routes: routes.map((route) => ({
+    ...route,
+    config: {
+      ...route.config,
+      auth: {
+        scope: [`plugin::magic-mark.settings.${route.method === 'GET' ? 'read' : 'update'}`],
+      },
+    },
+  })),
 };

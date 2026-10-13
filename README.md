@@ -2,6 +2,10 @@
 
 **Save and apply complex Content Manager queries with one click.** Professional bookmark management with role-based sharing, advanced filtering, and drag-and-drop organization for Strapi v5.
 
+[GitHub Pages documentation](https://schero94.github.io/Magicmark/)
+
+Requires Strapi `^5.57.0`.
+
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![npm version](https://badge.fury.io/js/strapi-plugin-magic-mark.svg)](https://www.npmjs.com/package/strapi-plugin-magic-mark)
 [![GitHub release](https://img.shields.io/github/v/release/Schero94/Magicmark.svg)](https://github.com/Schero94/Magicmark/releases)
@@ -40,8 +44,10 @@ Seamless integration - MagicMark button right in the Content Manager toolbar for
 - [Screenshots in Action](#screenshots-in-action)
 - [API Routes](#api-routes)
 - [Configuration](#configuration)
+- [Security](#security)
 - [Use Cases](#use-cases)
 - [Testing](#testing)
+- [Releases](#releases)
 - [Troubleshooting](#troubleshooting)
 - [Development](#development)
 
@@ -225,82 +231,24 @@ The **Advanced Filter Builder** (see screenshot above) lets you:
 
 ## 📡 API Routes
 
-### Content API Routes
+MagicMark registers these under Strapi's authenticated admin API at `/magic-mark`. They are not Content API routes. Each route requires the `plugin::magic-mark.settings.read` permission for `GET` or `plugin::magic-mark.settings.update` for writes. Bookmark changes also check ownership in the service.
 
-All routes require valid JWT authentication (except public bookmarks).
-
-#### Get All Bookmarks
-
-```bash
-GET /api/magic-mark/bookmarks
-
-Response:
-{
-  "data": [
-    {
-      "id": 1,
-      "attributes": {
-        "name": "Published Articles",
-        "emoji": "📰",
-        "description": "Recent published content",
-        "path": "/content-manager/collection-types/api::article.article",
-        "query": "filters[$and][0][publishedAt][$notNull]=true",
-        "isPinned": true,
-        "isPublic": false,
-        "createdAt": "2024-01-15T10:30:00Z"
-      }
-    }
-  ],
-  "meta": { "count": 5 }
-}
-```
-
-#### Create Bookmark
-
-```bash
-POST /api/magic-mark/bookmarks
-Authorization: Bearer JWT_TOKEN
-
-Request:
-{
-  "data": {
-    "name": "Draft Posts",
-    "emoji": "📝",
-    "description": "Unpublished drafts",
-    "path": "/content-manager/collection-types/api::article.article",
-    "query": "filters[0][publishedAt][$null]=true",
-    "isPublic": false,
-    "sharedWithRoles": [1, 2],
-    "sharedWithUsers": [3]
-  }
-}
-```
-
-#### Update Bookmark
-
-```bash
-PUT /api/magic-mark/bookmarks/:id
-Authorization: Bearer JWT_TOKEN
-```
-
-#### Delete Bookmark
-
-```bash
-DELETE /api/magic-mark/bookmarks/:id
-Authorization: Bearer JWT_TOKEN
-```
-
-#### Reorder Bookmarks
-
-```bash
-POST /api/magic-mark/bookmarks/reorder
-Authorization: Bearer JWT_TOKEN
-
-Request:
-{
-  "bookmarkIds": [3, 1, 5, 2, 4]
-}
-```
+| Method | Path | Purpose |
+| --- | --- | --- |
+| `GET` | `/magic-mark/bookmarks` | List bookmarks visible to the signed-in admin |
+| `POST` | `/magic-mark/bookmarks` | Create a bookmark |
+| `PUT` | `/magic-mark/bookmarks/:id` | Update an owned bookmark |
+| `DELETE` | `/magic-mark/bookmarks/:id` | Delete an owned bookmark |
+| `POST` | `/magic-mark/bookmarks/:id/pin` | Pin or unpin an owned bookmark |
+| `POST` | `/magic-mark/bookmarks/reorder` | Reorder bookmarks owned by the signed-in admin |
+| `GET` | `/magic-mark/roles` | List admin roles for sharing |
+| `GET` | `/magic-mark/users` | List admin users for sharing |
+| `GET` | `/magic-mark/license/status` | Read license status |
+| `POST` | `/magic-mark/license/auto-create` | Create and activate a license automatically |
+| `POST` | `/magic-mark/license/create` | Create and activate a license from submitted details |
+| `POST` | `/magic-mark/license/ping` | Check the stored license with the license service |
+| `POST` | `/magic-mark/license/store-key` | Store a submitted license key |
+| `GET` | `/magic-mark/license/limits` | Read current license limits |
 
 ---
 
@@ -319,25 +267,11 @@ export default () => ({
 });
 ```
 
-### Advanced Options (Optional)
+The plugin has no configurable bookmark-limit, history, or cleanup options. Its server config currently exposes only `debug`, which defaults to `false`.
 
-```typescript
-export default () => ({
-  'magic-mark': {
-    enabled: true,
-    config: {
-      // Maximum bookmarks per user
-      maxBookmarksPerUser: 50,
-      
-      // Enable query history
-      enableHistory: true,
-      
-      // Auto-cleanup old queries (days)
-      autoCleanupDays: 90,
-    },
-  },
-});
-```
+## 🔐 Security
+
+Admin routes use registered Strapi admin permission scopes. Bookmark controllers reject requests without an authenticated admin, and update, delete, pin, and reorder operations check that the acting admin owns the affected bookmark. Sharing changes are also owner-only. Public bookmarks are visible through the authenticated admin workflow; they do not make these routes unauthenticated.
 
 ---
 
@@ -516,6 +450,13 @@ npm run test:ts:back    # Backend TypeScript
 # Verify plugin
 npm run verify
 ```
+
+## 🚢 Releases
+
+Releases use semantic-release from the `main` branch. Use Conventional Commits so semantic-release can determine the next version. The release workflow runs `npm ci`, tests, the plugin build, and plugin verification before publishing to npm.
+
+- [GitHub releases](https://github.com/Schero94/Magicmark/releases)
+- [npm package](https://www.npmjs.com/package/strapi-plugin-magic-mark)
 
 ### Plugin Structure
 

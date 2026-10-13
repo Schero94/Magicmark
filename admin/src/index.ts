@@ -6,6 +6,7 @@ import Initializer from './components/Initializer';
 import PluginIcon from './components/PluginIcon';
 import ViewsWidget from './components/ViewsWidget';
 import AdvancedFilterButton from './components/AdvancedFilterButton';
+import pluginPermissions from './permissions';
 
 const name = pluginPkg.strapi.name;
 
@@ -34,7 +35,7 @@ export default {
         defaultMessage: name,
       },
       Component: () => import('./pages/App') as any,
-      permissions: [],
+      permissions: pluginPermissions.accessSettings,
     });
 
     app.createSettingSection(
@@ -54,7 +55,7 @@ export default {
           id: 'magic-mark-upgrade',
           to: `${pluginId}/upgrade`,
           Component: () => import(/* webpackChunkName: "magic-mark-upgrade" */ './pages/UpgradePage') as any,
-          permissions: [],
+          permissions: pluginPermissions.accessSettings,
         },
         {
           intlLabel: {
@@ -64,7 +65,7 @@ export default {
           id: 'magic-mark-license',
           to: `${pluginId}/license`,
           Component: () => import(/* webpackChunkName: "magic-mark-license" */ './pages/License') as any,
-          permissions: [],
+          permissions: pluginPermissions.accessSettings,
         },
       ]
     );

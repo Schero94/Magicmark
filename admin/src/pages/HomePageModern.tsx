@@ -487,7 +487,8 @@ const HomePageModern: React.FC = () => {
   const { isPremium, isAdvanced, tier, canUseFeature } = useLicenseInfo();
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [editingBookmark, setEditingBookmark] = useState<Bookmark | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -605,6 +606,7 @@ const HomePageModern: React.FC = () => {
 
   const fetchBookmarks = async () => {
     setLoading(true);
+    setLoadError(false);
     try {
       const { data } = await get(`/${pluginId}/bookmarks`);
       console.log('[Magic-Mark HomePage] Bookmarks loaded:', data);
@@ -612,6 +614,8 @@ const HomePageModern: React.FC = () => {
       setBookmarks(data.data || []);
     } catch (error) {
       console.error('[Magic-Mark HomePage] Error fetching bookmarks:', error);
+      setBookmarks([]);
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
@@ -794,7 +798,20 @@ const HomePageModern: React.FC = () => {
       {/* Loading */}
       {loading && (
         <Flex justifyContent="center" padding={8}>
-          <Loader>{formatMessage({ id: `${pluginId}.loading`, defaultMessage: 'Loading bookmarks...' })}</Loader>
+          <Loader aria-label={formatMessage({ id: `${pluginId}.loading`, defaultMessage: 'Loading bookmarks...' })}>
+            {formatMessage({ id: `${pluginId}.loading`, defaultMessage: 'Loading bookmarks...' })}
+          </Loader>
+        </Flex>
+      )}
+
+      {!loading && loadError && (
+        <Flex role="alert" direction="column" alignItems="flex-start" gap={3} padding={6}>
+          <Typography variant="delta">
+            {formatMessage({ id: `${pluginId}.error.load`, defaultMessage: 'Bookmarks could not be loaded.' })}
+          </Typography>
+          <Button onClick={fetchBookmarks} variant="secondary">
+            {formatMessage({ id: `${pluginId}.button.retry`, defaultMessage: 'Try again' })}
+          </Button>
         </Flex>
       )}
 
@@ -855,6 +872,7 @@ const HomePageModern: React.FC = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={formatMessage({ id: `${pluginId}.search.placeholder`, defaultMessage: 'Search by name, description...' })}
+                aria-label={formatMessage({ id: `${pluginId}.search.placeholder`, defaultMessage: 'Search by name, description...' })}
                 type="text"
               />
             </SearchInputWrapper>
@@ -974,9 +992,13 @@ const HomePageModern: React.FC = () => {
                       <ActionButtons 
                         className="action-buttons"
                       >
-                        <Button
+                        {isCurrentUserOwner(bookmark) && <Button
                           variant={bookmark.isPinned ? "secondary" : "ghost"}
                           size="S"
+                          aria-label={formatMessage({
+                            id: `${pluginId}.button.${bookmark.isPinned ? 'unpin' : 'pin'}`,
+                            defaultMessage: bookmark.isPinned ? 'Unpin bookmark' : 'Pin bookmark',
+                          })}
                           onClick={(e) => {
                             e.stopPropagation();
                             handlePin(bookmark);
@@ -987,10 +1009,11 @@ const HomePageModern: React.FC = () => {
                           }}
                         >
                           <Pin />
-                        </Button>
+                        </Button>}
                         <Button
                           variant="ghost"
                           size="S"
+                          aria-label={formatMessage({ id: `${pluginId}.button.open`, defaultMessage: 'Open bookmark' })}
                           onClick={(e) => {
                             e.stopPropagation();
                             handleBookmarkClick(bookmark);
@@ -1002,6 +1025,7 @@ const HomePageModern: React.FC = () => {
                         <Button
                           variant="ghost"
                           size="S"
+                          aria-label={formatMessage({ id: `${pluginId}.button.edit`, defaultMessage: 'Edit bookmark' })}
                           onClick={(e) => {
                             e.stopPropagation();
                             handleEdit(bookmark);
@@ -1015,6 +1039,7 @@ const HomePageModern: React.FC = () => {
                           <Button
                             variant="ghost"
                             size="S"
+                            aria-label={formatMessage({ id: `${pluginId}.button.delete`, defaultMessage: 'Delete bookmark' })}
                             onClick={(e) => {
                               e.stopPropagation();
                               handleDelete(bookmark);
@@ -1034,7 +1059,7 @@ const HomePageModern: React.FC = () => {
       )}
 
       {/* Empty State */}
-      {!loading && bookmarks.length === 0 && (
+      {!loading && !loadError && bookmarks.length === 0 && (
         <Box
           style={{
             background: 'transparent',

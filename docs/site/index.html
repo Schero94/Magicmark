@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Install and configure Magicmark, a Strapi 5 plugin for saving, applying, and sharing Content Manager query bookmarks.">
+    <title>Magicmark | Strapi plugin documentation</title>
+    <link rel="stylesheet" href="./site.css">
+  </head>
+  <body>
+    <a class="skip-link" href="#main-content">Skip to content</a>
+
+    <header class="topbar">
+      <div class="topbar-inner">
+        <a class="brand" href="#main-content" aria-label="Magicmark documentation home">
+          <span class="brand-mark" aria-hidden="true">MM</span>
+          <span>Magicmark</span>
+        </a>
+        <nav class="top-links" aria-label="Primary navigation">
+          <a href="#features">Features</a>
+          <a href="#api">API</a>
+          <a href="#releases">Releases</a>
+        </nav>
+      </div>
+    </header>
+
+    <div class="hero-wrap">
+      <section class="hero" aria-labelledby="page-title">
+        <div class="hero-copy">
+          <span class="eyebrow">Strapi plugin</span>
+          <h1 id="page-title">Save the query. Reuse the view.</h1>
+          <p>Magicmark saves Content Manager queries as bookmarks. Apply them again later, or share them with selected admin users and roles.</p>
+          <div class="hero-actions">
+            <a class="button primary" href="#install">Install the plugin</a>
+            <a class="button" href="https://github.com/Schero94/Magicmark">View source</a>
+          </div>
+          <div class="badges" aria-label="Compatibility">
+            <span class="badge">Strapi ^5.57.0</span>
+            <span class="badge">Admin plugin</span>
+            <span class="badge">MIT license</span>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <main class="layout" id="main-content">
+      <nav class="side-nav" aria-label="Documentation sections">
+        <a href="#features">Features</a>
+        <a href="#install">Install</a>
+        <a href="#configuration">Configuration</a>
+        <a href="#security">Security</a>
+        <a href="#api">API</a>
+        <a href="#releases">Releases</a>
+      </nav>
+
+      <div class="content">
+        <section class="section" id="features" aria-labelledby="features-title">
+          <h2 id="features-title">Features</h2>
+          <p class="section-lead">Save Content Manager filters, sorting, search, and pagination, then restore that query from the Magicmark controls.</p>
+          <div class="card-grid">
+            <article class="card">
+              <h3>Save and apply queries</h3>
+              <p>Name and describe bookmarks, add an emoji, and apply saved query state from the Content Manager.</p>
+            </article>
+            <article class="card">
+              <h3>Organize bookmarks</h3>
+              <p>Pin bookmarks and change their order. The plugin also provides search and filtering in its admin view.</p>
+            </article>
+            <article class="card">
+              <h3>Choose who can see a bookmark</h3>
+              <p>Keep a bookmark private, share it with selected admin users or roles, or mark it public for signed-in admins.</p>
+            </article>
+            <article class="card">
+              <h3>Build advanced filters</h3>
+              <p>Use the advanced filter interface to compose multi-condition filters for Content Manager queries.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="section" id="install" aria-labelledby="install-title">
+          <h2 id="install-title">Install</h2>
+          <p class="section-lead">The package declares Strapi <code>^5.57.0</code> as a peer dependency. It does not declare a Node.js engine range. The release workflow uses Node.js 22.</p>
+          <div class="code-card">
+            <div class="code-label"><span>Install from npm</span></div>
+            <pre><code>npm install strapi-plugin-magic-mark</code></pre>
+          </div>
+          <p>Enable the plugin in <code>config/plugins.ts</code> (or <code>config/plugins.js</code>):</p>
+          <div class="code-card">
+            <div class="code-label"><span>config/plugins.ts</span></div>
+            <pre><code>export default () =&gt; ({
+  'magic-mark': {
+    enabled: true,
+  },
+});</code></pre>
+          </div>
+          <p>Then rebuild the Strapi admin panel with <code>npm run build</code>.</p>
+        </section>
+
+        <section class="section" id="configuration" aria-labelledby="configuration-title">
+          <h2 id="configuration-title">Configuration</h2>
+          <p class="section-lead">No custom setup is needed beyond enabling the plugin. The server configuration currently contains one option:</p>
+          <div class="table-wrap">
+            <table>
+              <caption>Magicmark server configuration</caption>
+              <thead>
+                <tr><th scope="col">Option</th><th scope="col">Default</th><th scope="col">Purpose</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><code>debug</code></td><td><code>false</code></td><td>Enables additional plugin debug logging when set to <code>true</code>.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>Bookmark limits are enforced by the plugin's license guard. There are no configuration options for limits, history, or automatic cleanup.</p>
+        </section>
+
+        <section class="section" id="security" aria-labelledby="security-title">
+          <h2 id="security-title">Security and permissions</h2>
+          <p class="section-lead">These routes belong to Strapi's admin API. They are not public Content API endpoints.</p>
+          <ul>
+            <li>Admin routes use registered <code>settings.read</code> and <code>settings.update</code> permission scopes. Read routes use the former; write routes use the latter.</li>
+            <li>Every admin route is assigned a registered permission scope. Bookmark controllers reject requests without an authenticated admin; update, delete, pin, and reorder also enforce ownership in the service.</li>
+            <li>Bookmark visibility is limited to its owner, selected users or roles, and bookmarks marked public. Public visibility does not remove admin authentication.</li>
+            <li>The included tests cover unauthenticated creation, route permission scopes, ownership checks, and denied cross-user changes.</li>
+          </ul>
+          <p class="callout warning">The license workflow can contact the package's license service when an admin activates or checks a license. This documentation page does not perform those requests.</p>
+        </section>
+
+        <section class="section" id="api" aria-labelledby="api-title">
+          <h2 id="api-title">Admin API</h2>
+          <p class="section-lead">Paths below are relative to the Strapi admin API route base. Requests require the matching Strapi admin permission.</p>
+          <div class="table-wrap">
+            <table>
+              <caption>Magicmark admin API routes</caption>
+              <thead>
+                <tr><th scope="col">Method</th><th scope="col">Path</th><th scope="col">Permission</th><th scope="col">Purpose</th></tr>
+              </thead>
+              <tbody>
+                <tr><td><code>GET</code></td><td><code>/magic-mark/bookmarks</code></td><td>Read</td><td>List bookmarks visible to the signed-in admin.</td></tr>
+                <tr><td><code>POST</code></td><td><code>/magic-mark/bookmarks</code></td><td>Update</td><td>Create a bookmark.</td></tr>
+                <tr><td><code>PUT</code></td><td><code>/magic-mark/bookmarks/:id</code></td><td>Update</td><td>Edit an owned bookmark and its sharing settings.</td></tr>
+                <tr><td><code>DELETE</code></td><td><code>/magic-mark/bookmarks/:id</code></td><td>Update</td><td>Delete an owned bookmark.</td></tr>
+                <tr><td><code>POST</code></td><td><code>/magic-mark/bookmarks/:id/pin</code></td><td>Update</td><td>Pin or unpin an owned bookmark.</td></tr>
+                <tr><td><code>POST</code></td><td><code>/magic-mark/bookmarks/reorder</code></td><td>Update</td><td>Reorder bookmarks owned by the signed-in admin.</td></tr>
+                <tr><td><code>GET</code></td><td><code>/magic-mark/roles</code>, <code>/magic-mark/users</code></td><td>Read</td><td>Load admin roles and users for sharing.</td></tr>
+                <tr><td><code>GET</code></td><td><code>/magic-mark/license/status</code>, <code>/magic-mark/license/limits</code></td><td>Read</td><td>Read license status and limits.</td></tr>
+                <tr><td><code>POST</code></td><td><code>/magic-mark/license/auto-create</code>, <code>/magic-mark/license/create</code>, <code>/magic-mark/license/ping</code>, <code>/magic-mark/license/store-key</code></td><td>Update</td><td>Manage license activation and checks.</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>The source declares no Content API routes. Admin route declarations are in <code>server/src/routes/admin.ts</code>.</p>
+        </section>
+
+        <section class="section" id="releases" aria-labelledby="releases-title">
+          <h2 id="releases-title">Releases and testing</h2>
+          <p class="section-lead">The main-branch release workflow uses semantic-release and publishes this public package to npm. Commit messages follow Conventional Commits.</p>
+          <div class="code-card">
+            <div class="code-label"><span>Run checks locally</span></div>
+            <pre><code>npm ci
+npm test
+npm run build
+npm run verify</code></pre>
+          </div>
+          <p>The workflow runs those checks before semantic-release. It uses Node.js 22 and an NPM_TOKEN secret to publish.</p>
+          <div class="link-list">
+            <a href="https://github.com/Schero94/Magicmark">GitHub repository</a>
+            <a href="https://github.com/Schero94/Magicmark/releases">GitHub releases</a>
+            <a href="https://www.npmjs.com/package/strapi-plugin-magic-mark">npm package</a>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <p>Magicmark is released under the MIT license.</p>
+      <p><a href="https://github.com/Schero94/Magicmark">Source code and issue tracker</a></p>
+    </footer>
+  </body>
+</html>

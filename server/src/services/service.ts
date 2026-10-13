@@ -3,6 +3,12 @@ import type { Core } from '@strapi/strapi';
 const BOOKMARK_UID = 'plugin::magic-mark.bookmark';
 const ADMIN_USER_UID = 'admin::user';
 
+const unauthorized = (message: string) => {
+  const error = new Error(message) as Error & { status: number };
+  error.status = 403;
+  return error;
+};
+
 /**
  * Bookmark Service
  * Handles all bookmark-related database operations
@@ -172,7 +178,7 @@ const bookmarkService = ({ strapi }: { strapi: Core.Strapi }) => ({
 
       // Check ownership via creatorId field
       if (!existingBookmark || (existingBookmark as any).creatorId !== userId) {
-        throw new Error('Unauthorized: You can only edit your own bookmarks');
+        throw unauthorized('Unauthorized: You can only edit your own bookmarks');
       }
 
       const bookmark = await strapi.documents(BOOKMARK_UID).update({
@@ -208,9 +214,7 @@ const bookmarkService = ({ strapi }: { strapi: Core.Strapi }) => ({
     try {
       const existingBookmark = await strapi.documents(BOOKMARK_UID).findOne({ documentId });
       if (!existingBookmark || (existingBookmark as any).creatorId !== userId) {
-        const error = new Error('Unauthorized: You can only delete your own bookmarks');
-        (error as any).status = 403;
-        throw error;
+        throw unauthorized('Unauthorized: You can only delete your own bookmarks');
       }
       return await strapi.documents(BOOKMARK_UID).delete({
         documentId
@@ -230,6 +234,11 @@ const bookmarkService = ({ strapi }: { strapi: Core.Strapi }) => ({
    */
   async pin(documentId: string, isPinned: boolean, userId: string) {
     try {
+      const existingBookmark = await strapi.documents(BOOKMARK_UID).findOne({ documentId });
+      if (!existingBookmark || (existingBookmark as any).creatorId !== userId) {
+        throw unauthorized('Unauthorized: You can only pin your own bookmarks');
+      }
+
       const bookmark = await strapi.documents(BOOKMARK_UID).update({
         documentId,
         data: {
@@ -252,6 +261,20 @@ const bookmarkService = ({ strapi }: { strapi: Core.Strapi }) => ({
    */
   async reorder(bookmarkIds: string[], userId: string) {
     try {
+      const bookmarks = await strapi.documents(BOOKMARK_UID).findMany({
+        filters: { documentId: { $in: bookmarkIds } },
+        fields: ['documentId', 'creatorId'],
+        limit: bookmarkIds.length,
+      });
+      const ownedIds = new Set((bookmarks || [])
+        .filter((bookmark: any) => bookmark.creatorId === userId)
+        .map((bookmark: any) => bookmark.documentId));
+
+      // Validate the complete batch before writing so a mixed-owner request is atomic.
+      if (ownedIds.size !== bookmarkIds.length || bookmarkIds.some((documentId) => !ownedIds.has(documentId))) {
+        throw unauthorized('Unauthorized: You can only reorder your own bookmarks');
+      }
+
       const updates = bookmarkIds.map((documentId, index) =>
         strapi.documents(BOOKMARK_UID).update({
           documentId,

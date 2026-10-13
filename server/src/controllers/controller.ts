@@ -1,6 +1,11 @@
 const ADMIN_ROLE_UID = 'admin::role';
 const ADMIN_USER_UID = 'admin::user';
 
+const preserveClientError = (error: any, ctx: any, message: string) => {
+  if ([400, 401, 403, 404].includes(error?.status)) throw error;
+  ctx.throw(500, message);
+};
+
 /**
  * Bookmark Controller
  * Handles HTTP requests for bookmark management
@@ -34,7 +39,7 @@ export default ({ strapi }: any) => ({
         }
       };
     } catch (error) {
-      ctx.throw(500, `Error fetching bookmarks: ${error}`);
+      preserveClientError(error, ctx, 'Error fetching bookmarks');
     }
   },
 
@@ -83,7 +88,7 @@ export default ({ strapi }: any) => ({
         data: bookmark
       };
     } catch (error) {
-      ctx.throw(500, `Error creating bookmark: ${error}`);
+      preserveClientError(error, ctx, 'Error creating bookmark');
     }
   },
 
@@ -120,7 +125,7 @@ export default ({ strapi }: any) => ({
         data: bookmark
       };
     } catch (error) {
-      ctx.throw(500, `Error updating bookmark: ${error}`);
+      preserveClientError(error, ctx, 'Error updating bookmark');
     }
   },
 
@@ -147,8 +152,7 @@ export default ({ strapi }: any) => ({
         data: { success: true }
       };
     } catch (error) {
-      if ((error as any)?.status === 403) throw error;
-      ctx.throw(500, `Error deleting bookmark: ${error}`);
+      preserveClientError(error, ctx, 'Error deleting bookmark');
     }
   },
 
@@ -177,7 +181,7 @@ export default ({ strapi }: any) => ({
         data: bookmark
       };
     } catch (error) {
-      ctx.throw(500, `Error pinning bookmark: ${error}`);
+      preserveClientError(error, ctx, 'Error pinning bookmark');
     }
   },
 
@@ -210,7 +214,7 @@ export default ({ strapi }: any) => ({
         data: bookmarks
       };
     } catch (error) {
-      ctx.throw(500, `Error reordering bookmarks: ${error}`);
+      preserveClientError(error, ctx, 'Error reordering bookmarks');
     }
   },
 
@@ -248,7 +252,7 @@ export default ({ strapi }: any) => ({
         }
       };
     } catch (error) {
-      ctx.throw(500, `Error fetching roles: ${error}`);
+      preserveClientError(error, ctx, 'Error fetching roles');
     }
   },
 
@@ -327,7 +331,7 @@ export default ({ strapi }: any) => ({
         }
       };
     } catch (error) {
-      ctx.throw(500, `Error fetching users: ${error}`);
+      preserveClientError(error, ctx, 'Error fetching users');
     }
   },
 });

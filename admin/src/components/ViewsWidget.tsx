@@ -134,7 +134,7 @@ const ViewsWidget: React.FC<ViewsWidgetProps> = () => {
     const url = `/magic-mark/bookmarks`;
     
     try {
-      const { data } = await get(url);
+      const { data } = await get<{ data?: any[] }>(url);
       setBookmarks(data.data || []);
     } catch (error) {
       console.error('[Magic-Mark] Error fetching bookmarks:', error);

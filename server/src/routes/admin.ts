@@ -1,6 +1,4 @@
-export default {
-  type: 'admin',
-  routes: [
+const routes = [
     // Get available roles for sharing
     {
       method: 'GET',
@@ -122,5 +120,17 @@ export default {
         policies: [],
       },
     },
-  ],
+];
+
+export default {
+  type: 'admin' as const,
+  routes: routes.map((route) => ({
+    ...route,
+    config: {
+      ...route.config,
+      auth: {
+        scope: [`plugin::magic-mark.settings.${route.method === 'GET' ? 'read' : 'update'}`],
+      },
+    },
+  })),
 };

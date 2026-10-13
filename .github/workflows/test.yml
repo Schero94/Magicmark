@@ -15,14 +15,14 @@ jobs:
     
     strategy:
       matrix:
-        node-version: [18.x, 20.x]
+        node-version: [22.x]
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
@@ -38,11 +38,11 @@ jobs:
         run: npm run test:ts:back
         continue-on-error: true
 
-      - name: Verify plugin integrity
-        run: npm run verify
-
       - name: Build plugin
         run: npm run build
+
+      - name: Verify plugin integrity
+        run: npm run verify
 
       - name: Verify build output
         run: |
@@ -62,12 +62,12 @@ jobs:
     
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: '18.x'
+          node-version: '22.x'
           cache: 'npm'
 
       - name: Install dependencies

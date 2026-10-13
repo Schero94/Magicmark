@@ -453,7 +453,7 @@ npm run verify
 
 ## 🚢 Releases
 
-Releases use semantic-release from the `main` branch. Use Conventional Commits so semantic-release can determine the next version. The release workflow runs `npm ci`, tests, the plugin build, and plugin verification before publishing to npm.
+Releases use semantic-release from the `main` branch. Use Conventional Commits so semantic-release can determine the next version. The release workflow runs `npm ci --legacy-peer-deps`, tests, the plugin build, and plugin verification before publishing to npm.
 
 - [GitHub releases](https://github.com/Schero94/Magicmark/releases)
 - [npm package](https://www.npmjs.com/package/strapi-plugin-magic-mark)

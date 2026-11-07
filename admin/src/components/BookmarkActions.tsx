@@ -14,6 +14,14 @@ import { useIntl } from 'react-intl';
 import type { Bookmark } from '../types';
 import { msg } from '../utils/translations';
 
+/**
+ * The IconButton tooltip of the menu trigger stays open while the modal menu is open and covers
+ * the last item (Delete) when the menu flips above the button. Menu.Trigger forwards its props
+ * to IconButton at runtime, but its types do not list `withTooltip`, hence the spread. The
+ * label stays the accessible name.
+ */
+const TRIGGER_WITHOUT_TOOLTIP: Record<string, unknown> = { withTooltip: false };
+
 export interface BookmarkPermissions {
   canCreate: boolean;
   canUpdate: boolean;
@@ -83,6 +91,7 @@ export const BookmarkActions = ({
             variant="ghost"
             disabled={busy}
             data-bookmark-menu={bookmark.documentId}
+            {...TRIGGER_WITHOUT_TOOLTIP}
           />
           {/* No max height, like the native row menu: all five actions stay visible. */}
           <Menu.Content popoverPlacement="bottom-end" maxHeight={undefined}>

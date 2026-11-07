@@ -127,4 +127,9 @@ test('table rows keep one button per cell, so Escape closes the row menu (ACC-UI
   assert.doesNotMatch(actions, /stopPropagation/);
   // Like the native row menu: no max height, so no action scrolls out of view.
   assert.match(actions, /<Menu\.Content popoverPlacement="bottom-end" maxHeight=\{undefined\}>/);
+  assert.match(actions, /\{\.\.\.TRIGGER_WITHOUT_TOOLTIP\}\s*\/>/);
+  assert.match(
+    actions,
+    /TRIGGER_WITHOUT_TOOLTIP: Record<string, unknown> = \{ withTooltip: false \}/
+  );
 });

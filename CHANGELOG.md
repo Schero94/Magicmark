@@ -65,6 +65,9 @@ on several Strapi processes at once.
   security, performance, running several instances, upgrade notes, FAQ; the site has dark mode,
   Open Graph and structured data.
 - The bookmark name link has a 32 px target height.
+- The pagination of the bookmarks page fits phones: below 768 px it shows only the current page
+  between the first and the last, and below 520 px it leaves out the page size select. Before, it
+  ran past the right edge at 390 px and 320 px.
 
 ### Fixed
 

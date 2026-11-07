@@ -34,6 +34,8 @@ import {
   SearchInput,
   useClipboard,
   useIsDesktop,
+  useIsMobile,
+  useMediaQuery,
   useNotification,
   useQueryParams,
   useRBAC,
@@ -41,6 +43,7 @@ import {
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useIntl } from 'react-intl';
 import { NavLink, useHref } from 'react-router-dom';
+import { useTheme } from 'styled-components';
 import { BookmarkActions } from '../components/BookmarkActions';
 import { BookmarkFormModal } from '../components/BookmarkFormModal';
 import { useBookmarksApi } from '../hooks/useBookmarksApi';
@@ -106,6 +109,12 @@ export const BookmarksPage = () => {
   // Below the large breakpoint the seven-column table would scroll horizontally and hide the
   // row actions, so tablets and phones get cards that show the same information.
   const showCards = !useIsDesktop();
+  // The admin's pagination row does not wrap. On phones it shows only the current page between
+  // the first and last page, and below the small breakpoint (520 px) it drops the page size
+  // select, so the row fits 320 px.
+  const theme = useTheme();
+  const isMobile = useIsMobile();
+  const showPageSize = useMediaQuery(theme.breakpoints.small);
   const { names } = useContentTypeNames();
   const { allowedActions } = useRBAC(ALL_PERMISSIONS);
   const [{ query }, setQuery] = useQueryParams<PageQuery>();
@@ -624,8 +633,8 @@ export const BookmarksPage = () => {
               total={pagination.total}
               defaultPageSize={25}
             >
-              <Pagination.PageSize />
-              <Pagination.Links />
+              {showPageSize ? <Pagination.PageSize /> : null}
+              <Pagination.Links siblingCount={isMobile ? 0 : 1} />
             </Pagination.Root>
           ) : null}
         </Flex>

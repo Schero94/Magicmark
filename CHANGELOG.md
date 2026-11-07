@@ -66,6 +66,8 @@ on several Strapi processes at once.
   Open Graph and structured data.
 - Bookmark links on the page, in the Bookmarks popover and in the homepage widget, and the "Add
   condition" button, have a 32 px target height without moving their text.
+- The Roles field in the bookmark dialog lists the chosen roles as text. Design System 2.2.4 tags
+  had remove buttons without an accessible name; roles are removed by unticking them in the list.
 - Tab no longer leaves the bookmark dialog and the Advanced filters dialog. Design System 2.2.4
   pauses a Modal's focus trap when it contains a Combobox; both dialogs now loop focus themselves.
 - The pagination of the bookmarks page fits phones: below 768 px it shows only the current page

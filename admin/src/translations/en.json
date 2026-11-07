@@ -44,6 +44,7 @@
   "form.description": "Description",
   "form.descriptionHint": "Optional. Shown below the name.",
   "form.descriptionTooLong": "Use at most {max} characters.",
+  "form.discardBody": "Close without saving? Your changes to this bookmark will be lost.",
   "form.editTitle": "Edit bookmark",
   "form.icon": "Icon",
   "form.loadError": "The bookmark could not be loaded.",

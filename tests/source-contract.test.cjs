@@ -84,3 +84,16 @@ test('no hand-written query parser: saved queries go through qs with prototypes 
   assert.match(query, /allowPrototypes: false/);
   assertNone(adminFiles, /new URLSearchParams/, 'hand parsing');
 });
+
+test('a changed bookmark form asks before closing, like the native Blocker (ACC-UI-02)', () => {
+  const form = read(path.join(root, 'admin/src/components/BookmarkFormModal.tsx'));
+  assert.match(form, /<Modal\.Root open=\{open\} onOpenChange=\{handleOpenChange\}>/);
+  assert.match(form, /if \(!next && isDirty && !saving\)/);
+  assert.match(form, /<ConfirmDialog[\s\S]*form\.discardBody/);
+});
+
+test('deleting a bookmark moves focus to the page content, never <body> (ACC-UI-01)', () => {
+  const page = read(path.join(root, 'admin/src/pages/BookmarksPage.tsx'));
+  assert.match(page, /focusMainAfterLoad\.current = true;\s*reload\(\);/);
+  assert.match(page, /getElementById\('main-content'\)\?\.focus\(\)/);
+});

@@ -38,7 +38,7 @@ import {
   useQueryParams,
   useRBAC,
 } from '@strapi/strapi/admin';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useIntl } from 'react-intl';
 import { NavLink, useHref } from 'react-router-dom';
 import { BookmarkActions } from '../components/BookmarkActions';
@@ -108,6 +108,7 @@ export const BookmarksPage = () => {
   const [editId, setEditId] = useState<string | null>(null);
   const [toDelete, setToDelete] = useState<Bookmark | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const focusMainAfterLoad = useRef(false);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -128,6 +129,19 @@ export const BookmarksPage = () => {
       });
     return () => controller.abort();
   }, [api, page, pageSize, query._q, query.contentType, scope, sort, attempt, setQuery]);
+
+  // After a delete the row and its menu trigger are gone. Move focus to the page content (the
+  // skip-link target rendered by Page.Main) instead of letting it fall back to <body>.
+  useEffect(() => {
+    if (!focusMainAfterLoad.current || status !== 'ready') return undefined;
+    focusMainAfterLoad.current = false;
+    const timer = window.setTimeout(() => {
+      if (!document.activeElement || document.activeElement === document.body) {
+        document.getElementById('main-content')?.focus();
+      }
+    }, 50);
+    return () => window.clearTimeout(timer);
+  }, [result, status]);
 
   const reload = useCallback(() => setAttempt((n) => n + 1), []);
   const retry = () => {
@@ -231,6 +245,7 @@ export const BookmarksPage = () => {
         message: formatMessage(msg('notification.deleted', 'Bookmark deleted.')),
       });
       setToDelete(null);
+      focusMainAfterLoad.current = true;
       reload();
     } catch {
       toggleNotification({

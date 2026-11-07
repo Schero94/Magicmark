@@ -44,6 +44,7 @@
   "form.description": "Description",
   "form.descriptionHint": "Facultatif. Affichée sous le nom.",
   "form.descriptionTooLong": "Utilisez au maximum {max} caractères.",
+  "form.discardBody": "Fermer sans enregistrer ? Les modifications de ce favori seront perdues.",
   "form.editTitle": "Modifier le favori",
   "form.icon": "Icône",
   "form.loadError": "Le favori n'a pas pu être chargé.",

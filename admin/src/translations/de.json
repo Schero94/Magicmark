@@ -44,6 +44,7 @@
   "form.description": "Beschreibung",
   "form.descriptionHint": "Optional. Wird unter dem Namen angezeigt.",
   "form.descriptionTooLong": "Höchstens {max} Zeichen verwenden.",
+  "form.discardBody": "Ohne Speichern schließen? Die Änderungen an diesem Lesezeichen gehen verloren.",
   "form.editTitle": "Lesezeichen bearbeiten",
   "form.icon": "Symbol",
   "form.loadError": "Das Lesezeichen konnte nicht geladen werden.",

@@ -44,6 +44,7 @@
   "form.description": "Descripción",
   "form.descriptionHint": "Opcional. Se muestra debajo del nombre.",
   "form.descriptionTooLong": "Use como máximo {max} caracteres.",
+  "form.discardBody": "¿Cerrar sin guardar? Los cambios en este marcador se perderán.",
   "form.editTitle": "Editar marcador",
   "form.icon": "Icono",
   "form.loadError": "No se pudo cargar el marcador.",

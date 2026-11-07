@@ -44,6 +44,7 @@
   "form.description": "Descrição",
   "form.descriptionHint": "Opcional. Exibida abaixo do nome.",
   "form.descriptionTooLong": "Use no máximo {max} caracteres.",
+  "form.discardBody": "Fechar sem salvar? As alterações neste favorito serão perdidas.",
   "form.editTitle": "Editar favorito",
   "form.icon": "Ícone",
   "form.loadError": "Não foi possível carregar o favorito.",

@@ -5,10 +5,14 @@
  * and shown read-only at the top, then name, description, icon and, with the share
  * permission, who can see it. Edit: the same form without the capture; the saved view is
  * changed with "Update with current view" in the Content Manager.
+ *
+ * Closing a changed form (Escape, Close, Cancel) asks first, like the native Content Manager
+ * Blocker: a ConfirmDialog whose Cancel keeps the edits.
  */
 import {
   Box,
   Button,
+  Dialog,
   Field,
   Flex,
   Loader,
@@ -19,7 +23,7 @@ import {
   Textarea,
   Typography,
 } from '@strapi/design-system';
-import { useNotification } from '@strapi/strapi/admin';
+import { ConfirmDialog, useNotification } from '@strapi/strapi/admin';
 import { useEffect, useState } from 'react';
 import { useIntl } from 'react-intl';
 import { useBookmarksApi } from '../hooks/useBookmarksApi';
@@ -51,6 +55,17 @@ interface BookmarkFormModalProps {
 }
 
 const NAME_MAX = 100;
+
+/** Comparable snapshot of the editable fields, used to detect unsaved changes. */
+const snapshot = (name: string, description: string, icon: string, sharing: SharingValue) =>
+  JSON.stringify([
+    name,
+    description,
+    icon,
+    sharing.visibility,
+    [...sharing.roles].sort(),
+    sharing.users.map((user) => user.documentId).sort(),
+  ]);
 const DESCRIPTION_MAX = 500;
 
 /**
@@ -83,6 +98,10 @@ export const BookmarkFormModal = ({
   const [loadFailed, setLoadFailed] = useState(false);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [initial, setInitial] = useState(() =>
+    snapshot('', '', 'bookmark', { visibility: 'private', roles: [], users: [] })
+  );
+  const [confirmDiscard, setConfirmDiscard] = useState(false);
 
   // The modal is mounted when it opens; in edit mode it loads the bookmark once.
   useEffect(() => {
@@ -92,15 +111,19 @@ export const BookmarkFormModal = ({
       .get(bookmarkId)
       .then((bookmark) => {
         if (!active) return;
+        const loadedSharing: SharingValue = {
+          visibility: bookmark.visibility,
+          roles: bookmark.sharing?.roles.map((role) => role.documentId) ?? [],
+          users: bookmark.sharing?.users ?? [],
+        };
         setLoaded(bookmark);
         setName(bookmark.name);
         setDescription(bookmark.description ?? '');
         setIcon(bookmark.icon);
-        setSharing({
-          visibility: bookmark.visibility,
-          roles: bookmark.sharing?.roles.map((role) => role.documentId) ?? [],
-          users: bookmark.sharing?.users ?? [],
-        });
+        setSharing(loadedSharing);
+        setInitial(
+          snapshot(bookmark.name, bookmark.description ?? '', bookmark.icon, loadedSharing)
+        );
       })
       .catch(() => active && setLoadFailed(true))
       .finally(() => active && setLoading(false));
@@ -203,6 +226,17 @@ export const BookmarkFormModal = ({
     }
   };
 
+  const isDirty = !loading && !loadFailed && snapshot(name, description, icon, sharing) !== initial;
+
+  /** Closing a changed form asks first; saving closes directly through `onOpenChange`. */
+  const handleOpenChange = (next: boolean) => {
+    if (!next && isDirty && !saving) {
+      setConfirmDiscard(true);
+      return;
+    }
+    onOpenChange(next);
+  };
+
   const title = isEdit
     ? formatMessage(msg('form.editTitle', 'Edit bookmark'))
     : formatMessage(msg('form.createTitle', 'Save view as bookmark'));
@@ -210,95 +244,115 @@ export const BookmarkFormModal = ({
   const query = view?.query ?? loaded?.query ?? '';
 
   return (
-    <Modal.Root open={open} onOpenChange={onOpenChange}>
-      <Modal.Content>
-        <Modal.Header closeLabel={formatMessage(msg('form.close', 'Close'))}>
-          <Modal.Title>{title}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          {loading ? (
-            <Flex justifyContent="center" padding={6}>
-              <Loader small>{formatMessage(msg('state.loading', 'Loading'))}</Loader>
-            </Flex>
-          ) : loadFailed ? (
-            <Typography textColor="danger600">
-              {formatMessage(msg('form.loadError', 'The bookmark could not be loaded.'))}
-            </Typography>
-          ) : (
-            <Flex direction="column" alignItems="stretch" gap={6}>
-              <Box background="neutral100" hasRadius padding={4}>
-                <Flex direction="column" alignItems="stretch" gap={2}>
-                  <Typography variant="sigma" textColor="neutral600" tag="h3">
-                    {formatMessage(msg('form.savedView', 'Saved view'))}
-                  </Typography>
-                  <Typography fontWeight="semiBold">
-                    {view?.contentTypeName ??
-                      (contentType ? (names.get(contentType) ?? contentType) : '')}
-                  </Typography>
-                  <FilterSummary contentType={contentType} query={query} />
-                </Flex>
-              </Box>
+    <>
+      <Modal.Root open={open} onOpenChange={handleOpenChange}>
+        <Modal.Content>
+          <Modal.Header closeLabel={formatMessage(msg('form.close', 'Close'))}>
+            <Modal.Title>{title}</Modal.Title>
+          </Modal.Header>
+          <Modal.Body>
+            {loading ? (
+              <Flex justifyContent="center" padding={6}>
+                <Loader small>{formatMessage(msg('state.loading', 'Loading'))}</Loader>
+              </Flex>
+            ) : loadFailed ? (
+              <Typography textColor="danger600">
+                {formatMessage(msg('form.loadError', 'The bookmark could not be loaded.'))}
+              </Typography>
+            ) : (
+              <Flex direction="column" alignItems="stretch" gap={6}>
+                <Box background="neutral100" hasRadius padding={4}>
+                  <Flex direction="column" alignItems="stretch" gap={2}>
+                    <Typography variant="sigma" textColor="neutral600" tag="h3">
+                      {formatMessage(msg('form.savedView', 'Saved view'))}
+                    </Typography>
+                    <Typography fontWeight="semiBold">
+                      {view?.contentTypeName ??
+                        (contentType ? (names.get(contentType) ?? contentType) : '')}
+                    </Typography>
+                    <FilterSummary contentType={contentType} query={query} />
+                  </Flex>
+                </Box>
 
-              <Field.Root name="name" error={errors.name} required>
-                <Field.Label>{formatMessage(msg('form.name', 'Name'))}</Field.Label>
-                <TextInput
-                  value={name}
-                  maxLength={NAME_MAX}
-                  onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                    setName(event.target.value)
-                  }
-                  placeholder={formatMessage(
-                    msg('form.namePlaceholder', 'e.g. Drafts waiting for review')
+                <Field.Root name="name" error={errors.name} required>
+                  <Field.Label>{formatMessage(msg('form.name', 'Name'))}</Field.Label>
+                  <TextInput
+                    value={name}
+                    maxLength={NAME_MAX}
+                    onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                      setName(event.target.value)
+                    }
+                    placeholder={formatMessage(
+                      msg('form.namePlaceholder', 'e.g. Drafts waiting for review')
+                    )}
+                  />
+                  <Field.Error />
+                </Field.Root>
+
+                <Field.Root
+                  name="description"
+                  error={errors.description}
+                  hint={formatMessage(
+                    msg('form.descriptionHint', 'Optional. Shown below the name.')
                   )}
-                />
-                <Field.Error />
-              </Field.Root>
-
-              <Field.Root
-                name="description"
-                error={errors.description}
-                hint={formatMessage(msg('form.descriptionHint', 'Optional. Shown below the name.'))}
-              >
-                <Field.Label>{formatMessage(msg('form.description', 'Description'))}</Field.Label>
-                <Textarea
-                  value={description}
-                  onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
-                    setDescription(event.target.value)
-                  }
-                />
-                <Field.Hint />
-                <Field.Error />
-              </Field.Root>
-
-              <Field.Root name="icon">
-                <Field.Label>{formatMessage(msg('form.icon', 'Icon'))}</Field.Label>
-                <SingleSelect
-                  value={icon}
-                  onChange={(value: string | number) => setIcon(String(value))}
                 >
-                  {ICON_OPTIONS.map(({ key, Icon }) => (
-                    <SingleSelectOption key={key} value={key} startIcon={<Icon aria-hidden />}>
-                      {formatMessage(ICON_LABELS[key])}
-                    </SingleSelectOption>
-                  ))}
-                </SingleSelect>
-              </Field.Root>
+                  <Field.Label>{formatMessage(msg('form.description', 'Description'))}</Field.Label>
+                  <Textarea
+                    value={description}
+                    onChange={(event: React.ChangeEvent<HTMLTextAreaElement>) =>
+                      setDescription(event.target.value)
+                    }
+                  />
+                  <Field.Hint />
+                  <Field.Error />
+                </Field.Root>
 
-              {canShare ? (
-                <SharingFields value={sharing} onChange={setSharing} error={errors.roles} />
-              ) : null}
-            </Flex>
+                <Field.Root name="icon">
+                  <Field.Label>{formatMessage(msg('form.icon', 'Icon'))}</Field.Label>
+                  <SingleSelect
+                    value={icon}
+                    onChange={(value: string | number) => setIcon(String(value))}
+                  >
+                    {ICON_OPTIONS.map(({ key, Icon }) => (
+                      <SingleSelectOption key={key} value={key} startIcon={<Icon aria-hidden />}>
+                        {formatMessage(ICON_LABELS[key])}
+                      </SingleSelectOption>
+                    ))}
+                  </SingleSelect>
+                </Field.Root>
+
+                {canShare ? (
+                  <SharingFields value={sharing} onChange={setSharing} error={errors.roles} />
+                ) : null}
+              </Flex>
+            )}
+          </Modal.Body>
+          <Modal.Footer>
+            <Modal.Close>
+              <Button variant="tertiary">{formatMessage(msg('form.cancel', 'Cancel'))}</Button>
+            </Modal.Close>
+            <Button onClick={submit} loading={saving} disabled={loading || loadFailed}>
+              {formatMessage(msg('form.save', 'Save'))}
+            </Button>
+          </Modal.Footer>
+        </Modal.Content>
+      </Modal.Root>
+      <Dialog.Root open={confirmDiscard} onOpenChange={setConfirmDiscard}>
+        <ConfirmDialog
+          variant="danger"
+          onConfirm={() => {
+            setConfirmDiscard(false);
+            onOpenChange(false);
+          }}
+        >
+          {formatMessage(
+            msg(
+              'form.discardBody',
+              'Close without saving? Your changes to this bookmark will be lost.'
+            )
           )}
-        </Modal.Body>
-        <Modal.Footer>
-          <Modal.Close>
-            <Button variant="tertiary">{formatMessage(msg('form.cancel', 'Cancel'))}</Button>
-          </Modal.Close>
-          <Button onClick={submit} loading={saving} disabled={loading || loadFailed}>
-            {formatMessage(msg('form.save', 'Save'))}
-          </Button>
-        </Modal.Footer>
-      </Modal.Content>
-    </Modal.Root>
+        </ConfirmDialog>
+      </Dialog.Root>
+    </>
   );
 };

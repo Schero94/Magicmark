@@ -127,3 +127,9 @@ test('list query schema bounds page size and rejects unknown params', () => {
   });
   assert.throws(() => v.parse(v.idParamSchema, { id: '../x' }), { name: 'ValidationError' });
 });
+
+test('a search text up to 1000 characters can be saved, like a filter value (MM-RA-3)', () => {
+  const long = 'a'.repeat(1000);
+  assert.equal(qs.parse(v.normalizeListViewQuery(`_q=${long}`))._q, long);
+  assert.equal(v.normalizeListViewQuery(`_q=${long}a`), null);
+});

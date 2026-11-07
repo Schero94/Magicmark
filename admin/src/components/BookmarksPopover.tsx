@@ -1,6 +1,10 @@
 /**
  * Bookmarks of the current content type in a Design System popover, opened from the list
  * view toolbar. Loads when it opens; pinned bookmarks first.
+ *
+ * The popover shows at most POPOVER_LIMIT bookmarks. Pinned bookmarks are requested on their
+ * own, so a pin is never cut off by the limit; when the content type has more bookmarks, the
+ * footer link says how many and opens the bookmarks page filtered by the content type.
  */
 import {
   Box,
@@ -24,6 +28,7 @@ import { bookmarkLocation, useOpenBookmark } from '../hooks/useOpenBookmark';
 import { useContentTypeNames } from '../hooks/useSchemas';
 import pluginId from '../pluginId';
 import type { Bookmark } from '../types';
+import { fieldErrors } from '../utils/errors';
 import { getIcon } from '../utils/icons';
 import { type ListViewLocation, pickSavedQuery } from '../utils/listView';
 import { stringifyQuery } from '../utils/query';
@@ -36,6 +41,9 @@ interface BookmarksPopoverProps {
   canUpdate: boolean;
   canShare: boolean;
 }
+
+/** Most bookmarks the popover lists; the bookmarks page shows the rest. */
+const POPOVER_LIMIT = 100;
 
 /** Pinned first, then by name. */
 const sortBookmarks = (list: Bookmark[]) =>
@@ -58,6 +66,7 @@ export const BookmarksPopover = ({
   const { names } = useContentTypeNames();
   const [open, setOpen] = useState(false);
   const [items, setItems] = useState<Bookmark[]>([]);
+  const [total, setTotal] = useState(0);
   const [status, setStatus] = useState<'idle' | 'loading' | 'error' | 'ready'>('idle');
   const [busyId, setBusyId] = useState<string | null>(null);
   const [captured, setCaptured] = useState<CapturedView | null>(null);
@@ -65,8 +74,19 @@ export const BookmarksPopover = ({
   const load = useCallback(async () => {
     setStatus('loading');
     try {
-      const result = await api.list({ contentType: listView.uid, pageSize: 100, sort: 'name:asc' });
-      setItems(sortBookmarks(result.data));
+      const base = {
+        contentType: listView.uid,
+        pageSize: POPOVER_LIMIT,
+        sort: 'name:asc' as const,
+      };
+      const [pinned, all] = await Promise.all([
+        api.list({ ...base, scope: 'pinned' }),
+        api.list(base),
+      ]);
+      const pinnedIds = new Set(pinned.data.map((b) => b.documentId));
+      const rest = all.data.filter((b) => !pinnedIds.has(b.documentId));
+      setItems(sortBookmarks([...pinned.data, ...rest]).slice(0, POPOVER_LIMIT));
+      setTotal(all.meta.pagination.total);
       setStatus('ready');
     } catch {
       setStatus('error');
@@ -128,11 +148,16 @@ export const BookmarksPopover = ({
           }
         ),
       });
-    } catch {
+    } catch (error) {
       toggleNotification({
         type: 'danger',
         message: formatMessage(
-          msg('notification.viewUpdateError', 'The bookmark could not be updated.')
+          fieldErrors(error).query
+            ? msg(
+                'form.queryTooLong',
+                'This view cannot be saved: the search text or a filter value is too long. Shorten it in the list and try again.'
+              )
+            : msg('notification.viewUpdateError', 'The bookmark could not be updated.')
         ),
       });
     } finally {
@@ -296,9 +321,19 @@ export const BookmarksPopover = ({
               ) : null}
 
               <Divider />
-              <Link tag={NavLink} to={`/plugins/${pluginId}`} onClick={() => setOpen(false)}>
-                {formatMessage(msg('popover.manage', 'Manage bookmarks'))}
-              </Link>
+              {status === 'ready' && total > items.length ? (
+                <Link
+                  tag={NavLink}
+                  to={`/plugins/${pluginId}?contentType=${encodeURIComponent(listView.uid)}`}
+                  onClick={() => setOpen(false)}
+                >
+                  {formatMessage(msg('popover.showAll', 'Show all {total} bookmarks'), { total })}
+                </Link>
+              ) : (
+                <Link tag={NavLink} to={`/plugins/${pluginId}`} onClick={() => setOpen(false)}>
+                  {formatMessage(msg('popover.manage', 'Manage bookmarks'))}
+                </Link>
+              )}
             </Flex>
           </Box>
         </Popover.Content>

@@ -4,8 +4,11 @@
  * Access model
  * - A viewer sees a bookmark when they own it, it is public, it is shared with them, or it is
  *   shared with one of their roles. Everything else answers 404, like a missing bookmark.
- * - Owners edit and delete their bookmarks; holders of `bookmarks.manage` edit and delete every
- *   bookmark they can see. Changing who a bookmark is shared with needs `bookmarks.share`.
+ * - Owners edit and delete their bookmarks. Holders of `bookmarks.manage` edit and delete every
+ *   bookmark that is not private: public ones, ones shared with anyone (also when they are not a
+ *   recipient) and ones without an owner, which covers bookmarks left by deleted users. Private
+ *   bookmarks of other users stay hidden from managers too. Managers list these bookmarks with
+ *   the `managed` scope. Changing who a bookmark is shared with needs `bookmarks.share`.
  * - Pins are per user (bookmark-preference rows), so pinning never changes other users' lists.
  *
  * All reads are filtered and paginated in the database; owner names, pins and share flags of a
@@ -23,7 +26,12 @@ import {
   PREFERENCE_UID,
   SHARE_UID,
 } from '../constants';
-import { ICON_KEYS, normalizeListViewPath, type Visibility } from '../validation';
+import {
+  ICON_KEYS,
+  normalizeListViewPath,
+  normalizeListViewQuery,
+  type Visibility,
+} from '../validation';
 
 /** The admin user performing a request, reduced to what access checks need. */
 export interface Viewer {
@@ -38,7 +46,7 @@ export interface ListParams {
   page?: number;
   pageSize?: number;
   q?: string;
-  scope?: 'all' | 'mine' | 'shared' | 'pinned';
+  scope?: 'all' | 'mine' | 'shared' | 'pinned' | 'managed';
   sort?: 'name:asc' | 'name:desc' | 'updatedAt:desc' | 'updatedAt:asc';
   contentType?: string;
 }
@@ -163,6 +171,27 @@ const bookmarkService = ({ strapi }: { strapi: Core.Strapi }) => {
   };
 
   /**
+   * Filter that matches every bookmark a holder of `bookmarks.manage` may manage: the viewer's
+   * own, public ones, ones with at least one share row and ones without an owner. Private
+   * bookmarks of other users are not included.
+   * @param viewer - Current viewer (must have `canManage`).
+   * @returns Document Service filter object.
+   */
+  const managedFilter = async (viewer: Viewer) => {
+    const rows = await db.query(SHARE_UID).findMany({ select: ['bookmarkDocumentId'] });
+    const shared = [
+      ...new Set(rows.map((row: { bookmarkDocumentId: string }) => row.bookmarkDocumentId)),
+    ];
+    const or: Record<string, unknown>[] = [
+      { creatorId: viewer.userId },
+      { isPublic: true },
+      { creatorId: { $null: true } },
+    ];
+    if (shared.length) or.push({ documentId: { $in: shared } });
+    return { $or: or };
+  };
+
+  /**
    * Pinned bookmark documentIds of a user, optionally limited to `ids`.
    */
   const pinnedIds = async (userId: string, ids?: string[]): Promise<Set<string>> => {
@@ -242,7 +271,7 @@ const bookmarkService = ({ strapi }: { strapi: Core.Strapi }) => {
   };
 
   /**
-   * Loads one bookmark the viewer may see.
+   * Loads one bookmark the viewer may see. Managers also reach every non-private bookmark.
    * @throws {errors.NotFoundError} When it does not exist or is not visible to the viewer.
    */
   const findVisible = async (viewer: Viewer, documentId: string): Promise<BookmarkRow> => {
@@ -251,8 +280,23 @@ const bookmarkService = ({ strapi }: { strapi: Core.Strapi }) => {
       filters: { $and: [{ documentId }, access] },
       fields: BOOKMARK_FIELDS,
     });
-    if (!row) throw notFound();
-    return row as unknown as BookmarkRow;
+    if (row) return row as unknown as BookmarkRow;
+    if (viewer.canManage) {
+      // Managers may also reach bookmarks they are not a recipient of, as long as they are
+      // not private (public, shared with anyone, or without an owner).
+      const candidate = (await documents().findFirst({
+        filters: { documentId },
+        fields: BOOKMARK_FIELDS,
+      })) as unknown as BookmarkRow | null;
+      if (candidate) {
+        if (candidate.isPublic || !candidate.creatorId) return candidate;
+        const shares = await db.query(SHARE_UID).count({
+          where: { bookmarkDocumentId: documentId },
+        });
+        if (shares > 0) return candidate;
+      }
+    }
+    throw notFound();
   };
 
   /**
@@ -334,7 +378,12 @@ const bookmarkService = ({ strapi }: { strapi: Core.Strapi }) => {
     async list(viewer: Viewer, params: ListParams) {
       const page = params.page ?? 1;
       const pageSize = Math.min(params.pageSize ?? 25, LIMITS.pageSizeMax);
-      const and: Record<string, unknown>[] = [await accessFilter(viewer)];
+      if (params.scope === 'managed' && !viewer.canManage) {
+        throw new errors.ForbiddenError('Listing all shared bookmarks needs the manage permission');
+      }
+      const and: Record<string, unknown>[] = [
+        params.scope === 'managed' ? await managedFilter(viewer) : await accessFilter(viewer),
+      ];
 
       if (params.scope === 'mine') and.push({ creatorId: viewer.userId });
       if (params.scope === 'shared') {
@@ -493,7 +542,8 @@ const bookmarkService = ({ strapi }: { strapi: Core.Strapi }) => {
           ? (source.emoji as BookmarkInput['icon'])
           : 'bookmark',
         path: normalized,
-        query: source.query ?? '',
+        // Rows from 3.x or older builds may hold an unnormalised query; never copy it as is.
+        query: normalizeListViewQuery(source.query) ?? '',
       });
     },
 

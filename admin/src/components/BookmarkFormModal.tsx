@@ -10,6 +10,7 @@
  * Blocker: a ConfirmDialog whose Cancel keeps the edits.
  */
 import {
+  Alert,
   Box,
   Button,
   Dialog,
@@ -98,6 +99,9 @@ export const BookmarkFormModal = ({
   const [loadFailed, setLoadFailed] = useState(false);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  // Set when the server rejects the captured list view itself (search or filter too long);
+  // no form field can fix that, so it is shown as an Alert above the form.
+  const [queryRejected, setQueryRejected] = useState(false);
   const [initial, setInitial] = useState(() =>
     snapshot('', '', 'bookmark', { visibility: 'private', roles: [], users: [] })
   );
@@ -198,6 +202,7 @@ export const BookmarkFormModal = ({
       onOpenChange(false);
     } catch (error) {
       const fields = fieldErrors(error);
+      setQueryRejected(!!fields.query);
       if (Object.keys(fields).length) {
         setErrors({
           ...(fields.name
@@ -212,6 +217,7 @@ export const BookmarkFormModal = ({
             : {}),
         });
       }
+      if (fields.query) return;
       toggleNotification({
         type: 'danger',
         message: formatMessage(
@@ -261,6 +267,20 @@ export const BookmarkFormModal = ({
               </Typography>
             ) : (
               <Flex direction="column" alignItems="stretch" gap={6}>
+                {queryRejected ? (
+                  <Alert
+                    variant="danger"
+                    closeLabel={formatMessage(msg('form.close', 'Close'))}
+                    onClose={() => setQueryRejected(false)}
+                  >
+                    {formatMessage(
+                      msg(
+                        'form.queryTooLong',
+                        'This view cannot be saved: the search text or a filter value is too long. Shorten it in the list and try again.'
+                      )
+                    )}
+                  </Alert>
+                ) : null}
                 <Box background="neutral100" hasRadius padding={4}>
                   <Flex direction="column" alignItems="stretch" gap={2}>
                     <Typography variant="sigma" textColor="neutral600" tag="h3">

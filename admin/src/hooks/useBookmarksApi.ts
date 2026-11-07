@@ -17,7 +17,7 @@ export interface ListParams {
   page?: number;
   pageSize?: number;
   q?: string;
-  scope?: 'all' | 'mine' | 'shared' | 'pinned';
+  scope?: 'all' | 'mine' | 'shared' | 'pinned' | 'managed';
   sort?: string;
   contentType?: string;
 }

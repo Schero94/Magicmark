@@ -279,3 +279,66 @@ test('user search excludes the caller and inactive users and hides email without
     'email is not searchable without admin::users.read'
   );
 });
+
+test('managers reach shared bookmarks of deleted users they are not a recipient of (MM-RA-1)', async () => {
+  const { strapi, service } = setup();
+  const shared = await create(service, 'owner', {
+    name: 'Orphan',
+    visibility: 'shared',
+    users: ['editor'],
+  });
+  const priv = await create(service, 'owner', { name: 'Private' });
+  // The owner is deleted: the shared bookmark stays and shows "Deleted user".
+  strapi.table('admin::user').splice(
+    strapi.table('admin::user').findIndex((u) => u.documentId === 'owner'),
+    1
+  );
+  const manager = viewer('outsider', [], { canManage: true });
+
+  const one = await service.findOne(manager, shared.documentId);
+  assert.equal(one.owner.isDeleted, true);
+  assert.equal(one.canEdit, true);
+  await assert.rejects(service.findOne(manager, priv.documentId), { name: 'NotFoundError' });
+
+  const managed = await service.list(manager, { scope: 'managed' });
+  assert.deepEqual(
+    managed.results.map((b) => b.name),
+    ['Orphan'],
+    'the managed scope lists shared bookmarks but never private ones of others'
+  );
+  assert.equal((await service.list(manager, {})).pagination.total, 0, '"All" stays personal');
+
+  await assert.rejects(service.delete(viewer('editor'), shared.documentId), {
+    name: 'ForbiddenError',
+  });
+  await service.delete(manager, shared.documentId);
+  assert.deepEqual(
+    strapi.table('plugin::magic-mark.bookmark').map((b) => b.name),
+    ['Private']
+  );
+  assert.equal(strapi.table('plugin::magic-mark.bookmark-share').length, 0);
+});
+
+test('the managed scope needs the manage permission (MM-RA-1)', async () => {
+  const { service } = setup();
+  await assert.rejects(service.list(viewer('editor'), { scope: 'managed' }), {
+    name: 'ForbiddenError',
+  });
+});
+
+test('duplicate normalises a legacy query: page and unknown keys are dropped (MM-RA-2)', async () => {
+  const { strapi, service } = setup();
+  const pub = await create(service, 'owner', { visibility: 'public' });
+  const row = strapi
+    .table('plugin::magic-mark.bookmark')
+    .find((b) => b.documentId === pub.documentId);
+  row.query = 'page=3&pageSize=10&foo=bar&filters%5B%24and%5D%5B0%5D%5Btitle%5D%5B%24eq%5D=x';
+  const copy = await service.duplicate(viewer('editor'), pub.documentId);
+  assert.equal(copy.query.includes('page=3'), false);
+  assert.equal(copy.query.includes('foo'), false);
+  assert.match(copy.query, /pageSize=10/);
+  assert.match(decodeURIComponent(copy.query), /filters\[\$and\]\[0\]\[title\]\[\$eq\]=x/);
+
+  row.query = 'filters[__proto__][x]=1';
+  assert.equal((await service.duplicate(viewer('editor'), pub.documentId)).query, '');
+});

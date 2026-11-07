@@ -53,7 +53,7 @@ import { getIcon } from '../utils/icons';
 import { parseQuery } from '../utils/query';
 import { msg } from '../utils/translations';
 
-type Scope = 'all' | 'mine' | 'shared' | 'pinned';
+type Scope = 'all' | 'mine' | 'shared' | 'pinned' | 'managed';
 
 interface PageQuery {
   _q?: string;
@@ -112,11 +112,10 @@ export const BookmarksPage = () => {
 
   const page = Number(query.page) || 1;
   const pageSize = Number(query.pageSize) || 25;
-  const scope: Scope = (['all', 'mine', 'shared', 'pinned'] as Scope[]).includes(
-    query.scope as Scope
-  )
-    ? (query.scope as Scope)
-    : 'all';
+  const scopes: Scope[] = allowedActions.canManage
+    ? ['all', 'mine', 'shared', 'pinned', 'managed']
+    : ['all', 'mine', 'shared', 'pinned'];
+  const scope: Scope = scopes.includes(query.scope as Scope) ? (query.scope as Scope) : 'all';
   const sort =
     query.sort === 'name:desc' || query.sort === 'updatedAt:desc' || query.sort === 'updatedAt:asc'
       ? query.sort
@@ -424,6 +423,11 @@ export const BookmarksPage = () => {
                 <SingleSelectOption value="pinned">
                   {formatMessage(msg('scope.pinned', 'Pinned'))}
                 </SingleSelectOption>
+                {allowedActions.canManage ? (
+                  <SingleSelectOption value="managed">
+                    {formatMessage(msg('scope.managed', 'All shared bookmarks'))}
+                  </SingleSelectOption>
+                ) : null}
               </SingleSelect>
             </Box>
             <Box minWidth="20rem">

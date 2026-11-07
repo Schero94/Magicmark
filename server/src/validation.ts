@@ -128,7 +128,8 @@ const isSafeFilterTree = (node: unknown, depth = 0): boolean => {
 };
 
 /**
- * Normalises a saved list view query string. Keeps `filters`, `sort`, `pageSize`, `_q` and
+ * Normalises a saved list view query string. Keeps `filters`, `sort`, `pageSize`, `_q` (up to
+ * 1000 characters, like a filter value) and
  * `plugins[i18n][locale]`; drops `page` and everything else; rejects unsafe shapes.
  * @param query - Raw query string, with or without a leading "?".
  * @returns The normalised query string (no leading "?"), or null when it is invalid.
@@ -167,7 +168,7 @@ export const normalizeListViewQuery = (query: unknown): string | null => {
     out.pageSize = String(size);
   }
   if (parsed._q !== undefined) {
-    if (typeof parsed._q !== 'string' || parsed._q.length > 200) return null;
+    if (typeof parsed._q !== 'string' || parsed._q.length > MAX_FILTER_VALUE_LENGTH) return null;
     if (parsed._q) out._q = parsed._q;
   }
   const locale = (parsed.plugins as { i18n?: { locale?: unknown } } | undefined)?.i18n?.locale;
@@ -244,7 +245,7 @@ export const duplicateSchema = z.strictObject({
   name: name.optional(),
 });
 
-export const SCOPES = ['all', 'mine', 'shared', 'pinned'] as const;
+export const SCOPES = ['all', 'mine', 'shared', 'pinned', 'managed'] as const;
 export const SORTS = ['name:asc', 'name:desc', 'updatedAt:desc', 'updatedAt:asc'] as const;
 
 const intFromQuery = (min: number, max: number) =>

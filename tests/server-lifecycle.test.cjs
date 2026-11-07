@@ -34,7 +34,7 @@ const legacyFixture = () =>
             name: 'Legacy',
             path: 'content-manager/collection-types/api::article.article',
             contentType: null,
-            query: '',
+            query: 'page=3&pageSize=10&filters%5B%24and%5D%5B0%5D%5Btitle%5D%5B%24eq%5D=x',
             creatorId: 'owner',
             isPublic: false,
             isPinned: true,
@@ -111,6 +111,9 @@ test('3.x rows migrate: path, content type, numeric/documentId shares and the ow
   assert.equal(legacy.sharedWithUsers, null);
   assert.equal(legacy.isPinned, false);
   assert.equal(broken.contentType, '');
+  assert.equal(legacy.query.includes('page=3'), false, 'the 3.x page number is dropped (MM-RA-2)');
+  assert.match(legacy.query, /pageSize=10/);
+  assert.match(decodeURIComponent(legacy.query), /filters\[\$and\]\[0\]\[title\]\[\$eq\]=x/);
 
   const shares = strapi
     .table(SHARE)

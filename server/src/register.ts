@@ -17,7 +17,7 @@ export const PERMISSION_ACTIONS = [
   { uid: ACTION_UIDS.update, displayName: 'Edit own bookmarks' },
   { uid: ACTION_UIDS.delete, displayName: 'Delete own bookmarks' },
   { uid: ACTION_UIDS.share, displayName: 'Share bookmarks' },
-  { uid: ACTION_UIDS.manage, displayName: 'Manage all bookmarks' },
+  { uid: ACTION_UIDS.manage, displayName: 'Manage shared bookmarks of others' },
 ].map((action) => ({
   section: 'plugins' as const,
   pluginName: PLUGIN_ID,

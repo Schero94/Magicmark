@@ -21,13 +21,14 @@ import {
   SHARE_UID,
   actionId,
 } from '../constants';
-import { normalizeListViewPath } from '../validation';
+import { normalizeListViewPath, normalizeListViewQuery } from '../validation';
 
 interface LegacyRow {
   id: number;
   documentId: string;
   path: string | null;
   contentType: string | null;
+  query: string | null;
   creatorId: string | null;
   isPinned: boolean | null;
   sharedWithRoles: unknown;
@@ -63,16 +64,26 @@ const resolveLegacyIds = async (strapi: Core.Strapi, uid: string, raw: unknown) 
 const maintenanceService = ({ strapi }: { strapi: Core.Strapi }) => {
   const db = strapi.db;
 
+  /** Counts what a migration run had to drop, for one summary log line. */
+  const dropped = { queries: 0 };
+
   /** Migrates one 3.x bookmark row. */
   const migrateRow = async (row: LegacyRow) => {
-    // 1. Path and content type (3.x stored relative paths and no content type).
+    // 1. Path, content type and query. 3.x stored relative paths, no content type and the raw
+    //    URL query (with `page` and any other key), so every 3.x row has contentType null.
+    //    The query is normalised like a new bookmark; a query that cannot be kept becomes ''.
     if (row.contentType === null || row.contentType === undefined) {
       const normalized = normalizeListViewPath(row.path);
+      const query = normalizeListViewQuery(row.query);
+      if (query === null) dropped.queries += 1;
       await db.query(BOOKMARK_UID).updateMany({
         where: { id: row.id, contentType: { $null: true } },
-        data: normalized
-          ? { path: normalized.path, contentType: normalized.contentType }
-          : { contentType: '' },
+        data: {
+          ...(normalized
+            ? { path: normalized.path, contentType: normalized.contentType }
+            : { contentType: '' }),
+          query: query ?? '',
+        },
       });
     }
 
@@ -134,7 +145,7 @@ const maintenanceService = ({ strapi }: { strapi: Core.Strapi }) => {
     },
 
     /**
-     * Migrates every 3.x bookmark row (paths, content types, share JSON, global pins).
+     * Migrates every 3.x bookmark row (paths, content types, queries, share JSON, global pins).
      * Walks by id cursor in batches; rows already migrated are not selected again.
      * @returns Number of rows inspected.
      */
@@ -157,6 +168,7 @@ const maintenanceService = ({ strapi }: { strapi: Core.Strapi }) => {
             'documentId',
             'path',
             'contentType',
+            'query',
             'creatorId',
             'isPinned',
             'sharedWithRoles',
@@ -165,7 +177,15 @@ const maintenanceService = ({ strapi }: { strapi: Core.Strapi }) => {
           orderBy: { id: 'asc' },
           limit: LIMITS.migrationBatch,
         });
-        if (!rows.length) return inspected;
+        if (!rows.length) {
+          if (dropped.queries) {
+            strapi.log.warn(
+              `[magic-mark] ${dropped.queries} 3.x bookmark filter(s) could not be kept and were reset`
+            );
+            dropped.queries = 0;
+          }
+          return inspected;
+        }
         for (const row of rows) {
           try {
             await migrateRow(row);

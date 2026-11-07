@@ -133,3 +133,19 @@ test('table rows keep one button per cell, so Escape closes the row menu (ACC-UI
     /TRIGGER_WITHOUT_TOOLTIP: Record<string, unknown> = \{ withTooltip: false \}/
   );
 });
+
+test('the popover loads pinned bookmarks separately and links to the rest (MM-RA-4)', () => {
+  const src = read(path.join(root, 'admin/src/components/BookmarksPopover.tsx'));
+  assert.match(src, /scope: 'pinned'/, 'pinned bookmarks are requested on their own');
+  assert.match(src, /total > items\.length/, 'a hidden remainder is announced');
+  assert.match(src, /popover\.showAll/);
+  assert.match(src, /\?contentType=\$\{encodeURIComponent\(listView\.uid\)\}/);
+});
+
+test('a rejected list view query is explained, not hidden behind a generic error (MM-RA-3)', () => {
+  const form = read(path.join(root, 'admin/src/components/BookmarkFormModal.tsx'));
+  const popover = read(path.join(root, 'admin/src/components/BookmarksPopover.tsx'));
+  assert.match(form, /fields\.query/);
+  assert.match(form, /form\.queryTooLong/);
+  assert.match(popover, /fieldErrors\(error\)\.query/);
+});

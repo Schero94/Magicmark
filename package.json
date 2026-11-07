@@ -28,69 +28,83 @@
     }
   },
   "files": [
-    "dist/",
+    "dist",
+    "strapi-admin.js",
     "strapi-server.js",
     "README.md",
     "LICENSE",
-    "COPYRIGHT_NOTICE.txt",
-    "pics/"
+    "CHANGELOG.md"
   ],
   "scripts": {
-    "test": "node --test tests/*.test.js",
-    "build": "strapi-plugin build",
+    "clean": "node -e \"require('fs').rmSync('dist', { recursive: true, force: true })\"",
+    "test": "node --test tests/*.test.cjs",
+    "test:ts:front": "tsc --noEmit -p admin/tsconfig.json",
+    "test:ts:back": "tsc --noEmit -p server/tsconfig.json",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "build": "npm run clean && strapi-plugin build",
     "watch": "strapi-plugin watch",
     "watch:link": "strapi-plugin watch:link",
     "verify": "strapi-plugin verify",
-    "test:ts:front": "tsc --noEmit -p admin/tsconfig.json",
-    "test:ts:back": "tsc --noEmit -p server/tsconfig.json"
+    "verify:runtime": "node scripts/verify-runtime.cjs",
+    "prepublishOnly": "npm test && npm run build && npm run verify && npm run verify:runtime"
   },
   "dependencies": {
-    "@heroicons/react": "^2.2.0",
-    "@strapi/design-system": "^2.2.4",
-    "@strapi/icons": "^2.2.4",
-    "@types/qs": "^6.14.0",
-    "qs": "^6.14.0"
+    "qs": "^6.17.1",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@semantic-release/changelog": "^7.0.0",
-    "@semantic-release/commit-analyzer": "^13.0.0",
+    "@semantic-release/commit-analyzer": "^13.0.1",
     "@semantic-release/git": "^11.0.1",
     "@semantic-release/github": "^12.0.10",
     "@semantic-release/npm": "^13.2.0",
-    "@semantic-release/release-notes-generator": "^14.0.1",
+    "@semantic-release/release-notes-generator": "^14.1.1",
+    "@strapi/design-system": "^2.2.4",
+    "@strapi/icons": "^2.2.4",
     "@strapi/sdk-plugin": "^6.1.1",
-    "@strapi/strapi": "^5.57.0",
-    "@strapi/typescript-utils": "^5.57.0",
-    "vite": "^6.4.4",
-    "@swc/core": "^1.13.5",
+    "@strapi/strapi": "5.61.0",
+    "@strapi/typescript-utils": "5.61.0",
+    "@strapi/utils": "5.61.0",
+    "@types/qs": "^6.15.1",
     "@types/react": "^18.3.31",
     "@types/react-dom": "^18.3.7",
-    "prettier": "^3.6.2",
+    "eslint": "^10.14.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "globals": "^17.14.0",
+    "prettier": "^3.9.10",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-intl": "^6.8.9",
-    "react-router-dom": "^6.30.1",
+    "react-router-dom": "^6.30.6",
     "semantic-release": "^25.0.9",
-    "styled-components": "^6.1.19",
-    "typescript": "^5.9.3"
+    "styled-components": "^6.6.0",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.72.1"
   },
   "peerDependencies": {
-    "@strapi/sdk-plugin": "^6.1.1",
-    "@strapi/strapi": "^5.57.0",
+    "@strapi/design-system": "^2.0.0",
+    "@strapi/icons": "^2.0.0",
+    "@strapi/strapi": "^5.0.0",
+    "@strapi/utils": "^5.0.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-intl": "^6.6.2",
-    "react-router-dom": "^6.30.1",
-    "styled-components": "^6.1.19"
+    "react-intl": "^6.0.0",
+    "react-router-dom": "^6.0.0",
+    "styled-components": "^6.0.0"
   },
   "strapi": {
     "kind": "plugin",
     "name": "magic-mark",
-    "displayName": "MagicMark - Query Builder",
-    "description": "Save and apply complex Content Manager queries with one click. Advanced bookmark management with role-based sharing."
+    "displayName": "Magic Mark",
+    "description": "Save Content Manager list views with their filters as bookmarks and share them with roles and users."
   },
   "name": "strapi-plugin-magic-mark",
-  "description": "Advanced Query Builder and Bookmark Manager for Strapi v5 - Save complex Content Manager filters with one click",
+  "description": "Bookmarks and advanced filters for the Strapi 5 Content Manager: save list views, share them with roles and users. Free and open source.",
   "license": "MIT",
   "private": false,
   "author": "Schero D.",
@@ -101,5 +115,12 @@
   "bugs": {
     "url": "https://github.com/Schero94/Magicmark/issues"
   },
-  "homepage": "https://github.com/Schero94/Magicmark#readme"
+  "homepage": "https://github.com/Schero94/Magicmark#readme",
+  "engines": {
+    "node": "^22.22.2 || >=24.15.0",
+    "npm": ">=6.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
 }

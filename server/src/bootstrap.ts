@@ -1,59 +1,76 @@
+/**
+ * Plugin bootstrap phase. Idempotent and safe to run in every Strapi process at once.
+ *
+ * 1. Deletes the store keys of the removed 3.x license system (no network calls, no timers).
+ * 2. Migrates 3.x bookmark rows (paths, content types, share JSON, global pins).
+ * 3. Subscribes to admin user and role deletions to clean up shares, pins and private
+ *    bookmarks of deleted users. `destroy` removes the subscription.
+ */
 import type { Core } from '@strapi/strapi';
-import { createLogger } from './utils/logger';
+import { ADMIN_ROLE_UID, ADMIN_USER_UID, PLUGIN_ID } from './constants';
+import type { MaintenanceService } from './services/maintenance';
 
-export default ({ strapi }: { strapi: Core.Strapi }) => {
-  const log = createLogger(strapi);
-  
-  log.info('Plugin bootstrapping...');
-  
-  // Initialize License Guard
-  try {
-    const licenseGuardService = strapi.plugin('magic-mark').service('license-guard');
-    
-    // Wait a bit for all services to be ready
-    setTimeout(async () => {
-      const licenseStatus = await licenseGuardService.initialize();
-      
-      if (!licenseStatus.valid) {
-        log.error('╔════════════════════════════════════════════════════════════════╗');
-        log.error('║  [ERROR] MAGICMARK PLUGIN - NO VALID LICENSE                  ║');
-        log.error('║                                                                ║');
-        log.error('║  This plugin requires a valid license to operate.             ║');
-        log.error('║  Please activate your license via Admin UI:                   ║');
-        log.error('║  Go to Settings → MagicMark → License                         ║');
-        log.error('║                                                                ║');
-        log.error('║  The plugin will run with limited functionality until         ║');
-        log.error('║  a valid license is activated.                                ║');
-        log.error('╚════════════════════════════════════════════════════════════════╝');
-      } else if (licenseStatus.valid) {
-        // Get license key from store if data is not available (grace period)
-        const pluginStore = strapi.store({
-          type: 'plugin',
-          name: 'magic-mark',
-        });
-        const storedKey = await pluginStore.get({ key: 'licenseKey' }) as string | undefined;
-        
-        log.info('╔════════════════════════════════════════════════════════════════╗');
-        log.info('║  [SUCCESS] MAGICMARK PLUGIN LICENSE ACTIVE                    ║');
-        log.info('║                                                                ║');
-        
-        if (licenseStatus.data) {
-          log.info(`║  License: ${licenseStatus.data.licenseKey}                    ║`);
-          log.info(`║  User: ${licenseStatus.data.firstName} ${licenseStatus.data.lastName}`.padEnd(66) + '║');
-          log.info(`║  Email: ${licenseStatus.data.email}`.padEnd(66) + '║');
-        } else if (storedKey) {
-          log.info(`║  License: ${storedKey} (Offline Mode)                         ║`);
-          log.info(`║  Status: Grace Period Active                                  ║`);
-        }
-        
-        log.info('║                                                                ║');
-        log.info('║  [PING] Auto-pinging every 15 minutes                         ║');
-        log.info('╚════════════════════════════════════════════════════════════════╝');
-      }
-    }, 3000); // Wait 3 seconds for API to be ready
-  } catch (error) {
-    log.error('[ERROR] Error initializing License Guard:', error);
-  }
-  
-  log.info('Plugin bootstrapped successfully');
+const STATE_KEY = 'magicMarkDeletedIds';
+let unsubscribe: (() => void) | null = null;
+
+/** Detaches the lifecycle subscription created by bootstrap. */
+export const detachLifecycles = () => {
+  unsubscribe?.();
+  unsubscribe = null;
 };
+
+/**
+ * @param deps - `{ strapi }`.
+ * @sideeffect Deletes legacy store keys, migrates rows, subscribes to db lifecycles.
+ */
+const bootstrap = async ({ strapi }: { strapi: Core.Strapi }) => {
+  const maintenance = strapi.plugin(PLUGIN_ID).service('maintenance') as MaintenanceService;
+
+  try {
+    await maintenance.removeLegacyLicenseKeys();
+  } catch (error) {
+    strapi.log.error('[magic-mark] Removing legacy license keys failed', {
+      name: (error as Error)?.name,
+    });
+  }
+
+  try {
+    await maintenance.migrateLegacyBookmarks();
+  } catch (error) {
+    strapi.log.error('[magic-mark] Bookmark migration failed', { name: (error as Error)?.name });
+  }
+
+  const captureIds = async (event: {
+    model: { uid: string };
+    params: { where?: unknown };
+    state: Record<string, unknown>;
+  }) => {
+    const rows = await strapi.db.query(event.model.uid).findMany({
+      where: event.params.where ?? {},
+      select: ['documentId'],
+    });
+    event.state[STATE_KEY] = rows.map((row: { documentId: string }) => row.documentId);
+  };
+  const cleanup = async (event: { model: { uid: string }; state: Record<string, unknown> }) => {
+    const ids = (event.state[STATE_KEY] as string[] | undefined) ?? [];
+    try {
+      if (event.model.uid === ADMIN_USER_UID) await maintenance.cleanupDeletedUsers(ids);
+      if (event.model.uid === ADMIN_ROLE_UID) await maintenance.cleanupDeletedRoles(ids);
+    } catch (error) {
+      strapi.log.error('[magic-mark] Cleanup after deletion failed', {
+        name: (error as Error)?.name,
+      });
+    }
+  };
+
+  detachLifecycles();
+  unsubscribe = strapi.db.lifecycles.subscribe({
+    models: [ADMIN_USER_UID, ADMIN_ROLE_UID],
+    beforeDelete: captureIds,
+    beforeDeleteMany: captureIds,
+    afterDelete: cleanup,
+    afterDeleteMany: cleanup,
+  } as Parameters<typeof strapi.db.lifecycles.subscribe>[0]);
+};
+
+export default bootstrap;

@@ -1,7 +1,5 @@
-import bookmarkController from './controller';
-import license from './license';
+import bookmarks from './bookmarks';
 
 export default {
-  bookmarks: bookmarkController,
-  license,
+  bookmarks,
 };

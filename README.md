@@ -1,597 +1,337 @@
-# MagicMark - Advanced Query Builder for Strapi v5 🔖
+# Magic Mark
 
-**Save and apply complex Content Manager queries with one click.** Professional bookmark management with role-based sharing, advanced filtering, and drag-and-drop organization for Strapi v5.
+Bookmarks and advanced filters for the Strapi 5 Content Manager. Filter a list, save the view as
+a bookmark, open it again with one click and share it with roles or individual admin users.
 
-[GitHub Pages documentation](https://schero94.github.io/Magicmark/)
+Free and open source (MIT). No license key, no limits, no tracking, no calls to external
+servers.
 
-Requires Strapi `^5.57.0`.
+[![npm](https://img.shields.io/npm/v/strapi-plugin-magic-mark.svg)](https://www.npmjs.com/package/strapi-plugin-magic-mark)
+[![Test & Verify](https://github.com/Schero94/Magicmark/actions/workflows/test.yml/badge.svg)](https://github.com/Schero94/Magicmark/actions/workflows/test.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![npm version](https://badge.fury.io/js/strapi-plugin-magic-mark.svg)](https://www.npmjs.com/package/strapi-plugin-magic-mark)
-[![GitHub release](https://img.shields.io/github/v/release/Schero94/Magicmark.svg)](https://github.com/Schero94/Magicmark/releases)
+Documentation site: [https://schero94.github.io/Magicmark/](https://schero94.github.io/Magicmark/)
 
----
+![Bookmarks popover in the Content Manager list view](https://raw.githubusercontent.com/Schero94/Magicmark/main/pics/list-view-bookmarks.png)
 
-## 📸 Screenshots
+## Features
 
-### MagicMark Dashboard
-Professional interface for managing query bookmarks with statistics and easy access.
+- **Save view** in the list view toolbar keeps the content type, filters, sort order, page size,
+  search text and locale of the list you are looking at.
+- One click on a bookmark opens the list exactly like that again, without a page reload.
+- Share a bookmark with roles, with single admin users or with every admin. Recipients can open,
+  pin and copy it but not change it.
+- Pins are per user. Pinned bookmarks come first in the toolbar and on the Strapi homepage widget.
+- **Advanced filters** add "any condition", "is one of", "is none of", "is between", relation
+  fields and component fields to the native filters.
+- A Magic Mark page with search, scope, content type filter, sorting and pagination for all your
+  bookmarks.
+- Six role permissions, checked on the server for every request.
+- Built only with Strapi Design System components: light and dark mode, layouts down to 320 px,
+  keyboard access, five languages.
 
-![MagicMark Dashboard](pics/dashboard.png)
-
-### Save as MagicMark
-Create bookmarks with emoji, name, description, and sharing options directly from Content Manager.
-
-![Save Bookmark](pics/saveAsMagicMark.png)
-
-### Advanced Filter Builder
-Build complex queries with the advanced filter modal for precise content filtering.
-
-![Advanced Filters](pics/advancedFilters.png)
-
-### Quick Access in Content Manager
-Seamless integration - MagicMark button right in the Content Manager toolbar for instant bookmark access.
-
-![Quick Access](pics/quickaccesinContentmanager.png)
-
----
-
-## 📋 Table of Contents
+## Contents
 
 - [Features](#features)
-- [Quick Start](#quick-start)
-- [How It Works](#how-it-works)
-- [Screenshots in Action](#screenshots-in-action)
-- [API Routes](#api-routes)
+- [Quick start](#quick-start)
+- [Screenshots](#screenshots)
+- [Core concepts](#core-concepts)
+- [Screens](#screens)
+- [Compatibility](#compatibility)
+- [Examples](#examples)
 - [Configuration](#configuration)
-- [Security](#security)
-- [Use Cases](#use-cases)
-- [Testing](#testing)
-- [Releases](#releases)
+- [Admin API and permissions](#admin-api-and-permissions)
+- [Security and privacy](#security-and-privacy)
+- [Performance and several instances](#performance-and-several-instances)
 - [Troubleshooting](#troubleshooting)
-- [Development](#development)
+- [Upgrading from 3.x](#upgrading-from-3x)
+- [FAQ](#faq)
+- [Development and tests](#development-and-tests)
+- [Contributing](#contributing)
+- [Maintenance status](#maintenance-status)
+- [Languages](#languages)
+- [License](#license)
 
----
+## Quick start
 
-## ✨ Features
-
-### Core Bookmark Management
-✅ **Query Bookmarks** - Save complex Content Manager filters, sorts, and pagination  
-✅ **One-Click Apply** - Instantly restore entire query states  
-✅ **Emoji Identification** - Visual icons for quick bookmark recognition  
-✅ **Pin to Top** - Keep frequently used bookmarks always accessible  
-✅ **Drag & Drop** - Reorder bookmarks effortlessly  
-✅ **Mobile Optimized** - Fully responsive design  
-
-### Advanced Sharing
-✅ **Role-Based Sharing** - Share with specific admin roles  
-✅ **User Sharing** - Share with individual admin users  
-✅ **Public Bookmarks** - Make bookmarks visible to all users  
-✅ **Permission Control** - Fine-grained access management  
-
-### User Experience
-✅ **Quick Access** - Bookmark button in Content Manager toolbar  
-✅ **Filter Preview** - See exactly what's saved in each bookmark  
-✅ **Descriptions** - Add notes to remember bookmark purpose  
-✅ **Context Aware** - Automatically detects current content type  
-✅ **Instant Save** - Capture current query state in one click  
-✅ **Professional UI** - Beautiful gradient design with smooth animations  
-
-### Multi-Language Support
-✅ **5 Languages** - English, Deutsch, Français, Español, Português  
-✅ **Auto-Detection** - Follows your Strapi admin language  
-✅ **Complete i18n** - All UI elements translated  
-
----
-
-## 🚀 Quick Start
-
-### 1. Install Plugin
+Install the package, enable it, rebuild the admin and start Strapi:
 
 ```bash
 npm install strapi-plugin-magic-mark
-# or
-yarn add strapi-plugin-magic-mark
 ```
 
-### 2. Register in Config
-
-Add to `src/config/plugins.ts` (or `plugins.js`):
-
-```typescript
-export default () => ({
-  'magic-mark': {
-    enabled: true,
-  },
+```js
+// config/plugins.js (or .ts)
+module.exports = () => ({
+  'magic-mark': { enabled: true },
 });
 ```
 
-### 3. Build & Run
-
 ```bash
-# Rebuild admin panel
 npm run build
-
-# Start Strapi
 npm run develop
 ```
 
-### 4. Activate License (First Use)
+Then give your roles the permissions they need under **Settings > Roles > Plugins > Magic
+Mark**. Super Admins have all of them.
 
-- Go to Admin → **MagicMark**
-- Click **"Activate License"**
-- Choose: Auto-create, Manual entry, or Existing key
-- Done! Plugin is ready
+To save your first bookmark, open any collection type in the Content Manager, set a filter, open
+the star button next to **View settings** and choose **Save view**. Name it and save. The bookmark
+is now in the same star menu, on the Magic Mark page and, once pinned, in the homepage widget.
 
-### 5. Save Your First Bookmark
+## Screenshots
 
-1. Navigate to any Content Manager collection
-2. Apply filters, sorting, or search
-3. Click the **MagicMark** button in the toolbar (see screenshot above)
-4. Click **"Save Bookmark"**
-5. Add:
-   - Name (e.g., "Published Articles")
-   - Emoji (e.g., 📰)
-   - Description (optional)
-   - Sharing settings (optional)
-6. Click **Save**
+All screenshots use synthetic data on an isolated Strapi 5.61 host.
 
-### 6. Use Bookmarks
+### Bookmarks in the Content Manager
 
-- Click **MagicMark** → Select bookmark → Done!
-- All filters are instantly applied
-- Share with team members
+![Bookmarks popover next to View settings in the Content Manager list view](https://raw.githubusercontent.com/Schero94/Magicmark/main/pics/list-view-bookmarks.png)
 
----
+### Advanced filters
 
-## 🔄 How It Works
+![Advanced filters dialog with two conditions](https://raw.githubusercontent.com/Schero94/Magicmark/main/pics/advanced-filters.png)
 
-### Bookmark Save Flow
+### Save view as bookmark
 
-```
-User in Content Manager
-       ↓
-Applies: Filters, Sort, Search, Pagination
-       ↓
-[Click MagicMark Button] (See "Quick Access" screenshot)
-       ↓
-"Save Bookmark" Modal opens (See "Save as MagicMark" screenshot)
-       ↓
-User enters: Name, Emoji, Description, Sharing
-       ↓
-[Save]
-       ↓
-Query parameters captured:
-  - Path: /content-manager/collection-types/api::article.article
-  - Query: filters[$and][0][publishedAt][$notNull]=true&sort[0]=createdAt:desc
-  - Pagination: page=1&pageSize=25
-       ↓
-Bookmark stored in database
-       ↓
-Success! Bookmark appears in Dashboard (See "Dashboard" screenshot)
-```
+![Save view dialog with the captured filters and sharing options](https://raw.githubusercontent.com/Schero94/Magicmark/main/pics/save-view.png)
 
-### Bookmark Apply Flow
+### Bookmarks page
 
-```
-User clicks MagicMark button
-       ↓
-List of available bookmarks appears
-  (filtered by user permissions)
-       ↓
-[User selects bookmark]
-       ↓
-Navigation to content type happens
-       ↓
-Query parameters applied:
-  - Filters restored (See "Advanced Filters" screenshot)
-  - Sort order set
-  - Pagination reset
-  - Search cleared
-       ↓
-Content Manager displays filtered results
-```
+![Bookmarks page with table, search and filters](https://raw.githubusercontent.com/Schero94/Magicmark/main/pics/bookmarks.png)
 
----
+![Bookmarks page in dark mode](https://raw.githubusercontent.com/Schero94/Magicmark/main/pics/bookmarks-dark.png)
 
-## 🎬 Screenshots in Action
+### Homepage widget
 
-### 1. Dashboard View
-The main **MagicMark Dashboard** (see first screenshot above) shows:
-- All your bookmarks with emoji icons
-- Pinned bookmarks at the top
-- Quick actions: Edit, Delete, Share
-- Search and filter capabilities
-- Beautiful gradient design
+![Pinned bookmarks widget on the Strapi homepage](https://raw.githubusercontent.com/Schero94/Magicmark/main/pics/homepage-widget.png)
 
-### 2. Quick Access Button
-The **Quick Access** button (see screenshot above) is integrated directly into:
-- Content Manager toolbar
-- Appears on all collection pages
-- One-click access to bookmarks
-- Context-aware (shows relevant bookmarks)
+### Mobile (390 px)
 
-### 3. Save Bookmark Modal
-The **Save Bookmark Modal** (see screenshot above) includes:
-- Name field with emoji picker
-- Description for notes
-- Sharing options (Roles, Users, Public)
-- Preview of current query
-- Visual feedback
+![Bookmarks page at 390 px width](https://raw.githubusercontent.com/Schero94/Magicmark/main/pics/mobile-bookmarks.png)
 
-### 4. Advanced Filters
-The **Advanced Filter Builder** (see screenshot above) lets you:
-- Build complex filter conditions
-- Combine AND/OR logic
-- Save multi-level queries
-- Preview filter results
-- Edit existing filters
+## Core concepts
 
----
+| Term             | Meaning                                                                                                                                                                      |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Bookmark         | A saved Content Manager list view: content type, filters, sort order, page size, search text and locale. The page number is not saved, so a bookmark always opens on page 1. |
+| Owner            | The admin user who created the bookmark. Only the owner, or a user with **Manage shared bookmarks of others**, can edit or delete it.                                        |
+| Visibility       | **Only me**, **Specific roles and users** or **All admin users**. Recipients can open, pin and duplicate a bookmark, but not change it.                                      |
+| Pin              | Per user. Pinning a shared bookmark changes only your own list and your homepage widget.                                                                                     |
+| Advanced filters | A filter editor for the list view with "all conditions" or "any condition", extra operators (is one of, is none of, is between), relation fields and component fields.       |
 
-## 📡 API Routes
+## Screens
 
-MagicMark registers these under Strapi's authenticated admin API at `/magic-mark`. They are not Content API routes. Each route requires the `plugin::magic-mark.settings.read` permission for `GET` or `plugin::magic-mark.settings.update` for writes. Bookmark changes also check ownership in the service.
+| Screen                         | Where                                                                                                                                                                                                                                       | Who                                       |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| **Advanced filters** button    | Content Manager list view toolbar, next to View settings                                                                                                                                                                                    | Every admin who can open the list         |
+| **Bookmarks** button (popover) | Same toolbar. Lists the bookmarks of this content type, pinned first (up to 100; a link opens the rest on the Magic Mark page). **Save view** captures the current list; the refresh icon saves the current view into an existing bookmark. | Read bookmarks (saving: Create bookmarks) |
+| **Magic Mark** page            | Main menu. Search, show "created by me", "shared with me" or "pinned", filter by content type, sort and paginate. Row actions: pin, open, edit, duplicate, copy link, delete.                                                               | Read bookmarks                            |
+| **Pinned bookmarks** widget    | Strapi homepage (Add widget)                                                                                                                                                                                                                | Read bookmarks                            |
 
-| Method | Path | Purpose |
-| --- | --- | --- |
-| `GET` | `/magic-mark/bookmarks` | List bookmarks visible to the signed-in admin |
-| `POST` | `/magic-mark/bookmarks` | Create a bookmark |
-| `PUT` | `/magic-mark/bookmarks/:id` | Update an owned bookmark |
-| `DELETE` | `/magic-mark/bookmarks/:id` | Delete an owned bookmark |
-| `POST` | `/magic-mark/bookmarks/:id/pin` | Pin or unpin an owned bookmark |
-| `POST` | `/magic-mark/bookmarks/reorder` | Reorder bookmarks owned by the signed-in admin |
-| `GET` | `/magic-mark/roles` | List admin roles for sharing |
-| `GET` | `/magic-mark/users` | List admin users for sharing |
-| `GET` | `/magic-mark/license/status` | Read license status |
-| `POST` | `/magic-mark/license/auto-create` | Create and activate a license automatically |
-| `POST` | `/magic-mark/license/create` | Create and activate a license from submitted details |
-| `POST` | `/magic-mark/license/ping` | Check the stored license with the license service |
-| `POST` | `/magic-mark/license/store-key` | Store a submitted license key |
-| `GET` | `/magic-mark/license/limits` | Read current license limits |
+Opening a bookmark is a normal in-app navigation (no page reload). The Content Manager's
+remembered list settings for that content type are replaced by the bookmark's, so filters from
+an earlier visit do not mix in.
 
----
+With **All conditions** the filters use the same `$and` shape as Strapi's own filters, so they
+appear as native filter tags and can be removed one by one. With **Any condition** the list is
+filtered correctly, but Strapi does not show those conditions as tags; open Advanced filters to
+change or clear them.
 
-## ⚙️ Configuration
+## Compatibility
 
-### Basic Setup (Default)
+| Plugin                     | Strapi            | Node.js               | Notes                                                                                                       |
+| -------------------------- | ----------------- | --------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Next release (this branch) | 5.57 or newer 5.x | ^22.22.2 or >=24.15.0 | Acceptance host: Strapi 5.61.0 with SQLite. Free; 3.x data and permissions are migrated on the first start. |
+| 3.x                        | 5.x               | 22                    | Contained the license system; no longer maintained.                                                         |
 
-The plugin works out of the box with zero configuration!
+React 18, React Router 6, styled-components 6 and react-intl 6 are peer dependencies because the
+Strapi 5 admin ships these majors. TypeScript stays on 5.9 for development because
+`@strapi/sdk-plugin` 6.1.1 builds with TypeScript 5.9.3 and typescript-eslint 8 supports
+TypeScript below 6.1.
 
-```typescript
-// src/config/plugins.ts
-export default () => ({
-  'magic-mark': {
-    enabled: true,
-  },
-});
-```
+## Configuration
 
-The plugin has no configurable bookmark-limit, history, or cleanup options. Its server config currently exposes only `debug`, which defaults to `false`.
+Magic Mark has no configuration options and reads no environment variables. Everything is
+controlled with role permissions.
 
-## 🔐 Security
+## Examples
 
-Admin routes use registered Strapi admin permission scopes. Bookmark controllers reject requests without an authenticated admin, and update, delete, pin, and reorder operations check that the acting admin owns the affected bookmark. Sharing changes are also owner-only. Public bookmarks are visible through the authenticated admin workflow; they do not make these routes unauthenticated.
+**A review queue for editors.** Filter Articles by `stage` is `review`, sort by `updatedAt`, save
+the view as "Waiting for review" and share it with the Editor role. Every editor sees it in the
+star menu of Articles and can pin it for the homepage.
 
----
+**Your own working set.** Use Advanced filters with **Any condition** to combine "stage is one of
+draft, review" with "featured is true", save it as a private bookmark and pin it.
 
-## 💡 Use Cases
+**Keep a shared bookmark current.** Change the filters in the list, open the star menu and use
+the refresh icon next to the bookmark. It now saves the current view; the name and sharing stay.
 
-### Content Management
-
-**Published Articles** 📰
-```
-Filter: publishedAt is not empty
-Sort: createdAt DESC
-Result: Quick access to all published content
-```
-
-**Draft Posts** 📝
-```
-Filter: publishedAt is empty AND status = "draft"
-Sort: updatedAt DESC
-Result: Focus on work in progress
-```
-
-**Recent Updates** 🕒
-```
-Filter: updatedAt >= 7 days ago
-Sort: updatedAt DESC
-Result: See what changed recently
-```
-
-**My Content** 👤
-```
-Filter: createdBy = current user
-Sort: createdAt DESC
-Result: See all your creations
-```
-
-### Team Collaboration
-
-**Shared Queries** 👥
-- Team members access same filtered views
-- No need to re-apply complex filters
-- Everyone sees consistent data
-
-**Role-Based Access** 🔐
-- Editors see different bookmarks than Authors
-- Managers see different views than Contributors
-- Automatic based on admin roles
-
-**Public Bookmarks** 🌍
-- Common queries for entire team
-- New members immediately see them
-- Save time explaining filters
-
-### Power Users
-
-**Complex Filters** 🎯
-```
-Save multi-condition queries:
-  - Status = "approved"
-  - Category IN ["tech", "news"]
-  - Priority >= "high"
-  - CreatedAt >= "2024-01-01"
-```
-
-**Sorted Views** 📊
-```
-Different sort orders for different needs:
-  - By date (newest first)
-  - By title (A-Z)
-  - By popularity (most viewed)
-```
-
----
-
-## 🧪 Testing
-
-### 1. Install & Setup
+**List bookmarks from a script.** The admin API takes an admin JWT, like every Strapi admin route:
 
 ```bash
-# Install in your Strapi project
-npm install strapi-plugin-magic-mark
+curl -s "http://localhost:1337/magic-mark/bookmarks?contentType=api::article.article&scope=pinned" \
+  -H "Authorization: Bearer $ADMIN_JWT"
+```
 
-# Add to config/plugins.ts
-# Rebuild admin
+## Admin API and permissions
+
+All routes are admin routes under `/magic-mark`. Each one requires an authenticated admin
+(`admin::isAuthenticatedAdmin`) and every listed action (`admin::hasPermissions`). Owner checks
+run in the service: a bookmark you cannot see answers `404`, a bookmark you can see but do not
+own answers `403`.
+
+| Permission (Settings > Roles > Plugins)       | Action id                             |
+| --------------------------------------------- | ------------------------------------- |
+| Read bookmarks                                | `plugin::magic-mark.bookmarks.read`   |
+| Create bookmarks                              | `plugin::magic-mark.bookmarks.create` |
+| Edit own bookmarks                            | `plugin::magic-mark.bookmarks.update` |
+| Delete own bookmarks                          | `plugin::magic-mark.bookmarks.delete` |
+| Share bookmarks                               | `plugin::magic-mark.bookmarks.share`  |
+| Manage shared bookmarks of others (see below) | `plugin::magic-mark.bookmarks.manage` |
+
+**Manage shared bookmarks of others** is meant for the people who keep the bookmark list tidy.
+It covers every bookmark that is not private: public ones, ones shared with any role or user
+(also when you are not a recipient) and ones whose owner was deleted. They are listed on the
+Magic Mark page under **Show > All shared bookmarks**. Private bookmarks of other users stay
+private, also for managers and Super Admins. Editing and deleting still need Edit own and
+Delete own bookmarks.
+
+| Method and path                 | Required actions | Notes                                                                                                                                                                                |
+| ------------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `GET /bookmarks`                | read             | Query: `page`, `pageSize` (max 100), `q`, `scope` (`all`, `mine`, `shared`, `pinned`, `managed`), `sort` (`name:asc`, `name:desc`, `updatedAt:desc`, `updatedAt:asc`), `contentType` |
+| `POST /bookmarks`               | read, create     | Body: `name`, `path`, `query`, `description`, `icon`, `visibility`, `roles`, `users`. Sharing also needs share.                                                                      |
+| `GET /bookmarks/:id`            | read             | Owners and managers also get the sharing lists                                                                                                                                       |
+| `PUT /bookmarks/:id`            | read, update     | Owner or manage                                                                                                                                                                      |
+| `DELETE /bookmarks/:id`         | read, delete     | Owner or manage                                                                                                                                                                      |
+| `PUT /bookmarks/:id/view`       | read, update     | Replaces the saved query ("update with current view")                                                                                                                                |
+| `POST /bookmarks/:id/duplicate` | read, create     | Private copy owned by the caller                                                                                                                                                     |
+| `PUT /bookmarks/:id/pin`        | read             | Body `{ "pinned": true }`; per user                                                                                                                                                  |
+| `GET /sharing/roles`            | share            | `documentId` and name                                                                                                                                                                |
+| `GET /sharing/users`            | share            | Search `q`, `page`; 20 per page; email only with `admin::users.read`                                                                                                                 |
+
+Errors follow Strapi's format `{ data: null, error: { status, name, message, details } }`.
+Invalid input answers `400 ValidationError` with field details.
+
+There are no Content API routes.
+
+## Security and privacy
+
+- No license system, no outbound requests, no timers and no telemetry. On the first start the
+  3.x license keys are deleted from the plugin store.
+- Every route checks permissions on the server; the menu and buttons only follow them.
+- `path` must be a Content Manager list view (`/content-manager/collection-types/<uid>`), so a
+  shared bookmark cannot send anyone to another admin page or off-site. Queries are parsed with
+  `qs` with prototype keys disabled, limited in size and depth, and stored without `page`.
+- Request bodies are validated with strict zod schemas; unknown fields are rejected.
+- Recipients never see who else a bookmark is shared with. The user search returns names only,
+  plus email for admins who may read admin users.
+- Deleting an admin user removes their pins, the shares that point at them and their private
+  bookmarks. Their public or shared bookmarks stay and show "Deleted user"; someone with
+  **Manage shared bookmarks of others** finds them under **All shared bookmarks** and can edit or
+  delete them. Deleting a role removes its shares.
+- Logs contain no keys, emails or request bodies.
+- Several Strapi processes can share one database: the plugin keeps no state in memory, lists
+  are filtered and paginated in the database, and migrations claim each row with a guarded update
+  inside a transaction.
+
+## Performance and several instances
+
+- Lists are filtered, searched, sorted and paginated in the database (at most 100 rows per page).
+  Owner names, pins and share flags of a page are loaded with one query each, so a page costs
+  the same number of queries for 10 or 100 bookmarks.
+- The plugin keeps no state in memory and starts no timers, so several replicas and workers
+  (for example 2 replicas x 4 pm2 workers) can share one database. Parallel requests were tested
+  on SQLite; a run on Postgres with several real processes is still to do.
+- The 3.x migration runs on every process at start-up. Each row is claimed with a guarded update
+  inside a transaction, so shares and pins are written once even when processes start together.
+- Pinning is idempotent: pinning twice, from two tabs or two processes, leaves the bookmark
+  pinned.
+
+## Troubleshooting
+
+| Symptom                                       | Cause and fix                                                                          |
+| --------------------------------------------- | -------------------------------------------------------------------------------------- |
+| No Magic Mark menu entry or Bookmarks button  | The role lacks **Read bookmarks**.                                                     |
+| Save view is missing                          | The role lacks **Create bookmarks**.                                                   |
+| No sharing options in the dialog              | The role lacks **Share bookmarks**.                                                    |
+| Users are listed without email                | Email is shown only to admins who can read admin users.                                |
+| Advanced filters show only a few fields       | The role can read only those fields of the content type in the Content Manager.        |
+| "This bookmark does not point to a list view" | The bookmark was saved by 3.x with an unusual path. Delete it and save the view again. |
+
+## Upgrading from 3.x
+
+No manual steps. On the first start after the upgrade:
+
+- Roles with the 3.x permission **Read** (`settings.read`) get **Read bookmarks**. Roles with
+  **Edit** (`settings.update`) get Read, Create, Edit own, Delete own and Share bookmarks. Strapi
+  then removes the old permissions.
+- Bookmarks shared with users or roles move to the new share table. Shares to users that no
+  longer exist are dropped. Relative 3.x paths are fixed.
+- A bookmark pinned in 3.x stays pinned for its owner. Pins are per user from now on.
+- The custom order (move up and down) is gone; lists are sorted by name or by last update.
+- The license key and its validation date are deleted. The Upgrade and License settings pages are
+  gone; every feature is available to everyone.
+- The 3.x icon ids are kept and shown with Strapi icons.
+
+## FAQ
+
+**Is Magic Mark free?** Yes. The license system of 3.x is gone; every feature is available to
+everyone under the MIT license.
+
+**Does the plugin send data anywhere?** No. It makes no outbound requests and has no telemetry.
+
+**Can I see the private bookmarks of other admins?** No, also not as Super Admin. Managers see
+public and shared bookmarks of everyone under **Show > All shared bookmarks**.
+
+**What happens to bookmarks when an admin user is deleted?** Their private bookmarks, pins and the
+shares that point at them are removed. Their public and shared bookmarks stay and show "Deleted
+user" until a manager removes them.
+
+**Does a bookmark open on the page I saved it on?** No. The page number is not saved, so a
+bookmark always opens on page 1 with its filters, sort, page size, search and locale.
+
+**Why do "Any condition" filters not show as filter tags?** Strapi shows only `$and` filters as
+tags. The list is still filtered correctly; open Advanced filters to change or clear them.
+
+**Are the columns of the list view saved?** No. Columns are a per-user Content Manager setting
+and stay as they are.
+
+## Development and tests
+
+```bash
+npm ci --legacy-peer-deps
+npm run lint
+npm run format:check
+npm test
+npm run test:ts:front
+npm run test:ts:back
 npm run build
-```
-
-### 2. Test Basic Bookmark
-
-1. Go to Content Manager → Any collection
-2. Apply some filters
-3. Click **MagicMark** button (see screenshot)
-4. Save with name "Test Bookmark" and emoji 🧪
-5. Verify it appears in dashboard
-
-### 3. Test Bookmark Apply
-
-1. Clear all filters
-2. Click **MagicMark** → Select "Test Bookmark"
-3. Verify filters are restored correctly
-
-### 4. Test Sharing
-
-1. Create bookmark
-2. Share with specific role
-3. Login as user with that role
-4. Verify bookmark is visible
-
-### 5. Test Advanced Filters
-
-1. Use **Advanced Filter Builder** (see screenshot)
-2. Create complex multi-condition filter
-3. Save as bookmark
-4. Apply and verify all conditions work
-
----
-
-## 🐛 Troubleshooting
-
-### MagicMark Button Not Appearing
-
-**Problem:** No MagicMark button in Content Manager toolbar (see screenshot for where it should be).
-
-**Solutions:**
-1. Rebuild admin: `npm run build`
-2. Clear browser cache (Cmd+Shift+R / Ctrl+Shift+R)
-3. Check plugin is enabled in config
-4. Check browser console for errors (F12)
-
-### Bookmarks Not Saving
-
-**Problem:** Click "Save Bookmark" but bookmark doesn't appear in dashboard.
-
-**Solutions:**
-1. Check Strapi logs for errors
-2. Verify license is activated
-3. Check database is writable
-4. Try creating simpler bookmark first
-
-### Bookmarks Not Applying
-
-**Problem:** Select bookmark but filters don't apply.
-
-**Solutions:**
-1. Refresh page and try again
-2. Check Content Manager path matches bookmark
-3. Try creating new bookmark
-4. Clear browser localStorage
-
-### Advanced Filters Not Working
-
-**Problem:** Complex filters from advanced builder don't apply correctly.
-
-**Solutions:**
-1. Check filter syntax in bookmark
-2. Try simpler filter first
-3. Verify content type supports the filters
-4. Check browser console for errors
-
----
-
-## 🛠️ Development
-
-### Local Development
-
-```bash
-# Watch mode - rebuilds on file changes
-npm run watch
-
-# Link to local Strapi
-npm run watch:link
-
-# Type checking
-npm run test:ts:front   # Frontend TypeScript
-npm run test:ts:back    # Backend TypeScript
-
-# Verify plugin
 npm run verify
+npm run verify:runtime
 ```
 
-## 🚢 Releases
+`npm test` runs the Node test runner over the server services, validation, routes (with the real
+`admin::hasPermissions` policy), lifecycles and migrations, the admin filter and list view
+helpers, translation completeness and source rules. Releases use semantic-release from `main`;
+commit messages follow Conventional Commits.
 
-Releases use semantic-release from the `main` branch. Use Conventional Commits so semantic-release can determine the next version. The release workflow runs `npm ci --legacy-peer-deps`, tests, the plugin build, and plugin verification before publishing to npm.
+## Contributing
 
-- [GitHub releases](https://github.com/Schero94/Magicmark/releases)
-- [npm package](https://www.npmjs.com/package/strapi-plugin-magic-mark)
+Issues and pull requests are welcome at
+[github.com/Schero94/Magicmark](https://github.com/Schero94/Magicmark/issues). Before you open a
+pull request, run the commands from [Development and tests](#development-and-tests); CI runs the
+same ones. Use Conventional Commits (`fix:`, `feat:`, `docs:`), because the release version is
+derived from them. Screenshots must use synthetic data only.
 
-### Plugin Structure
+## Maintenance status
 
-```
-magic-mark/
-├── admin/                      # React admin UI
-│   └── src/
-│       ├── components/
-│       │   ├── BookmarkList.tsx
-│       │   ├── SaveBookmarkModal.tsx
-│       │   ├── BookmarkCard.tsx
-│       │   └── AdvancedFilterBuilder.tsx
-│       ├── pages/
-│       │   ├── App.tsx
-│       │   ├── HomePage.tsx (Dashboard - see screenshot)
-│       │   └── LicensePage.tsx
-│       ├── hooks/
-│       ├── translations/       # i18n (5 languages)
-│       └── index.ts
-├── server/                     # Backend (TypeScript)
-│   └── src/
-│       ├── bootstrap.ts
-│       ├── controllers/
-│       ├── services/
-│       ├── routes/
-│       └── content-types/
-├── pics/                       # Screenshots
-│   ├── dashboard.png
-│   ├── saveAsMagicMark.png
-│   ├── advancedFilters.png
-│   └── quickaccesinContentmanager.png
-├── .github/workflows/          # CI/CD
-├── package.json
-├── .releaserc.json
-└── README.md
-```
+Actively maintained. Dependabot proposes updates weekly; patch and minor updates are merged
+after lint, tests, type checks, build and verify pass. Strapi peer majors are updated by hand.
 
-### Build & Release
+## Languages
 
-```bash
-# Build plugin
-npm run build
+English, German, French, Spanish and Portuguese.
 
-# Verify integrity
-npm run verify
+## License
 
-# Release (automatic via GitHub Actions)
-# Just use semantic commits:
-git commit -m "feat: add new feature"    # → MINOR version
-git commit -m "fix: fix bug"             # → PATCH version
-git commit -m "feat!: breaking change"   # → MAJOR version
-```
-
----
-
-## 📦 NPM Release Process
-
-This plugin uses **semantic-release** for automated versioning.
-
-### Commit Message Format
-
-```bash
-# PATCH version (bug fix)
-git commit -m "fix: correct bookmark save"
-
-# MINOR version (new feature)
-git commit -m "feat: add bookmark export"
-
-# MAJOR version (breaking change)
-git commit -m "feat!: change API format"
-```
-
-### Automatic Release
-
-GitHub Actions automatically:
-- Analyzes commits
-- Bumps version
-- Updates CHANGELOG
-- Publishes to NPM
-- Creates GitHub release
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome!
-
-1. Fork: https://github.com/Schero94/Magicmark
-2. Create branch: `git checkout -b feature/amazing`
-3. Commit: `git commit -m "feat: add amazing feature"`
-4. Push: `git push origin feature/amazing`
-5. Open Pull Request
-
----
-
-## 📚 Resources
-
-- **NPM Package:** https://www.npmjs.com/package/strapi-plugin-magic-mark
-- **GitHub:** https://github.com/Schero94/Magicmark
-- **Issues:** https://github.com/Schero94/Magicmark/issues
-- **Changelog:** [CHANGELOG.md](./CHANGELOG.md)
-
----
-
-## 📄 License
-
-**MIT License** - Free for personal & commercial use
-
-**Copyright (c) 2025 Schero D.**
-
-See [LICENSE](./LICENSE) for full terms
-
----
-
-## 🌐 Supported Languages
-
-- 🇬🇧 **English** - Global standard
-- 🇩🇪 **Deutsch** - German (DACH region)
-- 🇫🇷 **Français** - French
-- 🇪🇸 **Español** - Spanish (Spain & Latin America)
-- 🇵🇹 **Português** - Portuguese (Brazil & Portugal)
-
-Language automatically follows your Strapi admin interface setting.
-
----
-
-## 🙏 Acknowledgments
-
-Built for the Strapi community.
-
-Special thanks to:
-- Strapi team for the amazing CMS
-- Community contributors
-- All users providing feedback
-
----
-
-**Made with 🔖 by Schero D.**
+[MIT](./LICENSE)

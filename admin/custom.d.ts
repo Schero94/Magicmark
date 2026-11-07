@@ -1,5 +1,4 @@
-// Type declarations for translations
 declare module '*.json' {
-  const content: Record<string, any>;
+  const content: Record<string, string>;
   export default content;
 }

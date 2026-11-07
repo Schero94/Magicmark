@@ -7,7 +7,7 @@ body:
     attributes:
       value: |
         ## Thanks for suggesting a feature!
-        
+
   - type: dropdown
     id: feature-area
     attributes:
@@ -27,21 +27,21 @@ body:
         - Other
     validations:
       required: true
-      
+
   - type: textarea
     id: problem
     attributes:
       label: 🤔 Problem / Use Case
     validations:
       required: true
-      
+
   - type: textarea
     id: solution
     attributes:
       label: 💡 Proposed Solution
     validations:
       required: true
-      
+
   - type: textarea
     id: example
     attributes:
@@ -49,7 +49,7 @@ body:
       description: Show example queries or UI mockups
     validations:
       required: false
-      
+
   - type: checkboxes
     id: terms
     attributes:

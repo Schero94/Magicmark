@@ -1,12 +1,16 @@
 ---
 name: strapi-plugin-maintenance
-description: Maintain Magicmark Strapi 5 bookmarks, sharing, license UI and conditional access with reproducible checks.
+description: Maintain Magic Mark (Magicmark), the free Strapi 5 bookmarks and advanced filters plugin, with reproducible checks.
 ---
 
-# Magicmark maintenance
+# Magic Mark maintenance
 
-Use Node 22. Read local rules, query current Strapi 5 plugin/route/permission and Design System docs through Context7, and compare newest compatible 5.x with the workbench pin. Do not store credentials or license keys in skills, traces or Git; never push without an explicit request.
+Use Node 22 or 24. Read local rules and the workbench skills (docs-first, lint-required, strapi-plugin-api, strapi-plugin-security, strapi-admin-ui-ux, strapi-design-system). Never store credentials in skills, traces or Git; never push without an explicit request.
 
-Trace both `server/src/routes/admin.ts` and `server/routes/admin.js`, the controller/services and `admin/src/permissions.ts`. Routes and menu links currently use empty `policies`/`permissions`; do not assume this means unauthenticated access, but prove the admin auth scope and role/permission boundary at runtime. Make a matrix for anonymous, admin lacking permission, allowed admin, bookmark owner and another admin. Check create/reorder/pin/share/delete ownership, role visibility, license key writes and limits server-side. Preserve the intentional share semantics while denying cross-user modification.
+The plugin is free: there is no license system and there must never be outbound requests, timers or tracking. `tests/source-contract.test.cjs` enforces this.
 
-Use Strapi 5 Design System, permission-backed menu and accessible bookmark actions, empty/error/loading states and responsive query-builder layout. Run `npm run build`, `npm run verify`, `npm run test:ts:front`, `npm run test:ts:back`, plus focused owner/deny tests; then shared app build/boot and Playwright CLI navigation. Do not present successful typechecks as proof of authorization.
+Server: `server/src/routes/admin.ts` (every route has `admin::isAuthenticatedAdmin` plus `admin::hasPermissions`), `controllers/bookmarks.ts`, `services/bookmarks.ts` (access rules, sharing rows, per-user pins), `services/maintenance.ts` (3.x migrations, deletion cleanup), `validation.ts` (zod). Keep the route permission matrix in `tests/server-routes.test.cjs` and the README in sync. A bookmark the caller cannot see answers 404; a visible one owned by someone else answers 403 on writes.
+
+Admin: Design System components and `@strapi/strapi/admin` APIs only, no custom styled components or colour literals. One injection in `listView.actions` (Advanced filters + Bookmarks), the bookmarks page, and the homepage widget. Every string uses `msg()` and exists in en, de, fr, es and pt (`tests/admin-i18n.test.cjs`); German copy does not address the reader.
+
+Gates before a commit: `npm run lint`, `npm run format:check`, `npm test`, `npm run test:ts:front`, `npm run test:ts:back`, `npm run build`, `npm run verify`, `npm run verify:runtime`, `npm pack --dry-run`. For UI or permission changes also run the isolated host acceptance (own port, SQLite, synthetic data, egress blocked) with an RBAC matrix (anonymous, admin without permission, owner, other admin, manager) and the Playwright viewport matrix in light and dark mode.

@@ -1,3 +1,19 @@
+/**
+ * Plugin content types. All three are internal: hidden from the Content Manager and
+ * the Content-Type Builder, without Draft & Publish.
+ *
+ * - `bookmark`: a saved Content Manager list view (path + query) owned by one admin.
+ * - `bookmark-share`: one row per role or admin user a bookmark is shared with.
+ * - `bookmark-preference`: per-user state for a bookmark (pinned).
+ *
+ * Owners, roles and users are referenced by `documentId` strings, not relations, so the
+ * plugin never needs read access to the `admin::user` content type for its own data.
+ */
+const internal = {
+  'content-manager': { visible: false },
+  'content-type-builder': { visible: false },
+};
+
 export default {
   bookmark: {
     schema: {
@@ -6,90 +22,72 @@ export default {
       info: {
         singularName: 'bookmark',
         pluralName: 'bookmarks',
-        displayName: 'Magic Bookmark',
-        description: 'Saved filter views for quick access with path and query parameters'
+        displayName: 'Magic Mark bookmark',
       },
-      options: {
-        draftAndPublish: false,
-        comment: 'Magic Bookmarks - Saved Views with Filters'
-      },
-      pluginOptions: {
-        'content-manager': { visible: false },
-        'content-type-builder': { visible: false }
-      },
+      options: { draftAndPublish: false },
+      pluginOptions: internal,
       attributes: {
-        name: { 
-          type: 'string', 
-          required: true, 
-          maxLength: 100, 
-          configurable: false 
-        },
-        // Path: /content-manager/collection-types/api::article.article
-        path: { 
-          type: 'string', 
-          required: true, 
+        name: { type: 'string', required: true, maxLength: 100, configurable: false },
+        description: { type: 'text', maxLength: 500, configurable: false },
+        // Router path of the list view, e.g. /content-manager/collection-types/api::article.article
+        path: { type: 'string', required: true, maxLength: 255, configurable: false },
+        // Content-type uid derived from `path`; used to list the bookmarks of one list view.
+        contentType: { type: 'string', maxLength: 255, configurable: false },
+        // Query string without the leading "?" (filters, sort, pageSize, plugins).
+        query: { type: 'text', configurable: false },
+        // Icon key (see server/src/validation.ts ICON_KEYS). The column keeps its 3.x name.
+        emoji: { type: 'string', default: 'bookmark', maxLength: 50, configurable: false },
+        creatorId: { type: 'string', configurable: false },
+        updaterId: { type: 'string', configurable: false },
+        isPublic: { type: 'boolean', default: false, configurable: false },
+        // 3.x fields. Migrated on bootstrap into bookmark-share and bookmark-preference rows
+        // and then cleared; kept in the schema so the migration can still read old rows.
+        sharedWithRoles: { type: 'json', configurable: false },
+        sharedWithUsers: { type: 'json', configurable: false },
+        isPinned: { type: 'boolean', default: false, configurable: false },
+        order: { type: 'integer', default: 0, configurable: false },
+      },
+    },
+  },
+  'bookmark-share': {
+    schema: {
+      kind: 'collectionType',
+      collectionName: 'magic_bookmark_shares',
+      info: {
+        singularName: 'bookmark-share',
+        pluralName: 'bookmark-shares',
+        displayName: 'Magic Mark bookmark share',
+      },
+      options: { draftAndPublish: false },
+      pluginOptions: internal,
+      attributes: {
+        bookmarkDocumentId: { type: 'string', required: true, configurable: false },
+        targetType: {
+          type: 'enumeration',
+          enum: ['user', 'role'],
+          required: true,
           configurable: false,
-          description: 'Content Manager path (e.g., /content-manager/collection-types/api::article.article)'
         },
-        // Query: filters[status][$eq]=published&sort=createdAt:DESC
-        query: { 
-          type: 'text', 
-          configurable: false,
-          description: 'URL query parameters (e.g., filters[status][$eq]=published&sort=createdAt:DESC)'
-        },
-        emoji: { 
-          type: 'string', 
-          default: 'bookmark', 
-          configurable: false, 
-          maxLength: 50 
-        },
-        isPinned: { 
-          type: 'boolean', 
-          default: false, 
-          configurable: false 
-        },
-        order: { 
-          type: 'integer', 
-          default: 0, 
-          configurable: false 
-        },
-        description: { 
-          type: 'text', 
-          configurable: false 
-        },
-        // Creator's documentId (stored as string, not relation)
-        // We store documentId instead of relation to avoid admin::user permission issues
-        creatorId: {
-          type: 'string',
-          configurable: false,
-          description: 'documentId of the admin user who created this bookmark'
-        },
-        // Last updater's documentId
-        updaterId: {
-          type: 'string',
-          configurable: false,
-          description: 'documentId of the admin user who last updated this bookmark'
-        },
-        // Array of role documentIds that have access to this bookmark
-        sharedWithRoles: {
-          type: 'json',
-          configurable: false,
-          description: 'Array of role documentIds that have access to this bookmark'
-        },
-        // Array of user documentIds that have direct access to this bookmark
-        sharedWithUsers: {
-          type: 'json',
-          configurable: false,
-          description: 'Array of user documentIds that have direct access to this bookmark'
-        },
-        // Whether this bookmark is public to all admin users
-        isPublic: {
-          type: 'boolean',
-          default: false,
-          configurable: false,
-          description: 'If true, all admin users can see this bookmark'
-        }
-      }
-    }
-  }
+        targetId: { type: 'string', required: true, configurable: false },
+      },
+    },
+  },
+  'bookmark-preference': {
+    schema: {
+      kind: 'collectionType',
+      collectionName: 'magic_bookmark_preferences',
+      info: {
+        singularName: 'bookmark-preference',
+        pluralName: 'bookmark-preferences',
+        displayName: 'Magic Mark bookmark preference',
+      },
+      options: { draftAndPublish: false },
+      pluginOptions: internal,
+      attributes: {
+        userId: { type: 'string', required: true, configurable: false },
+        bookmarkDocumentId: { type: 'string', required: true, configurable: false },
+        isPinned: { type: 'boolean', default: false, configurable: false },
+      },
+    },
+  },
 };

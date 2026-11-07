@@ -1,7 +1,7 @@
+/**
+ * The plugin has no configuration options.
+ */
 export default {
-  default: {
-    // Enable debug logging (set to true to see all plugin logs)
-    debug: false,
-  },
+  default: {},
   validator: () => {},
 };

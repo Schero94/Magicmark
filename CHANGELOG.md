@@ -1,3 +1,71 @@
+## [Unreleased]
+
+Magic Mark is now free, rebuilt on the Strapi Design System and secured on the server.
+
+### Free
+
+- Removed the license system: license guard, license routes and settings pages, upgrade page,
+  feature gates, the 10/50 bookmark limit, the keep-alive heartbeat and every call to the license
+  server. No telemetry, no timers, no outbound requests.
+- The stored `licenseKey` and `lastValidated` plugin store keys are deleted on the first start.
+- Removed `COPYRIGHT_NOTICE.txt`; the plugin is MIT licensed.
+
+### Security and fixes
+
+- Every admin route now requires `admin::isAuthenticatedAdmin` and `admin::hasPermissions`. Before,
+  any authenticated admin could call every route, including the admin user list, because the
+  admin strategy ignores `auth.scope`.
+- Request validation with strict zod schemas; paths must be Content Manager list views and queries
+  are normalised with `qs` (no prototype keys, no `page`).
+- Sharing with individual users works (3.x compared numeric ids with documentIds).
+- Lists are filtered, searched and paginated in the database; owner names load in one query.
+- The user search is paginated and shows email only to admins with `admin::users.read`.
+- Applying filters no longer reloads the page; "all conditions" filters use the native `$and`
+  shape and show as native filter tags.
+- Opening a bookmark replaces the Content Manager's remembered list settings for that content type.
+- Bookmark paths work with a custom admin URL; saved views no longer include the page number.
+- Advanced filters read fields from the Content Manager, so roles without Content-Type Builder
+  access can use them. Internal component keys (`id`, `documentId`) are not offered; a condition
+  on a component `documentId` made the list request fail.
+- Closing a changed bookmark dialog asks first (Cancel keeps the edits). The row menu closes with
+  Escape, row dialogs return focus to the row menu, and deleting a bookmark keeps keyboard focus in
+  the page. The Shared badge has enough contrast in dark mode, and below 1080 px the bookmarks
+  page shows cards so the row actions never scroll out of view.
+- Saved 3.x queries are normalised on the first start like new ones (the page number and unknown
+  keys are dropped), and duplicating a bookmark never copies an unnormalised query.
+- A search text of up to 1000 characters can be saved. When a view still cannot be saved, the
+  dialog says why instead of showing a generic error.
+- The Bookmarks popover requests pinned bookmarks separately, so a pin is never cut off, and
+  links to the Magic Mark page when a content type has more than 100 bookmarks.
+
+### Features
+
+- Rebuilt admin UI with Design System components only: Bookmarks popover and Advanced filters
+  button in the list view toolbar, bookmarks page with search, scope, content type filter, sorting
+  and pagination, create and edit dialog with sharing, delete confirmation, dark mode, 320 px
+  layouts, five languages.
+- Per-user pins (also for shared bookmarks), duplicate, "update with current view", copy link.
+- "Pinned bookmarks" homepage widget.
+- New permissions: Read, Create, Edit own, Delete own, Share and Manage shared bookmarks of
+  others. Managers see every public or shared bookmark under **Show > All shared bookmarks**,
+  also when they are not a recipient and when the owner was deleted; private bookmarks of other
+  users stay private.
+- Admin user and role deletion clean up shares, pins and private bookmarks.
+
+### Migration notes
+
+- Roles keep their access: 3.x `settings.read` maps to Read bookmarks; `settings.update` maps to
+  Read, Create, Edit own, Delete own and Share bookmarks. Give Manage shared bookmarks of others
+  to roles that should tidy up other users' shared bookmarks.
+- 3.x shares (JSON columns) and global pins are migrated on the first start; pins become the
+  owner's personal pin. The custom manual order is no longer used.
+- The plugin-internal admin routes changed (`/license/*`, `/roles`, `/users` and
+  `/bookmarks/reorder` were removed; sharing lookups moved to `/sharing/roles` and `/sharing/users`).
+  The plugin's own admin UI is their only consumer.
+- Peer dependencies: `@strapi/design-system`, `@strapi/icons` and `@strapi/utils` are now peers;
+  `@heroicons/react` is no longer installed. `@strapi/strapi` and `@strapi/utils` need 5.57 or
+  newer 5.x.
+
 # [3.4.0](https://github.com/Schero94/Magicmark/compare/v3.3.2...v3.4.0) (2026-02-08)
 
 

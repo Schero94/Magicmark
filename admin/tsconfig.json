@@ -5,8 +5,6 @@
     "rootDir": "../",
     "baseUrl": ".",
     "skipLibCheck": true,
-    "ignoreDeprecations": "5.0",
-    "noImplicitAny": false,
-    "strict": false
+    "strict": true
   }
 }

@@ -12,22 +12,72 @@ servers.
 
 Documentation site: [https://schero94.github.io/Magicmark/](https://schero94.github.io/Magicmark/)
 
+![Bookmarks popover in the Content Manager list view](https://raw.githubusercontent.com/Schero94/Magicmark/main/pics/list-view-bookmarks.png)
+
+## Features
+
+- **Save view** in the list view toolbar keeps the content type, filters, sort order, page size,
+  search text and locale of the list you are looking at.
+- One click on a bookmark opens the list exactly like that again, without a page reload.
+- Share a bookmark with roles, with single admin users or with every admin. Recipients can open,
+  pin and copy it but not change it.
+- Pins are per user. Pinned bookmarks come first in the toolbar and on the Strapi homepage widget.
+- **Advanced filters** add "any condition", "is one of", "is none of", "is between", relation
+  fields and component fields to the native filters.
+- A Magic Mark page with search, scope, content type filter, sorting and pagination for all your
+  bookmarks.
+- Six role permissions, checked on the server for every request.
+- Built only with Strapi Design System components: light and dark mode, layouts down to 320 px,
+  keyboard access, five languages.
+
 ## Contents
 
+- [Features](#features)
+- [Quick start](#quick-start)
 - [Screenshots](#screenshots)
 - [Core concepts](#core-concepts)
 - [Screens](#screens)
 - [Compatibility](#compatibility)
-- [Install](#install)
+- [Examples](#examples)
 - [Configuration](#configuration)
 - [Admin API and permissions](#admin-api-and-permissions)
 - [Security and privacy](#security-and-privacy)
+- [Performance and several instances](#performance-and-several-instances)
 - [Troubleshooting](#troubleshooting)
 - [Upgrading from 3.x](#upgrading-from-3x)
+- [FAQ](#faq)
 - [Development and tests](#development-and-tests)
+- [Contributing](#contributing)
 - [Maintenance status](#maintenance-status)
 - [Languages](#languages)
 - [License](#license)
+
+## Quick start
+
+Install the package, enable it, rebuild the admin and start Strapi:
+
+```bash
+npm install strapi-plugin-magic-mark
+```
+
+```js
+// config/plugins.js (or .ts)
+module.exports = () => ({
+  'magic-mark': { enabled: true },
+});
+```
+
+```bash
+npm run build
+npm run develop
+```
+
+Then give your roles the permissions they need under **Settings > Roles > Plugins > Magic
+Mark**. Super Admins have all of them.
+
+To save your first bookmark, open any collection type in the Content Manager, set a filter, open
+the star button next to **View settings** and choose **Save view**. Name it and save. The bookmark
+is now in the same star menu, on the Magic Mark page and, once pinned, in the homepage widget.
 
 ## Screenshots
 
@@ -99,31 +149,29 @@ Strapi 5 admin ships these majors. TypeScript stays on 5.9 for development becau
 `@strapi/sdk-plugin` 6.1.1 builds with TypeScript 5.9.3 and typescript-eslint 8 supports
 TypeScript below 6.1.
 
-## Install
-
-```bash
-npm install strapi-plugin-magic-mark
-```
-
-```js
-// config/plugins.js (or .ts)
-module.exports = () => ({
-  'magic-mark': { enabled: true },
-});
-```
-
-```bash
-npm run build
-npm run develop
-```
-
-Then give your roles the permissions they need under **Settings > Roles > Plugins > Magic
-Mark**. Super Admins have all of them.
-
 ## Configuration
 
 Magic Mark has no configuration options and reads no environment variables. Everything is
 controlled with role permissions.
+
+## Examples
+
+**A review queue for editors.** Filter Articles by `stage` is `review`, sort by `updatedAt`, save
+the view as "Waiting for review" and share it with the Editor role. Every editor sees it in the
+star menu of Articles and can pin it for the homepage.
+
+**Your own working set.** Use Advanced filters with **Any condition** to combine "stage is one of
+draft, review" with "featured is true", save it as a private bookmark and pin it.
+
+**Keep a shared bookmark current.** Change the filters in the list, open the star menu and use
+the refresh icon next to the bookmark. It now saves the current view; the name and sharing stay.
+
+**List bookmarks from a script.** The admin API takes an admin JWT, like every Strapi admin route:
+
+```bash
+curl -s "http://localhost:1337/magic-mark/bookmarks?contentType=api::article.article&scope=pinned" \
+  -H "Authorization: Bearer $ADMIN_JWT"
+```
 
 ## Admin API and permissions
 
@@ -186,6 +234,19 @@ There are no Content API routes.
   are filtered and paginated in the database, and migrations claim each row with a guarded update
   inside a transaction.
 
+## Performance and several instances
+
+- Lists are filtered, searched, sorted and paginated in the database (at most 100 rows per page).
+  Owner names, pins and share flags of a page are loaded with one query each, so a page costs
+  the same number of queries for 10 or 100 bookmarks.
+- The plugin keeps no state in memory and starts no timers, so several replicas and workers
+  (for example 2 replicas x 4 pm2 workers) can share one database. Parallel requests were tested
+  on SQLite; a run on Postgres with several real processes is still to do.
+- The 3.x migration runs on every process at start-up. Each row is claimed with a guarded update
+  inside a transaction, so shares and pins are written once even when processes start together.
+- Pinning is idempotent: pinning twice, from two tabs or two processes, leaves the bookmark
+  pinned.
+
 ## Troubleshooting
 
 | Symptom                                       | Cause and fix                                                                          |
@@ -212,6 +273,29 @@ No manual steps. On the first start after the upgrade:
   gone; every feature is available to everyone.
 - The 3.x icon ids are kept and shown with Strapi icons.
 
+## FAQ
+
+**Is Magic Mark free?** Yes. The license system of 3.x is gone; every feature is available to
+everyone under the MIT license.
+
+**Does the plugin send data anywhere?** No. It makes no outbound requests and has no telemetry.
+
+**Can I see the private bookmarks of other admins?** No, also not as Super Admin. Managers see
+public and shared bookmarks of everyone under **Show > All shared bookmarks**.
+
+**What happens to bookmarks when an admin user is deleted?** Their private bookmarks, pins and the
+shares that point at them are removed. Their public and shared bookmarks stay and show "Deleted
+user" until a manager removes them.
+
+**Does a bookmark open on the page I saved it on?** No. The page number is not saved, so a
+bookmark always opens on page 1 with its filters, sort, page size, search and locale.
+
+**Why do "Any condition" filters not show as filter tags?** Strapi shows only `$and` filters as
+tags. The list is still filtered correctly; open Advanced filters to change or clear them.
+
+**Are the columns of the list view saved?** No. Columns are a per-user Content Manager setting
+and stay as they are.
+
 ## Development and tests
 
 ```bash
@@ -230,6 +314,14 @@ npm run verify:runtime
 `admin::hasPermissions` policy), lifecycles and migrations, the admin filter and list view
 helpers, translation completeness and source rules. Releases use semantic-release from `main`;
 commit messages follow Conventional Commits.
+
+## Contributing
+
+Issues and pull requests are welcome at
+[github.com/Schero94/Magicmark](https://github.com/Schero94/Magicmark/issues). Before you open a
+pull request, run the commands from [Development and tests](#development-and-tests); CI runs the
+same ones. Use Conventional Commits (`fix:`, `feat:`, `docs:`), because the release version is
+derived from them. Screenshots must use synthetic data only.
 
 ## Maintenance status
 

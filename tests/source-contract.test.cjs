@@ -92,10 +92,14 @@ test('a changed bookmark form asks before closing, like the native Blocker (ACC-
   assert.match(form, /<ConfirmDialog[\s\S]*form\.discardBody/);
 });
 
-test('deleting a bookmark moves focus to the page content, never <body> (ACC-UI-01)', () => {
+test('row dialogs return focus to the row menu, or to the page after a delete (ACC-UI-01)', () => {
   const page = read(path.join(root, 'admin/src/pages/BookmarksPage.tsx'));
   assert.match(page, /focusMainAfterLoad\.current = true;\s*reload\(\);/);
-  assert.match(page, /getElementById\('main-content'\)\?\.focus\(\)/);
+  assert.match(page, /\(trigger \?\? document\.getElementById\('main-content'\)\)\?\.focus\(\)/);
+  assert.match(page, /focusTarget\.current = bookmark\.documentId;\s*setEditId/);
+  assert.match(page, /focusTarget\.current = bookmark\.documentId;\s*setToDelete/);
+  const actions = read(path.join(root, 'admin/src/components/BookmarkActions.tsx'));
+  assert.match(actions, /data-bookmark-menu=\{bookmark\.documentId\}/);
 });
 
 test('badges avoid the Badge primary variant, which fails contrast in the dark theme (ACC-UI-03)', () => {
@@ -108,5 +112,16 @@ test('badges avoid the Badge primary variant, which fails contrast in the dark t
 test('the bookmarks table keeps row actions visible at tablet widths (ACC-UI-04)', () => {
   const page = read(path.join(root, 'admin/src/pages/BookmarksPage.tsx'));
   assert.match(page, /const showFiltersColumn = useIsDesktop\(\);/);
-  assert.match(page, /colCount=\{showFiltersColumn \? 6 : 5\}/);
+});
+
+test('table rows keep one button per cell, so Escape closes the row menu (ACC-UI-05)', () => {
+  const page = read(path.join(root, 'admin/src/pages/BookmarksPage.tsx'));
+  assert.match(
+    page,
+    /<Td>\{actionsFor\(bookmark, 'pin'\)\}<\/Td>\s*<Td>\{actionsFor\(bookmark, 'menu'\)\}<\/Td>/
+  );
+  assert.match(page, /colCount=\{showFiltersColumn \? 7 : 6\}/);
+  const actions = read(path.join(root, 'admin/src/components/BookmarkActions.tsx'));
+  assert.match(actions, /<Menu\.Root open=\{menuOpen\} onOpenChange=\{setMenuOpen\}>/);
+  assert.doesNotMatch(actions, /stopPropagation/);
 });

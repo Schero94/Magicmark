@@ -153,18 +153,27 @@ export const BookmarksPage = () => {
     return () => controller.abort();
   }, [api, page, pageSize, query._q, query.contentType, scope, sort, attempt, setQuery]);
 
-  // After a delete the row and its menu trigger are gone. Move focus to the page content (the
-  // skip-link target rendered by Page.Main) instead of letting it fall back to <body>.
-  useEffect(() => {
-    if (!focusMainAfterLoad.current || status !== 'ready') return undefined;
-    focusMainAfterLoad.current = false;
-    const timer = window.setTimeout(() => {
-      if (!document.activeElement || document.activeElement === document.body) {
-        document.getElementById('main-content')?.focus();
-      }
+  // Dialogs opened from a row menu return focus to that row's "More actions" button when
+  // they close (Radix would restore it to the menu item, which is gone by then). After a
+  // delete the row is gone too, so focus goes to the page content (the Page.Main skip target).
+  const focusTarget = useRef<string | null>(null);
+  const restoreFocus = useCallback(() => {
+    const id = focusTarget.current;
+    focusTarget.current = null;
+    window.setTimeout(() => {
+      if (document.activeElement && document.activeElement !== document.body) return;
+      const trigger = id
+        ? document.querySelector<HTMLElement>(`[data-bookmark-menu="${CSS.escape(id)}"]`)
+        : null;
+      (trigger ?? document.getElementById('main-content'))?.focus();
     }, 50);
-    return () => window.clearTimeout(timer);
-  }, [result, status]);
+  }, []);
+
+  useEffect(() => {
+    if (!focusMainAfterLoad.current || status !== 'ready') return;
+    focusMainAfterLoad.current = false;
+    restoreFocus();
+  }, [result, status, restoreFocus]);
 
   const reload = useCallback(() => setAttempt((n) => n + 1), []);
   const retry = () => {
@@ -268,6 +277,7 @@ export const BookmarksPage = () => {
         message: formatMessage(msg('notification.deleted', 'Bookmark deleted.')),
       });
       setToDelete(null);
+      focusTarget.current = null;
       focusMainAfterLoad.current = true;
       reload();
     } catch {
@@ -294,17 +304,24 @@ export const BookmarksPage = () => {
 
   const conditions = (bookmark: Bookmark) => countConditions(parseQuery(bookmark.query).filters);
 
-  const actionsFor = (bookmark: Bookmark) => (
+  const actionsFor = (bookmark: Bookmark, parts: 'all' | 'pin' | 'menu' = 'all') => (
     <BookmarkActions
+      parts={parts}
       bookmark={bookmark}
       permissions={permissions}
       busy={busyId === bookmark.documentId}
       onOpen={() => openBookmark(bookmark)}
       onPin={() => togglePin(bookmark)}
-      onEdit={() => setEditId(bookmark.documentId)}
+      onEdit={() => {
+        focusTarget.current = bookmark.documentId;
+        setEditId(bookmark.documentId);
+      }}
       onDuplicate={() => duplicate(bookmark)}
       onCopyLink={() => copyLink(bookmark)}
-      onDelete={() => setToDelete(bookmark)}
+      onDelete={() => {
+        focusTarget.current = bookmark.documentId;
+        setToDelete(bookmark);
+      }}
     />
   );
 
@@ -522,7 +539,7 @@ export const BookmarksPage = () => {
               ))}
             </Flex>
           ) : (
-            <Table colCount={showFiltersColumn ? 6 : 5} rowCount={bookmarks.length + 1}>
+            <Table colCount={showFiltersColumn ? 7 : 6} rowCount={bookmarks.length + 1}>
               <Thead>
                 <Tr>
                   {sortHeader('name', formatMessage(msg('table.name', 'Name')))}
@@ -547,6 +564,9 @@ export const BookmarksPage = () => {
                     <Typography variant="sigma" textColor="neutral600">
                       {formatMessage(msg('table.owner', 'Owner'))}
                     </Typography>
+                  </Th>
+                  <Th>
+                    <VisuallyHidden>{formatMessage(msg('scope.pinned', 'Pinned'))}</VisuallyHidden>
                   </Th>
                   <Th>
                     <VisuallyHidden>
@@ -588,7 +608,8 @@ export const BookmarksPage = () => {
                     <Td>
                       <Typography textColor="neutral800">{ownerLabel(bookmark)}</Typography>
                     </Td>
-                    <Td>{actionsFor(bookmark)}</Td>
+                    <Td>{actionsFor(bookmark, 'pin')}</Td>
+                    <Td>{actionsFor(bookmark, 'menu')}</Td>
                   </Tr>
                 ))}
               </Tbody>
@@ -611,19 +632,28 @@ export const BookmarksPage = () => {
       {editId ? (
         <BookmarkFormModal
           open={!!editId}
-          onOpenChange={(next) => !next && setEditId(null)}
+          onOpenChange={(next) => {
+            if (next) return;
+            setEditId(null);
+            restoreFocus();
+          }}
           bookmarkId={editId}
           canShare={canShare}
           onSaved={() => {
             setEditId(null);
             reload();
+            restoreFocus();
           }}
         />
       ) : null}
 
       <Dialog.Root
         open={!!toDelete}
-        onOpenChange={(next: boolean) => !next && !deleting && setToDelete(null)}
+        onOpenChange={(next: boolean) => {
+          if (next || deleting) return;
+          setToDelete(null);
+          restoreFocus();
+        }}
       >
         <ConfirmDialog
           title={formatMessage(msg('delete.title', 'Delete bookmark?'))}

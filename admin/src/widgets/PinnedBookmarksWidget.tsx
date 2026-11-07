@@ -12,6 +12,7 @@ import { useContentTypeNames } from '../hooks/useSchemas';
 import type { Bookmark } from '../types';
 import { getIcon } from '../utils/icons';
 import { msg } from '../utils/translations';
+import { LINK_TARGET } from '../utils/targets';
 
 const PinnedBookmarksWidget = () => {
   const { formatMessage } = useIntl();
@@ -61,6 +62,7 @@ const PinnedBookmarksWidget = () => {
                 <Link
                   tag={NavLink}
                   to={target}
+                  {...LINK_TARGET}
                   onClick={(event: React.MouseEvent) => {
                     if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0)
                       return;

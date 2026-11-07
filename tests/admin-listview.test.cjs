@@ -80,3 +80,15 @@ test('opening a bookmark replaces the remembered Content Manager list settings (
   assert.equal(store.has('STRAPI_LIST_VIEW_SETTINGS:api::article.article:uuid-1'), false);
   assert.equal(store.has('STRAPI_LIST_VIEW_SETTINGS:api::article.article'), false);
 });
+
+test('modal focus loop wraps Tab at both ends and leaves the middle to the browser (A11Y-FOCUS)', () => {
+  const { loopTarget } = require('../admin/src/utils/focusLoop.ts');
+  const nodes = ['name', 'icon', 'cancel', 'save'];
+  assert.equal(loopTarget(nodes, 'save', false), 'name');
+  assert.equal(loopTarget(nodes, 'name', true), 'save');
+  assert.equal(loopTarget(nodes, 'icon', false), null);
+  assert.equal(loopTarget(nodes, 'cancel', true), null);
+  assert.equal(loopTarget(nodes, 'outside', false), 'name', 'focus outside comes back in');
+  assert.equal(loopTarget(nodes, 'outside', true), 'save');
+  assert.equal(loopTarget([], 'x', false), null);
+});

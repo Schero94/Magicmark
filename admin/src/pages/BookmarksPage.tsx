@@ -55,6 +55,7 @@ import { countConditions } from '../utils/filters';
 import { getIcon } from '../utils/icons';
 import { parseQuery } from '../utils/query';
 import { msg } from '../utils/translations';
+import { LINK_TARGET } from '../utils/targets';
 
 type Scope = 'all' | 'mine' | 'shared' | 'pinned' | 'managed';
 
@@ -344,10 +345,7 @@ export const BookmarksPage = () => {
             <Link
               tag={NavLink}
               to={target}
-              // The link text is 20 px tall; 6 px above and below give the 32 px target size the
-              // admin uses on small screens (WCAG 2.5.8 asks for 24 px).
-              paddingTop="0.6rem"
-              paddingBottom="0.6rem"
+              {...LINK_TARGET}
               onClick={(event: React.MouseEvent) => {
                 if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
                 event.preventDefault();

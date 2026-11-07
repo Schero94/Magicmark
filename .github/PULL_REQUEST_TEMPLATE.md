@@ -1,20 +1,21 @@
-<!-- 
+<!--
 Thank you for contributing to MagicMark! 🎉
 Please fill out this template to help us review your PR.
 -->
 
 ## 📝 Description
+
 <!-- Provide a clear and concise description of your changes -->
 
-
-
 ## 🔗 Related Issue(s)
+
 <!-- Link to related issues. Use "Closes #123" or "Fixes #123" to auto-close issues -->
 
 - Closes #
 - Related to #
 
 ## 🎯 Type of Change
+
 <!-- Put an `x` in all boxes that apply -->
 
 - [ ] 🐛 Bug fix (non-breaking change that fixes an issue)
@@ -27,6 +28,7 @@ Please fill out this template to help us review your PR.
 - [ ] ⚡ Performance improvement
 
 ## 🔍 Feature Area
+
 <!-- Which part of the plugin does this affect? -->
 
 - [ ] Query Builder UI
@@ -43,6 +45,7 @@ Please fill out this template to help us review your PR.
 - [ ] Documentation
 
 ## 🧪 Testing
+
 <!-- Describe the tests you ran to verify your changes -->
 
 - [ ] I have tested these changes locally
@@ -53,13 +56,14 @@ Please fill out this template to help us review your PR.
 
 ### Test Environment
 
-- **Plugin Version**: 
-- **Strapi Version**: 
-- **Node Version**: 
-- **Database**: 
-- **OS**: 
+- **Plugin Version**:
+- **Strapi Version**:
+- **Node Version**:
+- **Database**:
+- **OS**:
 
 ### Filter Testing
+
 <!-- If applicable, describe filter scenarios you tested -->
 
 - [ ] Tested with simple filters
@@ -69,11 +73,11 @@ Please fill out this template to help us review your PR.
 - [ ] Tested bookmark sharing
 
 ## 📸 Screenshots/Videos
+
 <!-- If applicable, add screenshots of query builder or filter results -->
 
-
-
 ## 📋 Checklist
+
 <!-- Put an `x` in all boxes that apply -->
 
 - [ ] My code follows the project's code style
@@ -85,17 +89,17 @@ Please fill out this template to help us review your PR.
 - [ ] I have tested query generation and execution
 
 ## 🔄 Breaking Changes
+
 <!-- If this introduces breaking changes, describe the impact and migration path -->
 
-
-
 ## 📚 Additional Context
+
 <!-- Add any other context about the PR here -->
 
-
-
 ---
+
 **PR Title Format**: Please use conventional commits format:
+
 - `feat: add date range filter operator`
 - `fix: resolve relation filter query generation`
 - `docs: update advanced filter examples`

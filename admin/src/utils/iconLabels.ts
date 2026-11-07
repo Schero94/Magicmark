@@ -1,0 +1,37 @@
+/** Translated names of the bookmark icons, keyed like ICON_OPTIONS. */
+import type { MessageDescriptor } from 'react-intl';
+import { msg } from './translations';
+
+export const ICON_LABELS: Record<string, MessageDescriptor> = {
+  bookmark: msg('icons.bookmark', 'Book'),
+  star: msg('icons.star', 'Star'),
+  heart: msg('icons.heart', 'Heart'),
+  bolt: msg('icons.bolt', 'Lightning'),
+  rocket: msg('icons.rocket', 'Rocket'),
+  sparkles: msg('icons.sparkles', 'Sparkle'),
+  pencil: msg('icons.pencil', 'Pencil'),
+  document: msg('icons.document', 'Document'),
+  folder: msg('icons.folder', 'Folder'),
+  photo: msg('icons.photo', 'Image'),
+  link: msg('icons.link', 'Link'),
+  tag: msg('icons.tag', 'Tag'),
+  filter: msg('icons.filter', 'Filter'),
+  search: msg('icons.search', 'Search'),
+  calendar: msg('icons.calendar', 'Calendar'),
+  clock: msg('icons.clock', 'Clock'),
+  bell: msg('icons.bell', 'Bell'),
+  check: msg('icons.check', 'Check mark'),
+  mail: msg('icons.mail', 'Mail'),
+  user: msg('icons.user', 'Person'),
+  briefcase: msg('icons.briefcase', 'Briefcase'),
+  gift: msg('icons.gift', 'Gift'),
+  globe: msg('icons.globe', 'Globe'),
+  home: msg('icons.home', 'House'),
+  flag: msg('icons.flag', 'Feather'),
+  fire: msg('icons.fire', 'Trend'),
+  cube: msg('icons.cube', 'Stack'),
+  cog: msg('icons.cog', 'Gear'),
+  wrench: msg('icons.wrench', 'Puzzle piece'),
+  terminal: msg('icons.terminal', 'Code'),
+  chart: msg('icons.chart', 'Chart'),
+};

@@ -149,3 +149,13 @@ test('a rejected list view query is explained, not hidden behind a generic error
   assert.match(form, /form\.queryTooLong/);
   assert.match(popover, /fieldErrors\(error\)\.query/);
 });
+
+test('removed 3.x plugin pages show the native "Page not found" state, not an error (MM-404)', () => {
+  const app = read(path.join(root, 'admin/src/pages/App.tsx'));
+  assert.match(app, /<Route path="\*" element={<NotFoundPage \/>} \/>/);
+  assert.doesNotMatch(app, /Page\.Error/, 'unknown paths are not an error');
+  const page = read(path.join(root, 'admin/src/pages/NotFoundPage.tsx'));
+  assert.match(page, /<Page\.Main /);
+  assert.match(page, /<EmptyStateLayout/);
+  assert.match(page, /to={`\/plugins\/\${pluginId}`}/, 'offers the way back to the plugin page');
+});

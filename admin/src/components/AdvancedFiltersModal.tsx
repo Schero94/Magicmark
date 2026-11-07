@@ -46,6 +46,8 @@ import {
   validateRow,
 } from '../utils/filters';
 import { msg, operatorLabel } from '../utils/translations';
+import { keepFocusInside } from '../utils/focusLoop';
+import { TEXT_BUTTON_TARGET } from '../utils/targets';
 
 interface AdvancedFiltersModalProps {
   open: boolean;
@@ -151,7 +153,7 @@ export const AdvancedFiltersModal = ({ open, onOpenChange, uid }: AdvancedFilter
 
   return (
     <Modal.Root open={open} onOpenChange={onOpenChange}>
-      <Modal.Content>
+      <Modal.Content onKeyDown={keepFocusInside}>
         <Modal.Header closeLabel={formatMessage(msg('form.close', 'Close'))}>
           <Modal.Title>{formatMessage(msg('filters.title', 'Advanced filters'))}</Modal.Title>
         </Modal.Header>
@@ -251,6 +253,7 @@ export const AdvancedFiltersModal = ({ open, onOpenChange, uid }: AdvancedFilter
               <Box>
                 <TextButton
                   startIcon={<Plus />}
+                  {...TEXT_BUTTON_TARGET}
                   onClick={() => setRows((prev) => [...prev, emptyRow()])}
                 >
                   {formatMessage(msg('filters.add', 'Add condition'))}

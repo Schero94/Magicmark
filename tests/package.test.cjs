@@ -9,25 +9,52 @@ const root = path.join(__dirname, '..');
 const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
 
 test('runtime dependencies are only what the plugin imports itself (PKG-1, DEP-01)', () => {
-  assert.deepEqual(Object.keys(pkg.dependencies).sort(), ['qs', 'zod']);
+  // @strapi/utils is imported by the server code. Strapi apps do not list it, so as a peer it
+  // made yarn 1 warn about an unmet peer; as a dependency it dedupes with Strapi's own copy.
+  assert.deepEqual(Object.keys(pkg.dependencies).sort(), ['@strapi/utils', 'qs', 'zod']);
+  assert.match(pkg.dependencies['@strapi/utils'], /^\^5\./);
   for (const name of ['@heroicons/react', '@types/qs', '@strapi/sdk-plugin', '@swc/core']) {
     assert.equal(pkg.dependencies[name], undefined, `${name} is not a runtime dependency`);
     assert.equal(pkg.peerDependencies[name], undefined, `${name} is not a peer`);
   }
   assert.equal(pkg.devDependencies['@heroicons/react'], undefined);
-  for (const peer of [
+  assert.equal(pkg.peerDependencies['@strapi/utils'], undefined, '@strapi/utils is not a peer');
+});
+
+test('peers match the Strapi 5 app template; admin-only packages are optional peers (PKG-2)', () => {
+  // create-strapi-app 5.61.0 adds react ^18.0.0, react-dom ^18.0.0, react-router-dom ^6.30.3
+  // and styled-components ^6.0.0 to every app. The Design System, icons and react-intl reach
+  // the app only through @strapi/admin, so they are optional: no install warning, and the
+  // admin build still resolves them from the app.
+  assert.deepEqual(Object.keys(pkg.peerDependencies).sort(), [
     '@strapi/design-system',
     '@strapi/icons',
     '@strapi/strapi',
-    '@strapi/utils',
     'react',
     'react-dom',
     'react-intl',
     'react-router-dom',
     'styled-components',
-  ]) {
-    assert.ok(pkg.peerDependencies[peer], `${peer} is a peer`);
-  }
+  ]);
+  assert.deepEqual(pkg.peerDependenciesMeta, {
+    '@strapi/design-system': { optional: true },
+    '@strapi/icons': { optional: true },
+    'react-intl': { optional: true },
+  });
+  assert.equal(pkg.peerDependencies['@strapi/strapi'], '^5.57.0');
+  assert.equal(pkg.peerDependencies.react, '^18.0.0');
+  assert.equal(pkg.peerDependencies['react-dom'], '^18.0.0');
+});
+
+test('package metadata points at the project site and repository (PKG-5)', () => {
+  assert.equal(pkg.homepage, 'https://schero94.github.io/Magicmark/');
+  assert.deepEqual(pkg.repository, {
+    type: 'git',
+    url: 'git+https://github.com/Schero94/Magicmark.git',
+  });
+  assert.equal(pkg.bugs.url, 'https://github.com/Schero94/Magicmark/issues');
+  assert.doesNotMatch(pkg.description, /enterprise|powerful|ultimate|blazing/i);
+  assert.ok(pkg.keywords.includes('strapi-plugin'));
 });
 
 test('Strapi peer pins are documented majors: React 18, React Router 6, styled-components 6, react-intl 6', () => {

@@ -2,7 +2,8 @@
 
 /**
  * In-memory stand-in for the parts of Strapi the plugin's services use: `db.query(uid)`,
- * `documents(uid)`, `db.transaction`, `store`, `log` and the admin permission service.
+ * `documents(uid)`, `db.transaction`, `db.queryBuilder` (row locks), `store`, `log` and the
+ * admin permission service.
  * Where clauses support the operators the plugin sends ($and, $or, $in, $ne, $null,
  * $notNull, $containsi, $gt and nested relation objects).
  */
@@ -96,8 +97,12 @@ const createFakeStrapi = ({ tables = {}, store = {} } = {}) => {
   };
   for (const [uid, rows] of Object.entries(tables)) for (const row of rows) insert(uid, row);
 
+  // Every query yields once, so concurrent service calls interleave like requests on
+  // several processes do.
+  const tick = () => new Promise((resolve) => setImmediate(resolve));
   const query = (uid) => ({
     async findMany({ where, select, orderBy, limit, populate } = {}) {
+      await tick();
       calls.queries.push({ uid, op: 'findMany' });
       let rows = sortRows(
         table(uid).filter((r) => matches(r, where)),
@@ -129,21 +134,26 @@ const createFakeStrapi = ({ tables = {}, store = {} } = {}) => {
       };
     },
     async count({ where } = {}) {
+      await tick();
       return table(uid).filter((r) => matches(r, where)).length;
     },
     async create({ data: row }) {
+      await tick();
       return insert(uid, row);
     },
     async createMany({ data: rows }) {
+      await tick();
       rows.forEach((row) => insert(uid, row));
       return { count: rows.length };
     },
     async updateMany({ where, data: patch }) {
+      await tick();
       const rows = table(uid).filter((r) => matches(r, where));
       rows.forEach((r) => Object.assign(r, patch));
       return { count: rows.length };
     },
     async deleteMany({ where }) {
+      await tick();
       const keep = table(uid).filter((r) => !matches(r, where));
       const count = table(uid).length - keep.length;
       data.set(uid, keep);
@@ -188,6 +198,51 @@ const createFakeStrapi = ({ tables = {}, store = {} } = {}) => {
     },
   });
 
+  // Row locks: `queryBuilder(...).forUpdate().execute()` waits until no other open
+  // transaction holds the same row, like `SELECT ... FOR UPDATE` on Postgres. Locks are
+  // released when the transaction callback settles.
+  const held = new Map();
+  const acquire = async (key, trx) => {
+    while (held.has(key) && held.get(key).trx !== trx) await held.get(key).released;
+    if (held.has(key)) return;
+    let release;
+    const released = new Promise((resolve) => (release = resolve));
+    held.set(key, { trx, released });
+    trx.locks.push(() => {
+      held.delete(key);
+      release();
+    });
+  };
+  const queryBuilder = (uid) => {
+    const state = { where: {}, trx: null, forUpdate: false };
+    const qb = {
+      select: () => qb,
+      where: (where) => ((state.where = where), qb),
+      first: () => qb,
+      transacting: (trx) => ((state.trx = trx), qb),
+      forUpdate: () => ((state.forUpdate = true), qb),
+      async execute() {
+        calls.queries.push({ uid, op: state.forUpdate ? 'lock' : 'select', where: state.where });
+        if (state.forUpdate) {
+          if (!state.trx?.locks) throw new Error('fake db: forUpdate outside a transaction');
+          const row = table(uid).find((r) => matches(r, state.where));
+          await acquire(`${uid}:${row ? row.id : JSON.stringify(state.where)}`, state.trx);
+        }
+        const row = table(uid).find((r) => matches(r, state.where));
+        return row ? { id: row.id } : null;
+      },
+    };
+    return qb;
+  };
+  const transaction = async (cb) => {
+    const trx = { locks: [] };
+    try {
+      return await cb({ trx });
+    } finally {
+      trx.locks.splice(0).forEach((release) => release());
+    }
+  };
+
   const storeValues = new Map(Object.entries(store));
   const logs = [];
   const services = {};
@@ -199,7 +254,8 @@ const createFakeStrapi = ({ tables = {}, store = {} } = {}) => {
     insert,
     db: {
       query,
-      transaction: async (cb) => cb({}),
+      transaction,
+      queryBuilder,
       lifecycles: {
         subscribe: (sub) => {
           strapi.subscriber = sub;
@@ -225,8 +281,19 @@ const createFakeStrapi = ({ tables = {}, store = {} } = {}) => {
     admin: {
       services: {
         permission: {
-          createMany: async (permissions) =>
-            permissions.map((p) => insert('admin::permission', { ...p, role: { id: p.role } })),
+          createMany: async (permissions) => {
+            await tick();
+            return permissions.map((p) =>
+              insert('admin::permission', { ...p, role: { id: p.role } })
+            );
+          },
+          deleteByIds: async (ids) => {
+            await tick();
+            data.set(
+              'admin::permission',
+              table('admin::permission').filter((row) => !ids.includes(row.id))
+            );
+          },
           actionProvider: {
             registerMany: async (actions) => {
               strapi.registeredActions = actions;

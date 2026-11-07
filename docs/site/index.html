@@ -3,9 +3,12 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>
+      Magic Mark (Magicmark): saved views and bookmarks for the Strapi 5 Content Manager
+    </title>
     <meta
       name="description"
-      content="Magic Mark (Magicmark): free bookmarks and advanced filters for the Strapi 5 Content Manager. Save list views, share them with roles and users."
+      content="Magic Mark is a free Strapi 5 plugin: save Content Manager list views with their filters as bookmarks, share them with roles and admin users, pin them and use advanced filters."
     />
     <meta name="color-scheme" content="light dark" />
     <meta name="theme-color" content="#f5f7fb" media="(prefers-color-scheme: light)" />
@@ -13,23 +16,49 @@
     <link rel="canonical" href="https://schero94.github.io/Magicmark/" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Magic Mark" />
-    <meta property="og:title" content="Magic Mark: bookmarks and advanced filters for Strapi 5" />
+    <meta property="og:title" content="Magic Mark: saved views for the Strapi 5 Content Manager" />
     <meta
       property="og:description"
-      content="Save Content Manager list views as bookmarks, share them with roles and users, and filter with any-condition logic. Free and open source."
+      content="Save filtered list views as bookmarks, share them with roles and users, pin them to the homepage and filter with any-condition logic. Free and open source."
     />
     <meta property="og:url" content="https://schero94.github.io/Magicmark/" />
     <meta
       property="og:image"
       content="https://schero94.github.io/Magicmark/img/list-view-bookmarks.png"
     />
+    <meta property="og:image:width" content="1440" />
+    <meta property="og:image:height" content="900" />
     <meta
       property="og:image:alt"
       content="Bookmarks popover next to View settings in the Strapi Content Manager"
     />
     <meta name="twitter:card" content="summary_large_image" />
-    <title>Magic Mark (Magicmark) | Strapi plugin documentation</title>
+    <meta name="twitter:title" content="Magic Mark: saved views for the Strapi 5 Content Manager" />
+    <meta
+      name="twitter:description"
+      content="Free Strapi 5 plugin: bookmarks for filtered list views, sharing by role, pins and advanced filters."
+    />
+    <meta
+      name="twitter:image"
+      content="https://schero94.github.io/Magicmark/img/list-view-bookmarks.png"
+    />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Magic Mark",
+        "alternateName": "strapi-plugin-magic-mark",
+        "applicationCategory": "DeveloperApplication",
+        "operatingSystem": "Node.js",
+        "description": "Strapi 5 plugin: save Content Manager list views as bookmarks, share them with roles and admin users, pin them and use advanced filters.",
+        "license": "https://opensource.org/licenses/MIT",
+        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" },
+        "url": "https://schero94.github.io/Magicmark/",
+        "codeRepository": "https://github.com/Schero94/Magicmark"
+      }
+    </script>
     <link rel="stylesheet" href="./site.css" />
+    <link rel="stylesheet" href="./site-extra.css" />
   </head>
   <body>
     <a class="skip-link" href="#main-content">Skip to content</a>
@@ -41,33 +70,44 @@
           <span>Magic Mark</span>
         </a>
         <nav class="top-links" aria-label="Primary navigation">
-          <a href="#features">Features</a>
-          <a href="#api">API</a>
-          <a href="#faq">FAQ</a>
-          <a href="#releases">Releases</a>
+          <a href="#install">Install</a>
+          <a href="https://github.com/Schero94/Magicmark">GitHub</a>
+          <a href="https://www.npmjs.com/package/strapi-plugin-magic-mark">npm</a>
         </nav>
       </div>
     </header>
 
     <div class="hero-wrap">
       <section class="hero" aria-labelledby="page-title">
-        <div class="hero-copy">
-          <span class="eyebrow">Strapi plugin</span>
-          <h1 id="page-title">Save the view. Open it again with one click.</h1>
-          <p>
-            Magic Mark adds bookmarks and advanced filters to the Strapi 5 Content Manager. Filter a
-            list, save it as a bookmark and share it with roles or admin users. Free, with no
-            license key, no limits and no external calls.
-          </p>
-          <div class="hero-actions">
-            <a class="button primary" href="#install">Install the plugin</a>
-            <a class="button" href="https://github.com/Schero94/Magicmark">View source</a>
+        <div class="hero-grid">
+          <div class="hero-copy">
+            <span class="eyebrow">Strapi 5 plugin</span>
+            <h1 id="page-title">Save the view. Open it again with one click.</h1>
+            <p>
+              Magic Mark adds saved views to the Strapi Content Manager. Filter a list once, save it
+              as a bookmark and share it with roles or admin users. Free under the MIT license, with
+              no license key, no limits and no external calls.
+            </p>
+            <div class="hero-actions">
+              <a class="button primary" href="#install">Install in one minute</a>
+              <a class="button" href="https://github.com/Schero94/Magicmark">Source on GitHub</a>
+            </div>
+            <code class="hero-install">npm install strapi-plugin-magic-mark</code>
+            <div class="badges" aria-label="Compatibility">
+              <span class="badge">Strapi 5.57+ (tested on 5.61)</span>
+              <span class="badge">Node 22 and 24</span>
+              <span class="badge">npm, yarn, pnpm</span>
+              <span class="badge">MIT license</span>
+            </div>
           </div>
-          <div class="badges" aria-label="Compatibility">
-            <span class="badge">Strapi 5.57+ (tested on 5.61)</span>
-            <span class="badge">Node 22 and 24</span>
-            <span class="badge">Free, MIT license</span>
-          </div>
+          <figure class="hero-shot">
+            <img
+              src="./img/list-view-bookmarks.png"
+              alt="The Bookmarks popover open next to View settings in the Content Manager list view"
+              width="1440"
+              height="900"
+            />
+          </figure>
         </div>
       </section>
     </div>
@@ -75,11 +115,15 @@
     <main class="layout" id="main-content">
       <nav class="side-nav" aria-label="Documentation sections">
         <a href="#features">Features</a>
+        <a href="#how">How it works</a>
         <a href="#install">Install</a>
-        <a href="#configuration">Configuration</a>
+        <a href="#screens">Screens</a>
+        <a href="#configuration">Permissions</a>
+        <a href="#examples">Examples</a>
+        <a href="#api">Admin API</a>
         <a href="#security">Security</a>
         <a href="#instances">Several instances</a>
-        <a href="#api">API</a>
+        <a href="#upgrade">Upgrade from 3.x</a>
         <a href="#faq">FAQ</a>
         <a href="#releases">Releases</a>
       </nav>
@@ -88,102 +132,206 @@
         <section class="section" id="features" aria-labelledby="features-title">
           <h2 id="features-title">Features</h2>
           <p class="section-lead">
-            Everything is built with the Strapi Design System, so Magic Mark looks and behaves like
-            the rest of the admin panel, in light and dark mode, from 1440 px down to 320 px.
+            Editors open the same lists every day. Magic Mark keeps those lists as bookmarks inside
+            Strapi, with permissions per role and a UI built only from Strapi Design System
+            components, in light and dark mode, from 1440 px down to 320 px.
           </p>
           <div class="card-grid">
             <article class="card">
               <h3>Bookmarks in the list view</h3>
               <p>
                 A Bookmarks button next to View settings lists the bookmarks of the current content
-                type. Save view captures filters, sort, page size, search and locale.
+                type, pinned first. Save view keeps filters, sort order, page size, search and
+                locale.
               </p>
             </article>
             <article class="card">
               <h3>Advanced filters</h3>
               <p>
                 Match all or any condition, use "is one of", "is none of" and "is between", and
-                filter on relation and component fields. All-conditions filters appear as native
+                filter on relation and component fields. "All conditions" filters show as native
                 filter tags.
               </p>
             </article>
             <article class="card">
-              <h3>Sharing</h3>
+              <h3>Sharing by role or user</h3>
               <p>
-                Keep a bookmark private, share it with roles and individual admin users, or with all
-                admins. Only the owner can change it; recipients can pin and duplicate it.
+                Keep a bookmark private, share it with roles and single admin users, or with all
+                admins. Only the owner or a manager changes it; recipients can pin and duplicate it.
               </p>
             </article>
             <article class="card">
-              <h3>Bookmarks page and widget</h3>
+              <h3>Pins, page and widget</h3>
               <p>
-                Search, filter and sort all bookmarks you can see, and pin your favourites to the
-                Strapi homepage widget.
+                Pins are per user. Pinned bookmarks appear first in the toolbar and in the "Pinned
+                bookmarks" widget on the Strapi homepage. The Magic Mark page searches, filters and
+                sorts everything you can see.
+              </p>
+            </article>
+            <article class="card">
+              <h3>Checked on the server</h3>
+              <p>
+                Six role permissions, owner checks and strict input validation on every request. A
+                bookmark can only point to a Content Manager list.
+              </p>
+            </article>
+            <article class="card">
+              <h3>Ready for several instances</h3>
+              <p>
+                Row locks keep edits, shares and pins correct when Railway replicas or pm2 workers
+                share one database. Tested with 8 processes on Postgres.
               </p>
             </article>
           </div>
-          <figure class="shot">
-            <img
-              src="./img/list-view-bookmarks.png"
-              alt="Bookmarks popover in the Content Manager list view"
-              width="1440"
-              height="900"
-              loading="lazy"
-            />
-            <figcaption>Bookmarks for the current content type, pinned first.</figcaption>
-          </figure>
-          <figure class="shot">
-            <img
-              src="./img/advanced-filters.png"
-              alt="Advanced filters dialog with two conditions"
-              width="1440"
-              height="900"
-              loading="lazy"
-            />
-            <figcaption>Advanced filters with the native operator wording.</figcaption>
-          </figure>
-          <figure class="shot">
-            <img
-              src="./img/bookmarks.png"
-              alt="Magic Mark bookmarks page with search, filters and table"
-              width="1440"
-              height="900"
-              loading="lazy"
-            />
-            <figcaption>The bookmarks page: owner, visibility, filters and row actions.</figcaption>
-          </figure>
+        </section>
+
+        <section class="section" id="how" aria-labelledby="how-title">
+          <h2 id="how-title">How it works</h2>
+          <ol class="steps">
+            <li class="card">
+              <span class="number" aria-hidden="true">1</span>
+              <h3>Filter a list</h3>
+              <p>
+                Open any collection type in the Content Manager and set filters, sort order, search
+                or locale, with the native filters or with Advanced filters.
+              </p>
+            </li>
+            <li class="card">
+              <span class="number" aria-hidden="true">2</span>
+              <h3>Save the view</h3>
+              <p>
+                Open Bookmarks next to View settings and choose Save view. Name it, pick an icon and
+                decide who can see it.
+              </p>
+            </li>
+            <li class="card">
+              <span class="number" aria-hidden="true">3</span>
+              <h3>Open it again</h3>
+              <p>
+                One click in the toolbar, on the Magic Mark page or in the homepage widget opens the
+                list exactly like that, on page 1.
+              </p>
+            </li>
+          </ol>
         </section>
 
         <section class="section" id="install" aria-labelledby="install-title">
           <h2 id="install-title">Install</h2>
           <p class="section-lead">
-            Requires Strapi 5.57 or newer 5.x and Node.js 22.22.2 or newer (or 24.15.0 or newer).
+            Needs Strapi 5.57 or newer 5.x and Node.js 22.22.2 or newer (or 24.15.0 or newer).
+            Installing into a new Strapi 5.61 app with npm 11, yarn 1.22 or pnpm prints no warning
+            caused by the plugin.
           </p>
           <div class="code-card">
-            <div class="code-label"><span>Install from npm</span></div>
-            <pre><code>npm install strapi-plugin-magic-mark</code></pre>
+            <div class="code-label"><span>1. Install the package</span></div>
+            <pre><code>npm install strapi-plugin-magic-mark
+# or: yarn add strapi-plugin-magic-mark
+# or: pnpm add strapi-plugin-magic-mark</code></pre>
           </div>
           <div class="code-card">
-            <div class="code-label"><span>config/plugins.ts</span></div>
-            <pre><code>export default () =&gt; ({
-  'magic-mark': { enabled: true },
-});</code></pre>
+            <div class="code-label"><span>2. Rebuild the admin and start Strapi</span></div>
+            <pre><code>npm run build
+npm run develop</code></pre>
           </div>
           <p>
-            Rebuild the admin panel with <code>npm run build</code>, then give your roles the Magic
-            Mark permissions under Settings, Roles, Plugins.
+            Strapi enables installed plugins by itself. If your <code>config/plugins</code> file
+            lists plugins explicitly, add <code>'magic-mark': { enabled: true }</code>. Super Admins
+            have every permission; give other roles what they need under Settings, Roles, Plugins,
+            Magic Mark.
           </p>
         </section>
 
+        <section class="section" id="screens" aria-labelledby="screens-title">
+          <h2 id="screens-title">Screens</h2>
+          <p class="section-lead">All screenshots use synthetic data on a Strapi 5.61 host.</p>
+          <div class="gallery">
+            <figure class="shot">
+              <img
+                src="./img/advanced-filters.png"
+                alt="Advanced filters dialog with two conditions"
+                width="1440"
+                height="900"
+                loading="lazy"
+              />
+              <figcaption>Advanced filters with any-condition logic and native wording.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img
+                src="./img/save-view.png"
+                alt="Save view dialog with name, icon, saved filters and sharing options"
+                width="1440"
+                height="900"
+                loading="lazy"
+              />
+              <figcaption>
+                Save view: name, icon, the captured filters and who can see it.
+              </figcaption>
+            </figure>
+            <figure class="shot">
+              <img
+                src="./img/bookmarks.png"
+                alt="Magic Mark page with search, filters and a table of bookmarks"
+                width="1440"
+                height="900"
+                loading="lazy"
+              />
+              <figcaption>
+                The Magic Mark page: owner, visibility, filters and row actions.
+              </figcaption>
+            </figure>
+            <figure class="shot">
+              <img
+                src="./img/bookmarks-dark.png"
+                alt="Magic Mark page in dark mode"
+                width="1440"
+                height="900"
+                loading="lazy"
+              />
+              <figcaption>Dark mode follows the Strapi admin theme.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img
+                src="./img/homepage-widget.png"
+                alt="Pinned bookmarks widget on the Strapi homepage"
+                width="1440"
+                height="900"
+                loading="lazy"
+              />
+              <figcaption>Pinned bookmarks on the Strapi homepage.</figcaption>
+            </figure>
+            <figure class="shot">
+              <img
+                src="./img/delete-bookmark.png"
+                alt="Confirmation dialog before a bookmark is deleted"
+                width="1440"
+                height="900"
+                loading="lazy"
+              />
+              <figcaption>Deleting asks first and keeps keyboard focus in the page.</figcaption>
+            </figure>
+            <figure class="shot wide phone">
+              <img
+                src="./img/mobile-bookmarks.png"
+                alt="Magic Mark page as cards on a 390 pixel wide screen"
+                width="390"
+                height="844"
+                loading="lazy"
+              />
+              <figcaption>Below 1080 px the page shows cards, down to 320 px.</figcaption>
+            </figure>
+          </div>
+        </section>
+
         <section class="section" id="configuration" aria-labelledby="configuration-title">
-          <h2 id="configuration-title">Configuration</h2>
+          <h2 id="configuration-title">Configuration and permissions</h2>
           <p class="section-lead">
-            There are no configuration options and no environment variables. Access is controlled
-            with role permissions.
+            There are no configuration options and no environment variables. Role permissions decide
+            what each admin can do. The owner of a bookmark can always edit and delete it (with Edit
+            own and Delete own).
           </p>
           <div class="table-wrap">
             <table>
-              <caption>
+              <caption class="visually-hidden">
                 Magic Mark permissions
               </caption>
               <thead>
@@ -197,7 +345,7 @@
                 <tr>
                   <td>Read bookmarks</td>
                   <td><code>plugin::magic-mark.bookmarks.read</code></td>
-                  <td>See and open bookmarks, pin them, the bookmarks page and widget.</td>
+                  <td>See and open bookmarks, pin them, the Magic Mark page and the widget.</td>
                 </tr>
                 <tr>
                   <td>Create bookmarks</td>
@@ -207,7 +355,7 @@
                 <tr>
                   <td>Edit own bookmarks</td>
                   <td><code>plugin::magic-mark.bookmarks.update</code></td>
-                  <td>Rename, describe and update the saved view of your bookmarks.</td>
+                  <td>Rename, describe, change the icon and update the saved view.</td>
                 </tr>
                 <tr>
                   <td>Delete own bookmarks</td>
@@ -223,9 +371,103 @@
                   <td>Manage shared bookmarks of others</td>
                   <td><code>plugin::magic-mark.bookmarks.manage</code></td>
                   <td>
-                    Edit and delete every public or shared bookmark, also ones of deleted users
-                    (Show &gt; All shared bookmarks). Private bookmarks of others stay private.
+                    See every public or shared bookmark under Show &gt; All shared bookmarks, also
+                    ones of deleted users. Private bookmarks of others stay private.
                   </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="section" id="examples" aria-labelledby="examples-title">
+          <h2 id="examples-title">Examples</h2>
+          <h3>A review queue for the editor team</h3>
+          <p>
+            Filter Articles by <code>stage</code> is <code>review</code>, sort by
+            <code>updatedAt</code> descending, save the view as "Waiting for review" and share it
+            with the Editor role. Every editor finds it in the Bookmarks menu and can pin it.
+          </p>
+          <h3>A personal working set</h3>
+          <p>
+            In Advanced filters choose Any condition, add "stage is one of idea, review" and "author
+            is anna.beispiel", apply, save it as a private bookmark and pin it.
+          </p>
+          <h3>Read bookmarks from a script</h3>
+          <div class="code-card">
+            <div class="code-label"><span>Admin API with an admin JWT</span></div>
+            <pre><code>curl -s "http://localhost:1337/magic-mark/bookmarks?scope=pinned" \
+  -H "Authorization: Bearer $ADMIN_JWT"</code></pre>
+          </div>
+        </section>
+
+        <section class="section" id="api" aria-labelledby="api-title">
+          <h2 id="api-title">Admin API</h2>
+          <p class="section-lead">
+            Admin routes under <code>/magic-mark</code>. Each one needs an authenticated admin and
+            every listed permission. A bookmark you cannot see answers 404; one you may not change
+            answers 403. There are no Content API routes.
+          </p>
+          <div class="table-wrap">
+            <table>
+              <caption class="visually-hidden">
+                Magic Mark admin API routes
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Route</th>
+                  <th scope="col">Permissions</th>
+                  <th scope="col">Purpose</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>GET /bookmarks</code></td>
+                  <td>read</td>
+                  <td>
+                    Paginated list. Query: <code>page</code>, <code>pageSize</code> (max 100),
+                    <code>q</code>, <code>scope</code>, <code>sort</code>, <code>contentType</code>.
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>POST /bookmarks</code></td>
+                  <td>read, create</td>
+                  <td>Create a bookmark. Sharing also needs share.</td>
+                </tr>
+                <tr>
+                  <td><code>GET /bookmarks/:id</code></td>
+                  <td>read</td>
+                  <td>One bookmark; sharing lists for the owner and managers.</td>
+                </tr>
+                <tr>
+                  <td><code>PUT /bookmarks/:id</code></td>
+                  <td>read, update</td>
+                  <td>Edit name, description, icon and sharing.</td>
+                </tr>
+                <tr>
+                  <td><code>DELETE /bookmarks/:id</code></td>
+                  <td>read, delete</td>
+                  <td>Delete a bookmark with its shares and pins.</td>
+                </tr>
+                <tr>
+                  <td><code>PUT /bookmarks/:id/view</code></td>
+                  <td>read, update</td>
+                  <td>Save the current view into a bookmark.</td>
+                </tr>
+                <tr>
+                  <td><code>POST /bookmarks/:id/duplicate</code></td>
+                  <td>read, create</td>
+                  <td>Private copy owned by the caller.</td>
+                </tr>
+                <tr>
+                  <td><code>PUT /bookmarks/:id/pin</code></td>
+                  <td>read</td>
+                  <td>Pin or unpin for the caller only.</td>
+                </tr>
+                <tr>
+                  <td><code>GET /sharing/roles</code>, <code>GET /sharing/users</code></td>
+                  <td>share</td>
+                  <td>Roles, and a paginated search of active admin users.</td>
                 </tr>
               </tbody>
             </table>
@@ -234,16 +476,19 @@
 
         <section class="section" id="security" aria-labelledby="security-title">
           <h2 id="security-title">Security and privacy</h2>
-          <ul>
+          <ul class="check-list">
             <li>
-              Every admin route requires an authenticated admin and the listed permissions
-              (<code>admin::hasPermissions</code>). A bookmark you cannot see answers 404; one you
-              can see but do not own answers 403 when you try to change it.
+              No license system, no telemetry, no outbound requests and no timers. Stored 3.x
+              license keys are deleted on the first start.
+            </li>
+            <li>
+              Every route checks authentication and permissions on the server; menus and buttons
+              only follow those rules.
             </li>
             <li>
               Saved paths must be Content Manager list views, so a shared bookmark cannot lead to
-              another admin page or off-site. Queries are parsed with prototype keys disabled and
-              stored without the page number.
+              another admin page or off-site. Queries are parsed with prototype keys disabled,
+              limited in size and depth, and stored without the page number.
             </li>
             <li>
               Request bodies are validated with strict schemas. Recipients never see who else a
@@ -251,144 +496,139 @@
               users.
             </li>
             <li>
-              No license system, no telemetry, no outbound requests and no timers. Stored 3.x
-              license keys are deleted on the first start.
-            </li>
-            <li>
               Deleting an admin user removes their pins, the shares pointing at them and their
-              private bookmarks.
+              private bookmarks. Their shared bookmarks stay, marked with the deleted owner, until a
+              manager removes them.
             </li>
           </ul>
         </section>
 
         <section class="section" id="instances" aria-labelledby="instances-title">
-          <h2 id="instances-title">Performance and several instances</h2>
-          <ul>
+          <h2 id="instances-title">Running several instances</h2>
+          <p class="section-lead">
+            Railway replicas, Kubernetes pods and pm2 cluster workers can share one database. The
+            plugin keeps no state in the process and starts no timers.
+          </p>
+          <ul class="check-list">
             <li>
-              Lists are filtered, searched, sorted and paginated in the database, at most 100 rows
-              per page. Owner names, pins and share flags of a page load with one query each.
+              Every write to an existing bookmark locks its row (<code>SELECT ... FOR UPDATE</code>)
+              inside a transaction, so parallel share edits, pins and deletes never leave duplicate
+              or orphaned rows.
             </li>
             <li>
-              The plugin keeps no state in memory and starts no timers, so several replicas and
-              workers can share one database. Parallel requests were tested on SQLite; a run on
-              Postgres with several real processes is still to do.
+              The 3.x upgrade claims each row with a guarded update and grants permissions per role
+              under a row lock, so every process can run it at the same start.
             </li>
             <li>
-              The 3.x migration claims each row with a guarded update inside a transaction, so
-              shares and pins are written once even when processes start together.
+              Tested on Strapi 5.61 and Postgres 16 with 8 processes (two groups of four) and about
+              1,260 parallel requests: no lost or duplicated rows, no server errors.
+            </li>
+          </ul>
+          <p class="callout warning">
+            Strapi's own schema sync is not safe in several processes at the same moment. When an
+            upgrade adds tables (3.x to 4.x adds two), start one instance first, or let your
+            platform restart the processes that stop with "already exists".
+          </p>
+          <p>
+            Lists are filtered, sorted and paginated in the database (at most 100 rows per request)
+            and load owner names, pins and share flags with one query each.
+          </p>
+        </section>
+
+        <section class="section" id="upgrade" aria-labelledby="upgrade-title">
+          <h2 id="upgrade-title">Upgrading from 3.x</h2>
+          <p class="section-lead">
+            No manual steps: update the package, rebuild the admin and start Strapi.
+          </p>
+          <ul class="check-list">
+            <li>
+              3.x Read becomes Read bookmarks; 3.x Edit becomes Read, Create, Edit own, Delete own
+              and Share bookmarks.
+            </li>
+            <li>
+              Shares move to their own table, 3.x pins become the owner's pin, relative paths and
+              saved queries are cleaned up, and the license keys are deleted.
+            </li>
+            <li>
+              The internal routes <code>/license/*</code>, <code>/roles</code>,
+              <code>/users</code> and <code>/bookmarks/reorder</code> are gone; the custom manual
+              order is no longer used. Strapi 5.57 or newer is required.
             </li>
           </ul>
         </section>
 
-        <section class="section" id="api" aria-labelledby="api-title">
-          <h2 id="api-title">Admin API</h2>
+        <section class="section" id="faq" aria-labelledby="faq-title">
+          <h2 id="faq-title">FAQ</h2>
+          <details>
+            <summary>Is Magic Mark free?</summary>
+            <p>Yes. Every feature is available to everyone under the MIT license.</p>
+          </details>
+          <details>
+            <summary>Does the plugin send data anywhere?</summary>
+            <p>No. It makes no outbound requests and has no telemetry, not even an install ping.</p>
+          </details>
+          <details>
+            <summary>Can managers see private bookmarks of other admins?</summary>
+            <p>
+              No, also not as Super Admin. Managers see public and shared bookmarks of everyone
+              under Show &gt; All shared bookmarks, including ones whose owner was deleted.
+            </p>
+          </details>
+          <details>
+            <summary>Does a bookmark open on the page I saved it on?</summary>
+            <p>
+              No. The page number is not saved, so a bookmark opens on page 1 with its filters,
+              sort, page size, search and locale.
+            </p>
+          </details>
+          <details>
+            <summary>Why do "Any condition" filters not show as filter tags?</summary>
+            <p>
+              Strapi shows only <code>$and</code> filters as tags. The list is still filtered
+              correctly; open Advanced filters to change or clear them.
+            </p>
+          </details>
+          <details>
+            <summary>Are the list view columns saved?</summary>
+            <p>No. Columns are a per-user Content Manager setting and stay as they are.</p>
+          </details>
+        </section>
+
+        <section class="section" id="releases" aria-labelledby="releases-title">
+          <h2 id="releases-title">Releases, compatibility and contributing</h2>
           <p class="section-lead">
-            Admin routes under <code>/magic-mark</code>. There are no Content API routes.
+            Releases are published to npm by semantic-release from the main branch. CI runs lint,
+            format check, tests, type checks, build and verify on Node 22 and 24, and once more
+            against Strapi 5.57.0, the lowest supported version.
           </p>
           <div class="table-wrap">
             <table>
-              <caption>
-                Magic Mark admin API routes
+              <caption class="visually-hidden">
+                Compatibility
               </caption>
               <thead>
                 <tr>
-                  <th scope="col">Method</th>
-                  <th scope="col">Path</th>
-                  <th scope="col">Permissions</th>
-                  <th scope="col">Purpose</th>
+                  <th scope="col">Magic Mark</th>
+                  <th scope="col">Strapi</th>
+                  <th scope="col">Node.js</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td><code>GET</code></td>
-                  <td><code>/bookmarks</code></td>
-                  <td>read</td>
-                  <td>Paginated list with search, scope, sort and content type filters.</td>
+                  <td>4.x</td>
+                  <td>5.57.0 or newer 5.x (tested on 5.61.0)</td>
+                  <td>22.22.2 or newer 22.x, 24.15.0 or newer</td>
                 </tr>
                 <tr>
-                  <td><code>POST</code></td>
-                  <td><code>/bookmarks</code></td>
-                  <td>read, create</td>
-                  <td>Create a bookmark; sharing also needs share.</td>
-                </tr>
-                <tr>
-                  <td><code>GET</code></td>
-                  <td><code>/bookmarks/:id</code></td>
-                  <td>read</td>
-                  <td>One bookmark; sharing lists for the owner and managers.</td>
-                </tr>
-                <tr>
-                  <td><code>PUT</code></td>
-                  <td><code>/bookmarks/:id</code></td>
-                  <td>read, update</td>
-                  <td>Edit name, description, icon and sharing (owner or manage).</td>
-                </tr>
-                <tr>
-                  <td><code>DELETE</code></td>
-                  <td><code>/bookmarks/:id</code></td>
-                  <td>read, delete</td>
-                  <td>Delete a bookmark (owner or manage).</td>
-                </tr>
-                <tr>
-                  <td><code>PUT</code></td>
-                  <td><code>/bookmarks/:id/view</code></td>
-                  <td>read, update</td>
-                  <td>Save the current view into a bookmark.</td>
-                </tr>
-                <tr>
-                  <td><code>POST</code></td>
-                  <td><code>/bookmarks/:id/duplicate</code></td>
-                  <td>read, create</td>
-                  <td>Private copy owned by the caller.</td>
-                </tr>
-                <tr>
-                  <td><code>PUT</code></td>
-                  <td><code>/bookmarks/:id/pin</code></td>
-                  <td>read</td>
-                  <td>Pin or unpin for the caller only.</td>
-                </tr>
-                <tr>
-                  <td><code>GET</code></td>
-                  <td><code>/sharing/roles</code>, <code>/sharing/users</code></td>
-                  <td>share</td>
-                  <td>Roles, and a paginated admin user search for sharing.</td>
+                  <td>3.x</td>
+                  <td>5.x (no longer maintained)</td>
+                  <td>22</td>
                 </tr>
               </tbody>
             </table>
           </div>
-        </section>
-
-        <section class="section" id="faq" aria-labelledby="faq-title">
-          <h2 id="faq-title">FAQ</h2>
-          <h3>Is Magic Mark free?</h3>
-          <p>Yes. The license system of 3.x is gone and every feature is available to everyone.</p>
-          <h3>Does the plugin send data anywhere?</h3>
-          <p>No. It makes no outbound requests and has no telemetry.</p>
-          <h3>Can managers see private bookmarks of other admins?</h3>
-          <p>
-            No, also not as Super Admin. Managers see public and shared bookmarks of everyone under
-            Show &gt; All shared bookmarks, including ones whose owner was deleted.
-          </p>
-          <h3>Does a bookmark open on the page I saved it on?</h3>
-          <p>
-            No. The page number is not saved, so a bookmark opens on page 1 with its filters, sort,
-            page size, search and locale.
-          </p>
-          <h3>Why do "Any condition" filters not show as filter tags?</h3>
-          <p>
-            Strapi shows only <code>$and</code> filters as tags. The list is still filtered
-            correctly; open Advanced filters to change or clear them.
-          </p>
-        </section>
-
-        <section class="section" id="releases" aria-labelledby="releases-title">
-          <h2 id="releases-title">Releases and testing</h2>
-          <p class="section-lead">
-            Releases use semantic-release from the main branch with Conventional Commits. CI runs
-            lint, format check, tests, type checks, build and verify on Node 22 and 24.
-          </p>
           <div class="code-card">
-            <div class="code-label"><span>Run checks locally</span></div>
+            <div class="code-label"><span>Run the checks locally</span></div>
             <pre><code>npm ci --legacy-peer-deps
 npm run lint
 npm run format:check
@@ -396,13 +636,11 @@ npm test
 npm run build
 npm run verify</code></pre>
           </div>
-          <p>
-            Upgrading from 3.x needs no manual steps: permissions, shares and pins are migrated on
-            the first start. See the README for details.
-          </p>
           <div class="link-list">
             <a href="https://github.com/Schero94/Magicmark">GitHub repository</a>
-            <a href="https://github.com/Schero94/Magicmark/releases">GitHub releases</a>
+            <a href="https://github.com/Schero94/Magicmark/issues/new/choose">Report a bug</a>
+            <a href="https://github.com/Schero94/Magicmark/blob/main/CHANGELOG.md">Changelog</a>
+            <a href="https://github.com/Schero94/Magicmark/releases">Releases</a>
             <a href="https://www.npmjs.com/package/strapi-plugin-magic-mark">npm package</a>
           </div>
         </section>

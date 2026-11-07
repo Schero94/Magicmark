@@ -34,6 +34,7 @@ import { type ListViewLocation, pickSavedQuery } from '../utils/listView';
 import { stringifyQuery } from '../utils/query';
 import { msg } from '../utils/translations';
 import { BookmarkFormModal, type CapturedView } from './BookmarkFormModal';
+import { LINK_TARGET } from '../utils/targets';
 
 interface BookmarksPopoverProps {
   listView: ListViewLocation;
@@ -253,6 +254,7 @@ export const BookmarksPopover = ({
                                 <Link
                                   tag={NavLink}
                                   to={target}
+                                  {...LINK_TARGET}
                                   onClick={(event: React.MouseEvent) => {
                                     if (
                                       event.metaKey ||
@@ -325,12 +327,18 @@ export const BookmarksPopover = ({
                 <Link
                   tag={NavLink}
                   to={`/plugins/${pluginId}?contentType=${encodeURIComponent(listView.uid)}`}
+                  {...LINK_TARGET}
                   onClick={() => setOpen(false)}
                 >
                   {formatMessage(msg('popover.showAll', 'Show all {total} bookmarks'), { total })}
                 </Link>
               ) : (
-                <Link tag={NavLink} to={`/plugins/${pluginId}`} onClick={() => setOpen(false)}>
+                <Link
+                  tag={NavLink}
+                  to={`/plugins/${pluginId}`}
+                  onClick={() => setOpen(false)}
+                  {...LINK_TARGET}
+                >
                   {formatMessage(msg('popover.manage', 'Manage bookmarks'))}
                 </Link>
               )}

@@ -15,6 +15,13 @@
  * page are loaded with one query each (no N+1). Writes that touch several rows run in one
  * transaction, and no state is kept in the process, so any number of Strapi processes can
  * serve the same database.
+ *
+ * Concurrency: every write to an existing bookmark (edit, share, view, pin, delete) first locks
+ * the bookmark row with `SELECT ... FOR UPDATE` inside its transaction, the pattern Strapi's own
+ * admin uses for the first admin. Writes to one bookmark therefore run one after another across
+ * processes: two share edits never interleave their delete-and-insert steps, two pins never both
+ * insert a preference row, and a write that waited for a delete answers 404 instead of leaving
+ * share or pin rows behind. SQLite ignores `FOR UPDATE` and serialises writers on its own.
  */
 import type { Core } from '@strapi/strapi';
 import { errors } from '@strapi/utils';
@@ -358,7 +365,26 @@ const bookmarkService = ({ strapi }: { strapi: Core.Strapi }) => {
     return { isPublic: visibility === 'public', roles, users };
   };
 
-  /** Replaces the share rows of a bookmark. Call inside a transaction. */
+  /**
+   * Locks the bookmark row until the surrounding transaction ends (`FOR UPDATE`).
+   * @param trx - Transaction from `db.transaction`.
+   * @param documentId - Bookmark documentId.
+   * @throws {errors.NotFoundError} When the bookmark no longer exists (for example deleted by
+   *   another process while this request waited for the lock).
+   */
+  const lockBookmark = async (trx: unknown, documentId: string) => {
+    const row = await db
+      .queryBuilder(BOOKMARK_UID)
+      .select(['id'])
+      .where({ documentId })
+      .first()
+      .transacting(trx)
+      .forUpdate()
+      .execute();
+    if (!row) throw notFound();
+  };
+
+  /** Replaces the share rows of a bookmark. Call inside a transaction that holds the lock. */
   const replaceShares = async (bookmarkDocumentId: string, roles: string[], users: string[]) => {
     await db.query(SHARE_UID).deleteMany({ where: { bookmarkDocumentId } });
     const data = [
@@ -496,7 +522,8 @@ const bookmarkService = ({ strapi }: { strapi: Core.Strapi }) => {
 
     /**
      * Updates name, description, icon and sharing of a bookmark.
-     * @throws {errors.NotFoundError} / {errors.ForbiddenError} See findEditable.
+     * @throws {errors.NotFoundError} / {errors.ForbiddenError} See findEditable; also 404 when
+     *   the bookmark was deleted while this request waited for the row lock.
      * @sideeffect Updates the bookmark and replaces its share rows in one transaction.
      */
     async update(viewer: Viewer, documentId: string, input: BookmarkInput) {
@@ -508,7 +535,8 @@ const bookmarkService = ({ strapi }: { strapi: Core.Strapi }) => {
       if (input.icon !== undefined) data.emoji = input.icon;
       if (sharing) data.isPublic = sharing.isPublic;
 
-      await db.transaction(async () => {
+      await db.transaction(async ({ trx }) => {
+        await lockBookmark(trx, documentId);
         await documents().update({ documentId, data, fields: ['documentId'] });
         if (sharing) await replaceShares(documentId, sharing.roles, sharing.users);
       });
@@ -520,10 +548,13 @@ const bookmarkService = ({ strapi }: { strapi: Core.Strapi }) => {
      */
     async updateView(viewer: Viewer, documentId: string, query: string) {
       await findEditable(viewer, documentId);
-      await documents().update({
-        documentId,
-        data: { query, updaterId: viewer.userId },
-        fields: ['documentId'],
+      await db.transaction(async ({ trx }) => {
+        await lockBookmark(trx, documentId);
+        await documents().update({
+          documentId,
+          data: { query, updaterId: viewer.userId },
+          fields: ['documentId'],
+        });
       });
       return this.findOne(viewer, documentId);
     },
@@ -553,7 +584,8 @@ const bookmarkService = ({ strapi }: { strapi: Core.Strapi }) => {
      */
     async delete(viewer: Viewer, documentId: string) {
       await findEditable(viewer, documentId);
-      await db.transaction(async () => {
+      await db.transaction(async ({ trx }) => {
+        await lockBookmark(trx, documentId);
         await db.query(SHARE_UID).deleteMany({ where: { bookmarkDocumentId: documentId } });
         await db.query(PREFERENCE_UID).deleteMany({ where: { bookmarkDocumentId: documentId } });
         await documents().delete({ documentId });
@@ -563,12 +595,15 @@ const bookmarkService = ({ strapi }: { strapi: Core.Strapi }) => {
 
     /**
      * Pins or unpins a visible bookmark for the viewer only. Idempotent: updates every
-     * preference row of the pair and creates one only when none exists.
+     * preference row of the pair and creates one only when none exists. The bookmark row lock
+     * makes the check-then-insert safe across processes.
+     * @throws {errors.NotFoundError} When the bookmark is not visible or was deleted meanwhile.
      * @sideeffect Writes one bookmark-preference row.
      */
     async setPinned(viewer: Viewer, documentId: string, pinned: boolean) {
       await findVisible(viewer, documentId);
-      await db.transaction(async () => {
+      await db.transaction(async ({ trx }) => {
+        await lockBookmark(trx, documentId);
         const where = { userId: viewer.userId, bookmarkDocumentId: documentId };
         const { count } = await db.query(PREFERENCE_UID).updateMany({
           where,

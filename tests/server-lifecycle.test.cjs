@@ -152,10 +152,79 @@ test('concurrent migrations (several processes) insert each share once', async (
   assert.equal(strapi.table(SHARE).length, 2);
 });
 
+const legacyPermissionFixture = () =>
+  withServices(
+    createFakeStrapi({
+      tables: {
+        'admin::role': [
+          { id: 7, documentId: 'roleseven', name: 'Seven' },
+          { id: 8, documentId: 'roleeight', name: 'Eight' },
+        ],
+        'admin::permission': [
+          { action: 'plugin::magic-mark.settings.read', role: { id: 7 } },
+          { action: 'plugin::magic-mark.settings.update', role: { id: 8 } },
+          { action: 'plugin::magic-mark.bookmarks.read', role: { id: 8 } },
+        ],
+      },
+    })
+  );
+
+const actionsOf = (strapi, id) =>
+  strapi
+    .table('admin::permission')
+    .filter((p) => p.role.id === id && p.action.includes('bookmarks.'))
+    .map((p) => p.action.split('.').pop())
+    .sort();
+
+test('8 processes migrating 3.x permissions at once create each permission once', async () => {
+  const strapi = legacyPermissionFixture();
+  await Promise.all(
+    Array.from({ length: 8 }, () => maintenanceService({ strapi }).migrateLegacyPermissions())
+  );
+  assert.deepEqual(actionsOf(strapi, 7), ['read']);
+  assert.deepEqual(actionsOf(strapi, 8), ['create', 'delete', 'read', 'share', 'update']);
+});
+
+test('duplicate Magic Mark permissions from a simultaneous start are removed, the oldest stays', async () => {
+  const strapi = legacyPermissionFixture();
+  const manage = 'plugin::magic-mark.bookmarks.manage';
+  for (let i = 0; i < 6; i++)
+    strapi.insert('admin::permission', { action: manage, role: { id: 8 } });
+  strapi.insert('admin::permission', {
+    action: manage,
+    role: { id: 8 },
+    conditions: ['admin::is-creator'],
+  });
+  strapi.insert('admin::permission', { action: manage, role: { id: 7 } });
+  strapi.insert('admin::permission', { action: 'plugin::other.read', role: { id: 8 } });
+  strapi.insert('admin::permission', { action: 'plugin::other.read', role: { id: 8 } });
+  const firstId = strapi.table('admin::permission').find((p) => p.action === manage).id;
+
+  const removed = await Promise.all(
+    Array.from({ length: 4 }, () => maintenanceService({ strapi }).removeDuplicatePermissions())
+  );
+  assert.ok(removed.some((n) => n === 5));
+  const rows = strapi.table('admin::permission').filter((p) => p.action === manage);
+  assert.equal(rows.length, 3, 'one per role plus the row with other conditions');
+  assert.ok(
+    rows.some((p) => p.id === firstId),
+    'the oldest row stays'
+  );
+  assert.equal(
+    strapi.table('admin::permission').filter((p) => p.action === 'plugin::other.read').length,
+    2,
+    'other plugins are not touched'
+  );
+});
+
 test('3.x permissions are mapped to the new actions for the same roles', async () => {
   const strapi = withServices(
     createFakeStrapi({
       tables: {
+        'admin::role': [
+          { id: 7, documentId: 'roleseven', name: 'Seven' },
+          { id: 8, documentId: 'roleeight', name: 'Eight' },
+        ],
         'admin::permission': [
           { action: 'plugin::magic-mark.settings.read', role: { id: 7 } },
           { action: 'plugin::magic-mark.settings.update', role: { id: 8 } },
@@ -210,4 +279,31 @@ test('the user deletion lifecycle captures ids before delete and cleans up after
     false
   );
   await server.destroy({ strapi });
+});
+
+test('the afterSync hook gives the super admin every action once, also with 8 processes', async () => {
+  const strapi = withServices(
+    createFakeStrapi({
+      tables: {
+        'admin::role': [
+          { id: 1, documentId: 'rolesuper', name: 'Super Admin', code: 'strapi-super-admin' },
+        ],
+        'admin::permission': [{ action: 'plugin::magic-mark.bookmarks.read', role: { id: 1 } }],
+      },
+    })
+  );
+  await server.register({ strapi });
+  const hook = strapi.hooks['strapi::content-types.afterSync'];
+  assert.equal(typeof hook, 'function');
+  await Promise.all([
+    hook(),
+    ...Array.from({ length: 7 }, () => maintenanceService({ strapi }).grantSuperAdminActions()),
+  ]);
+  assert.deepEqual(actionsOf(strapi, 1), ['create', 'delete', 'manage', 'read', 'share', 'update']);
+});
+
+test('without a super admin role (first start of a new project) nothing is granted', async () => {
+  const strapi = withServices(createFakeStrapi());
+  await strapi.services.maintenance.grantSuperAdminActions();
+  assert.equal(strapi.table('admin::permission').length, 0);
 });

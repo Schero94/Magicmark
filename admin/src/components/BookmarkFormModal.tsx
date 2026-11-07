@@ -36,6 +36,7 @@ import { msg } from '../utils/translations';
 import { ICON_LABELS } from '../utils/iconLabels';
 import { FilterSummary } from './FilterSummary';
 import { SharingFields, type SharingValue } from './SharingFields';
+import { keepFocusInside } from '../utils/focusLoop';
 
 export interface CapturedView {
   path: string;
@@ -252,7 +253,7 @@ export const BookmarkFormModal = ({
   return (
     <>
       <Modal.Root open={open} onOpenChange={handleOpenChange}>
-        <Modal.Content>
+        <Modal.Content onKeyDown={keepFocusInside}>
           <Modal.Header closeLabel={formatMessage(msg('form.close', 'Close'))}>
             <Modal.Title>{title}</Modal.Title>
           </Modal.Header>

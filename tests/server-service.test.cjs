@@ -342,3 +342,94 @@ test('duplicate normalises a legacy query: page and unknown keys are dropped (MM
   row.query = 'filters[__proto__][x]=1';
   assert.equal((await service.duplicate(viewer('editor'), pub.documentId)).query, '');
 });
+
+// Several Strapi processes on one database: requests for the same bookmark interleave. The
+// fake db yields on every query and implements row locks like Postgres `FOR UPDATE`.
+
+test('8 parallel pins of the same bookmark by one user store one preference row', async () => {
+  const { strapi, service } = setup();
+  const created = await create(service, 'owner');
+  await Promise.all(
+    Array.from({ length: 8 }, () => service.setPinned(viewer('owner'), created.documentId, true))
+  );
+  const prefs = strapi
+    .table('plugin::magic-mark.bookmark-preference')
+    .filter((p) => p.bookmarkDocumentId === created.documentId && p.userId === 'owner');
+  assert.equal(prefs.length, 1);
+  assert.equal(prefs[0].isPinned, true);
+});
+
+test('parallel share edits of one bookmark leave exactly one of the requested share sets', async () => {
+  const { strapi, service } = setup();
+  const created = await create(service, 'owner');
+  const sets = [
+    { visibility: 'shared', roles: ['roleeditor'], users: ['editor'] },
+    { visibility: 'shared', roles: ['roleauthor'], users: ['outsider'] },
+    { visibility: 'shared', roles: ['roleeditor', 'roleauthor'], users: [] },
+    { visibility: 'shared', roles: [], users: ['editor', 'outsider'] },
+  ];
+  await Promise.all(
+    [...sets, ...sets].map((set) => service.update(viewer('owner'), created.documentId, set))
+  );
+  const rows = strapi
+    .table('plugin::magic-mark.bookmark-share')
+    .filter((s) => s.bookmarkDocumentId === created.documentId)
+    .map((s) => `${s.targetType}:${s.targetId}`)
+    .sort();
+  assert.equal(rows.length, new Set(rows).size, 'no duplicate share rows');
+  const allowed = sets.map((set) =>
+    [...set.roles.map((r) => `role:${r}`), ...set.users.map((u) => `user:${u}`)].sort().join(',')
+  );
+  assert.ok(allowed.includes(rows.join(',')), `unexpected share set ${rows.join(',')}`);
+});
+
+test('writes that race a delete answer 404 and leave no share or pin rows behind', async () => {
+  const { strapi, service } = setup();
+  const created = await create(service, 'owner', { visibility: 'shared', users: ['editor'] });
+  const id = created.documentId;
+  const results = await Promise.allSettled([
+    service.delete(viewer('owner'), id),
+    service.update(viewer('owner'), id, { visibility: 'shared', roles: ['roleeditor'] }),
+    service.setPinned(viewer('owner'), id, true),
+    service.setPinned(viewer('editor'), id, true),
+    service.updateView(viewer('owner'), id, 'sort=title:ASC'),
+    service.delete(viewer('owner'), id),
+  ]);
+  for (const result of results) {
+    if (result.status === 'rejected') assert.equal(result.reason.name, 'NotFoundError');
+  }
+  const deletes = [results[0], results[5]];
+  assert.equal(deletes.filter((r) => r.status === 'fulfilled').length, 1, 'one delete wins');
+  assert.equal(strapi.table('plugin::magic-mark.bookmark').length, 0);
+  assert.equal(
+    strapi.table('plugin::magic-mark.bookmark-share').filter((s) => s.bookmarkDocumentId === id)
+      .length,
+    0
+  );
+  assert.equal(
+    strapi
+      .table('plugin::magic-mark.bookmark-preference')
+      .filter((p) => p.bookmarkDocumentId === id).length,
+    0
+  );
+});
+
+test('every write to an existing bookmark locks its row first', async () => {
+  const { strapi, service } = setup();
+  const created = await create(service, 'owner');
+  const id = created.documentId;
+  const locksAfter = async (fn) => {
+    strapi.calls.queries.length = 0;
+    await fn();
+    return strapi.calls.queries.filter(
+      (q) => q.op === 'lock' && q.uid === 'plugin::magic-mark.bookmark'
+    ).length;
+  };
+  assert.equal(await locksAfter(() => service.update(viewer('owner'), id, { name: 'x' })), 1);
+  assert.equal(
+    await locksAfter(() => service.updateView(viewer('owner'), id, 'sort=title:ASC')),
+    1
+  );
+  assert.equal(await locksAfter(() => service.setPinned(viewer('owner'), id, true)), 1);
+  assert.equal(await locksAfter(() => service.delete(viewer('owner'), id)), 1);
+});

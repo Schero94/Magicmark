@@ -1,20 +1,91 @@
 ## [Unreleased]
 
-Magic Mark is now free, rebuilt on the Strapi Design System and secured on the server.
+Magic Mark 4.0 is free, rebuilt on the Strapi Design System, secured on the server and safe to run
+on several Strapi processes at once.
 
-### Free
+### Breaking changes
 
-- Removed the license system: license guard, license routes and settings pages, upgrade page,
-  feature gates, the 10/50 bookmark limit, the keep-alive heartbeat and every call to the license
-  server. No telemetry, no timers, no outbound requests.
+- The plugin-internal admin routes `/license/*`, `/roles`, `/users` and `/bookmarks/reorder` were
+  removed; the sharing lookups moved to `/sharing/roles` and `/sharing/users`.
+- The 3.x permissions **Read** and **Edit** (`settings.read`, `settings.update`) were replaced by
+  six bookmark permissions (migrated automatically, see Migration).
+- `@strapi/strapi` 5.57 or newer 5.x is required.
+- Every admin route now checks the Magic Mark permissions; before, any authenticated admin could
+  call every route.
+
+### Migration
+
+1. Update the package, rebuild the admin (`npm run build`) and start Strapi. Roles keep their
+   access: `settings.read` becomes Read bookmarks; `settings.update` becomes Read, Create, Edit
+   own, Delete own and Share bookmarks.
+2. Give **Manage shared bookmarks of others** to roles that should tidy up other users' shared
+   bookmarks.
+3. 3.x shares (JSON columns) and global pins are migrated on the first start; a pin becomes the
+   owner's personal pin. The custom manual order is no longer used.
+4. Code that called the removed routes must use `/sharing/roles` and `/sharing/users`. The
+   plugin's own admin UI was their only consumer.
+5. Several instances: the upgrade adds two tables, and Strapi's schema sync is not safe when
+   several processes run it at the same moment (7 of 8 processes stopped with "relation already
+   exists" in the test and came up after a restart). Start one instance first, or let the
+   platform restart the others.
+
+### Removed
+
+- The license system: license guard, license routes and settings pages, upgrade page, feature
+  gates, the 10/50 bookmark limit, the keep-alive heartbeat and every call to the license server.
+  No telemetry, no installation ping, no timers, no outbound requests.
 - The stored `licenseKey` and `lastValidated` plugin store keys are deleted on the first start.
-- Removed `COPYRIGHT_NOTICE.txt`; the plugin is MIT licensed.
+- `COPYRIGHT_NOTICE.txt`; the plugin is MIT licensed.
+- The `@heroicons/react` dependency.
 
-### Security and fixes
+### Added
 
-- Every admin route now requires `admin::isAuthenticatedAdmin` and `admin::hasPermissions`. Before,
-  any authenticated admin could call every route, including the admin user list, because the
-  admin strategy ignores `auth.scope`.
+- Rebuilt admin UI with Design System components only: Bookmarks popover and Advanced filters
+  button in the list view toolbar, bookmarks page with search, scope, content type filter, sorting
+  and pagination, create and edit dialog with sharing, delete confirmation, dark mode, 320 px
+  layouts, five languages.
+- Per-user pins (also for shared bookmarks), duplicate, "update with current view", copy link.
+- "Pinned bookmarks" homepage widget.
+- Six permissions: Read, Create, Edit own, Delete own, Share and Manage shared bookmarks of
+  others. Managers see every public or shared bookmark under **Show > All shared bookmarks**, also
+  when they are not a recipient and when the owner was deleted; private bookmarks of other users
+  stay private.
+- Admin user and role deletion clean up shares, pins and private bookmarks.
+- CI builds and tests once more against the lowest supported Strapi version (5.57.0).
+
+### Changed
+
+- Package: `@strapi/utils` is a dependency instead of a peer (Strapi apps do not list it, so
+  yarn 1 warned about an unmet peer). `@strapi/design-system`, `@strapi/icons` and `react-intl`
+  are optional peers because apps get them through `@strapi/admin`; `react` and `react-dom` peers
+  are `^18.0.0` like the Strapi 5 app template. Installing into a new Strapi 5.61 app with npm 11,
+  yarn 1.22 or pnpm prints no plugin warning (yarn 1 printed four before).
+- Package metadata: plain description, `homepage` points at the project site, keywords updated.
+- README and project site rewritten: quick start, full permission and API reference, examples,
+  security, performance, running several instances, upgrade notes, FAQ; the site has dark mode,
+  Open Graph and structured data.
+- Bookmark links on the page, in the Bookmarks popover and in the homepage widget, and the "Add
+  condition" button, have a 32 px target height without moving their text.
+- The Roles field in the bookmark dialog lists the chosen roles as text. Design System 2.2.4 tags
+  had remove buttons without an accessible name; roles are removed by unticking them in the list.
+- Tab no longer leaves the bookmark dialog and the Advanced filters dialog. Design System 2.2.4
+  pauses a Modal's focus trap when it contains a Combobox; both dialogs now loop focus themselves.
+- The pagination of the bookmarks page fits phones: below 768 px it shows only the current page
+  between the first and the last, and below 520 px it leaves out the page size select. Before, it
+  ran past the right edge at 390 px and 320 px.
+
+### Fixed
+
+- Several Strapi processes on one database (tested with 8 processes on Postgres 16):
+  - every write to an existing bookmark (edit, share, update view, pin, delete) locks the
+    bookmark row first, so parallel share edits no longer leave duplicate share rows, parallel
+    pins no longer create two preference rows, a delete no longer deadlocks with a parallel edit,
+    and an edit or pin that raced a delete answers 404 instead of leaving orphaned rows;
+  - the 3.x permission migration grants each role's actions under a row lock (before, each
+    process inserted them and roles ended up with duplicate permissions);
+  - the Super Admin role gets the Magic Mark actions under a row lock before Strapi's own unlocked
+    Super Admin sync runs, so a simultaneous start no longer duplicates them; leftover duplicates
+    are removed at the next start.
 - Request validation with strict zod schemas; paths must be Content Manager list views and queries
   are normalised with `qs` (no prototype keys, no `page`).
 - Sharing with individual users works (3.x compared numeric ids with documentIds).
@@ -37,34 +108,14 @@ Magic Mark is now free, rebuilt on the Strapi Design System and secured on the s
   dialog says why instead of showing a generic error.
 - The Bookmarks popover requests pinned bookmarks separately, so a pin is never cut off, and
   links to the Magic Mark page when a content type has more than 100 bookmarks.
+- Unknown paths below the Magic Mark page (old links to pages that no longer exist) show the
+  native "Page not found" state with a link back to Magic Mark instead of "Something went wrong".
 
-### Features
+### Security
 
-- Rebuilt admin UI with Design System components only: Bookmarks popover and Advanced filters
-  button in the list view toolbar, bookmarks page with search, scope, content type filter, sorting
-  and pagination, create and edit dialog with sharing, delete confirmation, dark mode, 320 px
-  layouts, five languages.
-- Per-user pins (also for shared bookmarks), duplicate, "update with current view", copy link.
-- "Pinned bookmarks" homepage widget.
-- New permissions: Read, Create, Edit own, Delete own, Share and Manage shared bookmarks of
-  others. Managers see every public or shared bookmark under **Show > All shared bookmarks**,
-  also when they are not a recipient and when the owner was deleted; private bookmarks of other
-  users stay private.
-- Admin user and role deletion clean up shares, pins and private bookmarks.
-
-### Migration notes
-
-- Roles keep their access: 3.x `settings.read` maps to Read bookmarks; `settings.update` maps to
-  Read, Create, Edit own, Delete own and Share bookmarks. Give Manage shared bookmarks of others
-  to roles that should tidy up other users' shared bookmarks.
-- 3.x shares (JSON columns) and global pins are migrated on the first start; pins become the
-  owner's personal pin. The custom manual order is no longer used.
-- The plugin-internal admin routes changed (`/license/*`, `/roles`, `/users` and
-  `/bookmarks/reorder` were removed; sharing lookups moved to `/sharing/roles` and `/sharing/users`).
-  The plugin's own admin UI is their only consumer.
-- Peer dependencies: `@strapi/design-system`, `@strapi/icons` and `@strapi/utils` are now peers;
-  `@heroicons/react` is no longer installed. `@strapi/strapi` and `@strapi/utils` need 5.57 or
-  newer 5.x.
+- Every admin route requires `admin::isAuthenticatedAdmin` and `admin::hasPermissions`. Before,
+  any authenticated admin could call every route, including the admin user list, because the
+  admin strategy ignores `auth.scope`.
 
 # [3.4.0](https://github.com/Schero94/Magicmark/compare/v3.3.2...v3.4.0) (2026-02-08)
 

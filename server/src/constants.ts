@@ -9,6 +9,8 @@ export const PREFERENCE_UID = 'plugin::magic-mark.bookmark-preference';
 export const ADMIN_USER_UID = 'admin::user';
 export const ADMIN_ROLE_UID = 'admin::role';
 export const ADMIN_PERMISSION_UID = 'admin::permission';
+/** Code of Strapi's built-in super admin role. */
+export const SUPER_ADMIN_CODE = 'strapi-super-admin';
 
 /**
  * Permission action uids registered with the admin action provider.

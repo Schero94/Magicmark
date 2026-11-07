@@ -126,8 +126,9 @@ export const SharingFields = ({ value, onChange, error }: SharingFieldsProps) =>
             ) : null}
             <Field.Root name="roles" error={error}>
               <Field.Label>{formatMessage(msg('form.roles', 'Roles'))}</Field.Label>
+              {/* No tags: in DS 2.2.4 each tag's remove button has no accessible name. Roles are
+                  removed by unticking them in the list, and the trigger lists the chosen roles. */}
               <MultiSelect
-                withTags
                 loading={rolesLoading}
                 value={value.roles}
                 onChange={(next: string[]) => onChange({ ...value, roles: next })}

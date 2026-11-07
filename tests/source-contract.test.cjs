@@ -97,3 +97,10 @@ test('deleting a bookmark moves focus to the page content, never <body> (ACC-UI-
   assert.match(page, /focusMainAfterLoad\.current = true;\s*reload\(\);/);
   assert.match(page, /getElementById\('main-content'\)\?\.focus\(\)/);
 });
+
+test('badges avoid the Badge primary variant, which fails contrast in the dark theme (ACC-UI-03)', () => {
+  assertNone(adminFiles, /<Badge[^>]*variant=\{?['"]?primary/, 'Badge variant primary');
+  const page = read(path.join(root, 'admin/src/pages/BookmarksPage.tsx'));
+  assert.doesNotMatch(page, /variant: 'primary'/);
+  assert.match(page, /backgroundColor: 'primary100',\s*textColor: 'primary700'/);
+});

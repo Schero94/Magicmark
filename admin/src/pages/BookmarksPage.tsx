@@ -64,13 +64,34 @@ interface PageQuery {
   pageSize?: string;
 }
 
+/**
+ * Badge colours per visibility. "Shared" uses primary100/primary700 instead of the Badge
+ * `primary` variant: that variant (primary200 on primary700) measures 2.4:1 in the dark theme
+ * of Design System 2.2.4, below WCAG 1.4.3. These pairs measure at least 4.9:1 in both themes.
+ */
 const VISIBILITY_BADGE: Record<
   Visibility,
-  { variant: 'neutral' | 'primary' | 'secondary'; label: ReturnType<typeof msg> }
+  {
+    backgroundColor: 'neutral200' | 'primary100' | 'secondary200';
+    textColor: 'neutral700' | 'primary700' | 'secondary700';
+    label: ReturnType<typeof msg>;
+  }
 > = {
-  private: { variant: 'neutral', label: msg('visibility.private', 'Only me') },
-  shared: { variant: 'primary', label: msg('visibility.shared', 'Shared') },
-  public: { variant: 'secondary', label: msg('visibility.public', 'All admins') },
+  private: {
+    backgroundColor: 'neutral200',
+    textColor: 'neutral700',
+    label: msg('visibility.private', 'Only me'),
+  },
+  shared: {
+    backgroundColor: 'primary100',
+    textColor: 'primary700',
+    label: msg('visibility.shared', 'Shared'),
+  },
+  public: {
+    backgroundColor: 'secondary200',
+    textColor: 'secondary700',
+    label: msg('visibility.public', 'All admins'),
+  },
 };
 
 const COLUMNS = 6;
@@ -474,7 +495,10 @@ export const BookmarksPage = () => {
                       {actionsFor(bookmark)}
                     </Flex>
                     <Flex gap={2} wrap="wrap">
-                      <Badge variant={VISIBILITY_BADGE[bookmark.visibility].variant}>
+                      <Badge
+                        backgroundColor={VISIBILITY_BADGE[bookmark.visibility].backgroundColor}
+                        textColor={VISIBILITY_BADGE[bookmark.visibility].textColor}
+                      >
                         {formatMessage(VISIBILITY_BADGE[bookmark.visibility].label)}
                       </Badge>
                       <Typography variant="pi" textColor="neutral600">
@@ -548,7 +572,10 @@ export const BookmarksPage = () => {
                       </Typography>
                     </Td>
                     <Td>
-                      <Badge variant={VISIBILITY_BADGE[bookmark.visibility].variant}>
+                      <Badge
+                        backgroundColor={VISIBILITY_BADGE[bookmark.visibility].backgroundColor}
+                        textColor={VISIBILITY_BADGE[bookmark.visibility].textColor}
+                      >
                         {formatMessage(VISIBILITY_BADGE[bookmark.visibility].label)}
                       </Badge>
                     </Td>

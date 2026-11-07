@@ -64,19 +64,19 @@ All screenshots use synthetic data on an isolated Strapi 5.61 host.
 | Term             | Meaning                                                                                                                                                                      |
 | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Bookmark         | A saved Content Manager list view: content type, filters, sort order, page size, search text and locale. The page number is not saved, so a bookmark always opens on page 1. |
-| Owner            | The admin user who created the bookmark. Only the owner, or a user with **Manage all bookmarks**, can edit or delete it.                                                     |
+| Owner            | The admin user who created the bookmark. Only the owner, or a user with **Manage shared bookmarks of others**, can edit or delete it.                                        |
 | Visibility       | **Only me**, **Specific roles and users** or **All admin users**. Recipients can open, pin and duplicate a bookmark, but not change it.                                      |
 | Pin              | Per user. Pinning a shared bookmark changes only your own list and your homepage widget.                                                                                     |
 | Advanced filters | A filter editor for the list view with "all conditions" or "any condition", extra operators (is one of, is none of, is between), relation fields and component fields.       |
 
 ## Screens
 
-| Screen                         | Where                                                                                                                                                                             | Who                                       |
-| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
-| **Advanced filters** button    | Content Manager list view toolbar, next to View settings                                                                                                                          | Every admin who can open the list         |
-| **Bookmarks** button (popover) | Same toolbar. Lists the bookmarks of this content type, pinned first. **Save view** captures the current list; the refresh icon saves the current view into an existing bookmark. | Read bookmarks (saving: Create bookmarks) |
-| **Magic Mark** page            | Main menu. Search, show "created by me", "shared with me" or "pinned", filter by content type, sort and paginate. Row actions: pin, open, edit, duplicate, copy link, delete.     | Read bookmarks                            |
-| **Pinned bookmarks** widget    | Strapi homepage (Add widget)                                                                                                                                                      | Read bookmarks                            |
+| Screen                         | Where                                                                                                                                                                                                                                       | Who                                       |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| **Advanced filters** button    | Content Manager list view toolbar, next to View settings                                                                                                                                                                                    | Every admin who can open the list         |
+| **Bookmarks** button (popover) | Same toolbar. Lists the bookmarks of this content type, pinned first (up to 100; a link opens the rest on the Magic Mark page). **Save view** captures the current list; the refresh icon saves the current view into an existing bookmark. | Read bookmarks (saving: Create bookmarks) |
+| **Magic Mark** page            | Main menu. Search, show "created by me", "shared with me" or "pinned", filter by content type, sort and paginate. Row actions: pin, open, edit, duplicate, copy link, delete.                                                               | Read bookmarks                            |
+| **Pinned bookmarks** widget    | Strapi homepage (Add widget)                                                                                                                                                                                                                | Read bookmarks                            |
 
 Opening a bookmark is a normal in-app navigation (no page reload). The Content Manager's
 remembered list settings for that content type are replaced by the bookmark's, so filters from
@@ -132,27 +132,34 @@ All routes are admin routes under `/magic-mark`. Each one requires an authentica
 run in the service: a bookmark you cannot see answers `404`, a bookmark you can see but do not
 own answers `403`.
 
-| Permission (Settings > Roles > Plugins)                                         | Action id                             |
-| ------------------------------------------------------------------------------- | ------------------------------------- |
-| Read bookmarks                                                                  | `plugin::magic-mark.bookmarks.read`   |
-| Create bookmarks                                                                | `plugin::magic-mark.bookmarks.create` |
-| Edit own bookmarks                                                              | `plugin::magic-mark.bookmarks.update` |
-| Delete own bookmarks                                                            | `plugin::magic-mark.bookmarks.delete` |
-| Share bookmarks                                                                 | `plugin::magic-mark.bookmarks.share`  |
-| Manage all bookmarks (edit and delete the bookmarks of others that you can see) | `plugin::magic-mark.bookmarks.manage` |
+| Permission (Settings > Roles > Plugins)       | Action id                             |
+| --------------------------------------------- | ------------------------------------- |
+| Read bookmarks                                | `plugin::magic-mark.bookmarks.read`   |
+| Create bookmarks                              | `plugin::magic-mark.bookmarks.create` |
+| Edit own bookmarks                            | `plugin::magic-mark.bookmarks.update` |
+| Delete own bookmarks                          | `plugin::magic-mark.bookmarks.delete` |
+| Share bookmarks                               | `plugin::magic-mark.bookmarks.share`  |
+| Manage shared bookmarks of others (see below) | `plugin::magic-mark.bookmarks.manage` |
 
-| Method and path                 | Required actions | Notes                                                                                                                                                                     |
-| ------------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `GET /bookmarks`                | read             | Query: `page`, `pageSize` (max 100), `q`, `scope` (`all`, `mine`, `shared`, `pinned`), `sort` (`name:asc`, `name:desc`, `updatedAt:desc`, `updatedAt:asc`), `contentType` |
-| `POST /bookmarks`               | read, create     | Body: `name`, `path`, `query`, `description`, `icon`, `visibility`, `roles`, `users`. Sharing also needs share.                                                           |
-| `GET /bookmarks/:id`            | read             | Owners and managers also get the sharing lists                                                                                                                            |
-| `PUT /bookmarks/:id`            | read, update     | Owner or manage                                                                                                                                                           |
-| `DELETE /bookmarks/:id`         | read, delete     | Owner or manage                                                                                                                                                           |
-| `PUT /bookmarks/:id/view`       | read, update     | Replaces the saved query ("update with current view")                                                                                                                     |
-| `POST /bookmarks/:id/duplicate` | read, create     | Private copy owned by the caller                                                                                                                                          |
-| `PUT /bookmarks/:id/pin`        | read             | Body `{ "pinned": true }`; per user                                                                                                                                       |
-| `GET /sharing/roles`            | share            | `documentId` and name                                                                                                                                                     |
-| `GET /sharing/users`            | share            | Search `q`, `page`; 20 per page; email only with `admin::users.read`                                                                                                      |
+**Manage shared bookmarks of others** is meant for the people who keep the bookmark list tidy.
+It covers every bookmark that is not private: public ones, ones shared with any role or user
+(also when you are not a recipient) and ones whose owner was deleted. They are listed on the
+Magic Mark page under **Show > All shared bookmarks**. Private bookmarks of other users stay
+private, also for managers and Super Admins. Editing and deleting still need Edit own and
+Delete own bookmarks.
+
+| Method and path                 | Required actions | Notes                                                                                                                                                                                |
+| ------------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `GET /bookmarks`                | read             | Query: `page`, `pageSize` (max 100), `q`, `scope` (`all`, `mine`, `shared`, `pinned`, `managed`), `sort` (`name:asc`, `name:desc`, `updatedAt:desc`, `updatedAt:asc`), `contentType` |
+| `POST /bookmarks`               | read, create     | Body: `name`, `path`, `query`, `description`, `icon`, `visibility`, `roles`, `users`. Sharing also needs share.                                                                      |
+| `GET /bookmarks/:id`            | read             | Owners and managers also get the sharing lists                                                                                                                                       |
+| `PUT /bookmarks/:id`            | read, update     | Owner or manage                                                                                                                                                                      |
+| `DELETE /bookmarks/:id`         | read, delete     | Owner or manage                                                                                                                                                                      |
+| `PUT /bookmarks/:id/view`       | read, update     | Replaces the saved query ("update with current view")                                                                                                                                |
+| `POST /bookmarks/:id/duplicate` | read, create     | Private copy owned by the caller                                                                                                                                                     |
+| `PUT /bookmarks/:id/pin`        | read             | Body `{ "pinned": true }`; per user                                                                                                                                                  |
+| `GET /sharing/roles`            | share            | `documentId` and name                                                                                                                                                                |
+| `GET /sharing/users`            | share            | Search `q`, `page`; 20 per page; email only with `admin::users.read`                                                                                                                 |
 
 Errors follow Strapi's format `{ data: null, error: { status, name, message, details } }`.
 Invalid input answers `400 ValidationError` with field details.
@@ -172,7 +179,8 @@ There are no Content API routes.
   plus email for admins who may read admin users.
 - Deleting an admin user removes their pins, the shares that point at them and their private
   bookmarks. Their public or shared bookmarks stay and show "Deleted user"; someone with
-  **Manage all bookmarks** can remove them. Deleting a role removes its shares.
+  **Manage shared bookmarks of others** finds them under **All shared bookmarks** and can edit or
+  delete them. Deleting a role removes its shares.
 - Logs contain no keys, emails or request bodies.
 - Several Strapi processes can share one database: the plugin keeps no state in memory, lists
   are filtered and paginated in the database, and migrations claim each row with a guarded update

@@ -31,6 +31,12 @@ Magic Mark is now free, rebuilt on the Strapi Design System and secured on the s
   Escape, row dialogs return focus to the row menu, and deleting a bookmark keeps keyboard focus in
   the page. The Shared badge has enough contrast in dark mode, and below 1080 px the bookmarks
   page shows cards so the row actions never scroll out of view.
+- Saved 3.x queries are normalised on the first start like new ones (the page number and unknown
+  keys are dropped), and duplicating a bookmark never copies an unnormalised query.
+- A search text of up to 1000 characters can be saved. When a view still cannot be saved, the
+  dialog says why instead of showing a generic error.
+- The Bookmarks popover requests pinned bookmarks separately, so a pin is never cut off, and
+  links to the Magic Mark page when a content type has more than 100 bookmarks.
 
 ### Features
 
@@ -40,21 +46,25 @@ Magic Mark is now free, rebuilt on the Strapi Design System and secured on the s
   layouts, five languages.
 - Per-user pins (also for shared bookmarks), duplicate, "update with current view", copy link.
 - "Pinned bookmarks" homepage widget.
-- New permissions: Read, Create, Edit own, Delete own, Share and Manage all bookmarks.
+- New permissions: Read, Create, Edit own, Delete own, Share and Manage shared bookmarks of
+  others. Managers see every public or shared bookmark under **Show > All shared bookmarks**,
+  also when they are not a recipient and when the owner was deleted; private bookmarks of other
+  users stay private.
 - Admin user and role deletion clean up shares, pins and private bookmarks.
 
 ### Migration notes
 
 - Roles keep their access: 3.x `settings.read` maps to Read bookmarks; `settings.update` maps to
-  Read, Create, Edit own, Delete own and Share bookmarks. Give Manage all bookmarks to roles that
-  should administer other users' bookmarks.
+  Read, Create, Edit own, Delete own and Share bookmarks. Give Manage shared bookmarks of others
+  to roles that should tidy up other users' shared bookmarks.
 - 3.x shares (JSON columns) and global pins are migrated on the first start; pins become the
   owner's personal pin. The custom manual order is no longer used.
 - The plugin-internal admin routes changed (`/license/*`, `/roles`, `/users` and
   `/bookmarks/reorder` were removed; sharing lookups moved to `/sharing/roles` and `/sharing/users`).
   The plugin's own admin UI is their only consumer.
 - Peer dependencies: `@strapi/design-system`, `@strapi/icons` and `@strapi/utils` are now peers;
-  `@heroicons/react` is no longer installed.
+  `@heroicons/react` is no longer installed. `@strapi/strapi` and `@strapi/utils` need 5.57 or
+  newer 5.x.
 
 # [3.4.0](https://github.com/Schero94/Magicmark/compare/v3.3.2...v3.4.0) (2026-02-08)
 

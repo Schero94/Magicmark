@@ -84,7 +84,8 @@ export const BookmarkActions = ({
             disabled={busy}
             data-bookmark-menu={bookmark.documentId}
           />
-          <Menu.Content popoverPlacement="bottom-end">
+          {/* No max height, like the native row menu: all five actions stay visible. */}
+          <Menu.Content popoverPlacement="bottom-end" maxHeight={undefined}>
             <Menu.Item startIcon={<ExternalLink />} onSelect={onOpen} disabled={!bookmark.path}>
               {formatMessage(msg('actions.open', 'Open'))}
             </Menu.Item>

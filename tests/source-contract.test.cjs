@@ -124,4 +124,6 @@ test('table rows keep one button per cell, so Escape closes the row menu (ACC-UI
   const actions = read(path.join(root, 'admin/src/components/BookmarkActions.tsx'));
   assert.match(actions, /<Menu\.Root open=\{menuOpen\} onOpenChange=\{setMenuOpen\}>/);
   assert.doesNotMatch(actions, /stopPropagation/);
+  // Like the native row menu: no max height, so no action scrolls out of view.
+  assert.match(actions, /<Menu\.Content popoverPlacement="bottom-end" maxHeight=\{undefined\}>/);
 });

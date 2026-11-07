@@ -3,6 +3,8 @@
  *
  * 1. Deletes the store keys of the removed 3.x license system (no network calls, no timers).
  * 2. Migrates 3.x bookmark rows (paths, content types, share JSON, global pins).
+ * 2b. Removes duplicate Magic Mark permission rows that a simultaneous start of several
+ *     processes can leave (Strapi's super admin permission sync runs in every process).
  * 3. Subscribes to admin user and role deletions to clean up shares, pins and private
  *    bookmarks of deleted users. `destroy` removes the subscription.
  */
@@ -38,6 +40,14 @@ const bootstrap = async ({ strapi }: { strapi: Core.Strapi }) => {
     await maintenance.migrateLegacyBookmarks();
   } catch (error) {
     strapi.log.error('[magic-mark] Bookmark migration failed', { name: (error as Error)?.name });
+  }
+
+  try {
+    await maintenance.removeDuplicatePermissions();
+  } catch (error) {
+    strapi.log.error('[magic-mark] Removing duplicate permissions failed', {
+      name: (error as Error)?.name,
+    });
   }
 
   const captureIds = async (event: {

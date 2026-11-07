@@ -7,6 +7,9 @@
  * - Hooks the 3.x -> 4.x permission migration into `strapi::content-types.afterSync`, which runs
  *   after the schema sync and before the admin bootstrap deletes permissions of unregistered
  *   (3.x) actions. Roles therefore keep their access across the upgrade.
+ * - In the same hook, gives the super admin role the Magic Mark actions under a row lock, so
+ *   the admin's unlocked super admin sync has nothing left to insert when several processes
+ *   start at once (no duplicate permission rows).
  */
 import type { Core } from '@strapi/strapi';
 import { ACTION_UIDS, PLUGIN_ID } from './constants';
@@ -37,6 +40,13 @@ const register = async ({ strapi }: { strapi: Core.Strapi }) => {
       await strapi.plugin(PLUGIN_ID).service('maintenance').migrateLegacyPermissions();
     } catch (error) {
       strapi.log.error('[magic-mark] Permission migration failed', {
+        name: (error as Error)?.name,
+      });
+    }
+    try {
+      await strapi.plugin(PLUGIN_ID).service('maintenance').grantSuperAdminActions();
+    } catch (error) {
+      strapi.log.error('[magic-mark] Granting super admin actions failed', {
         name: (error as Error)?.name,
       });
     }

@@ -9,6 +9,8 @@
  */
 import type { Core } from '@strapi/strapi';
 import {
+  ACTION_UIDS,
+  type ActionKey,
   ADMIN_PERMISSION_UID,
   ADMIN_ROLE_UID,
   ADMIN_USER_UID,
@@ -19,6 +21,7 @@ import {
   PLUGIN_ID,
   PREFERENCE_UID,
   SHARE_UID,
+  SUPER_ADMIN_CODE,
   actionId,
 } from '../constants';
 import { normalizeListViewPath, normalizeListViewQuery } from '../validation';
@@ -132,6 +135,44 @@ const maintenanceService = ({ strapi }: { strapi: Core.Strapi }) => {
     }
   };
 
+  /**
+   * Grants `actions` to a role once. Several processes run this at the same start; locking the
+   * role row (`SELECT ... FOR UPDATE`, ignored by SQLite, which serialises writers anyway) makes
+   * the check-then-insert run in one process at a time, so no permission is duplicated.
+   * @param roleId - Numeric admin role id.
+   * @param actions - Full action ids.
+   * @sideeffect Creates admin permission rows through the admin permission service.
+   */
+  const grantActions = async (roleId: number, actions: string[]) => {
+    await db.transaction(async ({ trx }) => {
+      const role = await db
+        .queryBuilder(ADMIN_ROLE_UID)
+        .select(['id'])
+        .where({ id: roleId })
+        .first()
+        .transacting(trx)
+        .forUpdate()
+        .execute();
+      if (!role) return;
+      const existing = await db.query(ADMIN_PERMISSION_UID).findMany({
+        where: { role: { id: roleId }, action: { $in: actions } },
+        select: ['action'],
+      });
+      const have = new Set(existing.map((row: { action: string }) => row.action));
+      const missing = actions.filter((action) => !have.has(action));
+      if (!missing.length) return;
+      await strapi.admin.services.permission.createMany(
+        missing.map((action) => ({
+          action,
+          subject: null,
+          properties: {},
+          conditions: [],
+          role: roleId,
+        }))
+      );
+    });
+  };
+
   return {
     /**
      * Deletes the store keys of the removed 3.x license system.
@@ -203,6 +244,7 @@ const maintenanceService = ({ strapi }: { strapi: Core.Strapi }) => {
     /**
      * Grants the 4.x actions to every role that held a 3.x action. Runs before the admin
      * removes permissions of unregistered actions, so existing roles keep their access.
+     * Safe when every process of a cluster runs it at once (per-role row lock).
      * @sideeffect Creates admin permission rows.
      */
     async migrateLegacyPermissions() {
@@ -217,24 +259,69 @@ const maintenanceService = ({ strapi }: { strapi: Core.Strapi }) => {
         for (const key of LEGACY_ACTION_MAP[permission.action] ?? []) set.add(actionId(key));
         wanted.set(permission.role.id, set);
       }
-      for (const [roleId, actions] of wanted) {
-        const existing = await db.query(ADMIN_PERMISSION_UID).findMany({
-          where: { role: { id: roleId }, action: { $in: [...actions] } },
-          select: ['action'],
-        });
-        const have = new Set(existing.map((row: { action: string }) => row.action));
-        const missing = [...actions].filter((action) => !have.has(action));
-        if (!missing.length) continue;
-        await strapi.admin.services.permission.createMany(
-          missing.map((action) => ({
-            action,
-            subject: null,
-            properties: {},
-            conditions: [],
-            role: roleId,
-          }))
-        );
+      for (const [roleId, actions] of wanted) await grantActions(roleId, [...actions]);
+    },
+
+    /**
+     * Gives the super admin role every Magic Mark action before the admin bootstrap runs.
+     * Strapi's super admin sync (`resetSuperAdminPermissions`, admin bootstrap) does the same,
+     * but without a lock: when several processes start at once, each one inserts the missing
+     * actions and the role ends up with duplicates. Granting them here, under the role row lock,
+     * leaves the admin sync nothing to insert. Does nothing before the role exists (first start
+     * of a new project).
+     * @sideeffect Creates admin permission rows for the super admin role.
+     */
+    async grantSuperAdminActions() {
+      const role = await db.query(ADMIN_ROLE_UID).findOne({
+        where: { code: SUPER_ADMIN_CODE },
+        select: ['id'],
+      });
+      if (!role) return;
+      await grantActions(
+        role.id,
+        Object.keys(ACTION_UIDS).map((key) => actionId(key as ActionKey))
+      );
+    },
+
+    /**
+     * Removes duplicate Magic Mark permission rows (same role, action, subject, properties and
+     * conditions), keeping the oldest. Duplicates can be left by an earlier start of several
+     * processes at once on a new project, where the super admin role did not exist yet when
+     * `grantSuperAdminActions` ran. Concurrent runs pick the same row to keep.
+     * @returns Number of rows removed.
+     * @sideeffect Deletes admin permission rows through the admin permission service.
+     */
+    async removeDuplicatePermissions() {
+      const rows: {
+        id: number;
+        action: string;
+        subject?: string | null;
+        properties?: unknown;
+        conditions?: unknown;
+        role?: { id: number } | null;
+      }[] = await db.query(ADMIN_PERMISSION_UID).findMany({
+        where: {
+          action: { $in: Object.keys(ACTION_UIDS).map((key) => actionId(key as ActionKey)) },
+        },
+        select: ['id', 'action', 'subject', 'properties', 'conditions'],
+        populate: { role: { select: ['id'] } },
+        orderBy: { id: 'asc' },
+      });
+      const seen = new Set<string>();
+      const duplicates: number[] = [];
+      for (const row of rows) {
+        const key = JSON.stringify([
+          row.role?.id ?? null,
+          row.action,
+          row.subject ?? null,
+          row.properties ?? {},
+          row.conditions ?? [],
+        ]);
+        if (seen.has(key)) duplicates.push(row.id);
+        else seen.add(key);
       }
+      if (duplicates.length) await strapi.admin.services.permission.deleteByIds(duplicates);
+      return duplicates.length;
     },
 
     /**

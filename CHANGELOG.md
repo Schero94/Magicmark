@@ -29,8 +29,8 @@ Magic Mark is now free, rebuilt on the Strapi Design System and secured on the s
   on a component `documentId` made the list request fail.
 - Closing a changed bookmark dialog asks first (Cancel keeps the edits). The row menu closes with
   Escape, row dialogs return focus to the row menu, and deleting a bookmark keeps keyboard focus in
-  the page. The Shared badge has enough contrast in dark mode, and the bookmarks table keeps its
-  row actions visible at tablet widths.
+  the page. The Shared badge has enough contrast in dark mode, and below 1080 px the bookmarks
+  page shows cards so the row actions never scroll out of view.
 
 ### Features
 

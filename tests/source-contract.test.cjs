@@ -109,9 +109,10 @@ test('badges avoid the Badge primary variant, which fails contrast in the dark t
   assert.match(page, /backgroundColor: 'primary100',\s*textColor: 'primary700'/);
 });
 
-test('the bookmarks table keeps row actions visible at tablet widths (ACC-UI-04)', () => {
+test('below the large breakpoint the bookmarks page uses cards, so row actions stay visible (ACC-UI-04)', () => {
   const page = read(path.join(root, 'admin/src/pages/BookmarksPage.tsx'));
-  assert.match(page, /const showFiltersColumn = useIsDesktop\(\);/);
+  assert.match(page, /const showCards = !useIsDesktop\(\);/);
+  assert.match(page, /\) : showCards \? \(/);
 });
 
 test('table rows keep one button per cell, so Escape closes the row menu (ACC-UI-05)', () => {
@@ -120,7 +121,7 @@ test('table rows keep one button per cell, so Escape closes the row menu (ACC-UI
     page,
     /<Td>\{actionsFor\(bookmark, 'pin'\)\}<\/Td>\s*<Td>\{actionsFor\(bookmark, 'menu'\)\}<\/Td>/
   );
-  assert.match(page, /colCount=\{showFiltersColumn \? 7 : 6\}/);
+  assert.match(page, /colCount=\{7\}/);
   const actions = read(path.join(root, 'admin/src/components/BookmarkActions.tsx'));
   assert.match(actions, /<Menu\.Root open=\{menuOpen\} onOpenChange=\{setMenuOpen\}>/);
   assert.doesNotMatch(actions, /stopPropagation/);

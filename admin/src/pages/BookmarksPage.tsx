@@ -1,6 +1,6 @@
 /**
  * Bookmarks page (plugin menu entry). A native Strapi list page: header, search and filters,
- * a table (cards below the medium breakpoint) and pagination. Search, scope, content type,
+ * a table (cards below the large breakpoint, 1080 px) and pagination. Search, scope, content type,
  * sort and paging live in the URL and are applied by the server.
  */
 import {
@@ -34,7 +34,6 @@ import {
   SearchInput,
   useClipboard,
   useIsDesktop,
-  useIsMobile,
   useNotification,
   useQueryParams,
   useRBAC,
@@ -104,10 +103,9 @@ export const BookmarksPage = () => {
   const api = useBookmarksApi();
   const openBookmark = useOpenBookmark();
   const { copy } = useClipboard();
-  const isMobile = useIsMobile();
-  // Tablet widths (768-1079 px) drop the Filters column so the row actions stay visible
-  // without horizontal scrolling; the edit dialog still shows the saved filters.
-  const showFiltersColumn = useIsDesktop();
+  // Below the large breakpoint the seven-column table would scroll horizontally and hide the
+  // row actions, so tablets and phones get cards that show the same information.
+  const showCards = !useIsDesktop();
   const { names } = useContentTypeNames();
   const { allowedActions } = useRBAC(ALL_PERMISSIONS);
   const [{ query }, setQuery] = useQueryParams<PageQuery>();
@@ -497,7 +495,7 @@ export const BookmarksPage = () => {
                 )
               }
             />
-          ) : isMobile ? (
+          ) : showCards ? (
             <Flex direction="column" alignItems="stretch" gap={3} tag="ul">
               {bookmarks.map((bookmark) => (
                 <Box
@@ -539,7 +537,7 @@ export const BookmarksPage = () => {
               ))}
             </Flex>
           ) : (
-            <Table colCount={showFiltersColumn ? 7 : 6} rowCount={bookmarks.length + 1}>
+            <Table colCount={7} rowCount={bookmarks.length + 1}>
               <Thead>
                 <Tr>
                   {sortHeader('name', formatMessage(msg('table.name', 'Name')))}
@@ -548,13 +546,11 @@ export const BookmarksPage = () => {
                       {formatMessage(msg('table.contentType', 'Content type'))}
                     </Typography>
                   </Th>
-                  {showFiltersColumn ? (
-                    <Th>
-                      <Typography variant="sigma" textColor="neutral600">
-                        {formatMessage(msg('table.filters', 'Filters'))}
-                      </Typography>
-                    </Th>
-                  ) : null}
+                  <Th>
+                    <Typography variant="sigma" textColor="neutral600">
+                      {formatMessage(msg('table.filters', 'Filters'))}
+                    </Typography>
+                  </Th>
                   <Th>
                     <Typography variant="sigma" textColor="neutral600">
                       {formatMessage(msg('table.visibility', 'Visibility'))}
@@ -582,21 +578,19 @@ export const BookmarksPage = () => {
                     <Td>
                       <Typography textColor="neutral800">{contentTypeLabel(bookmark)}</Typography>
                     </Td>
-                    {showFiltersColumn ? (
-                      <Td>
-                        <Typography textColor="neutral800">
-                          {formatMessage(
-                            msg(
-                              'table.conditionCount',
-                              '{count, plural, =0 {No filters} one {# filter} other {# filters}}'
-                            ),
-                            {
-                              count: conditions(bookmark),
-                            }
-                          )}
-                        </Typography>
-                      </Td>
-                    ) : null}
+                    <Td>
+                      <Typography textColor="neutral800">
+                        {formatMessage(
+                          msg(
+                            'table.conditionCount',
+                            '{count, plural, =0 {No filters} one {# filter} other {# filters}}'
+                          ),
+                          {
+                            count: conditions(bookmark),
+                          }
+                        )}
+                      </Typography>
+                    </Td>
                     <Td>
                       <Badge
                         backgroundColor={VISIBILITY_BADGE[bookmark.visibility].backgroundColor}

@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import ReactDOM from 'react-dom';
 import { Box, Typography } from '@strapi/design-system';
 import styled from 'styled-components';
+import { calculateDropdownPosition } from '../utils/dropdownPosition';
 
 const SelectContainer = styled.div`
   position: relative;
@@ -60,12 +61,12 @@ const IconWrapper = styled.span<{ $isOpen: boolean }>`
   color: ${(p) => p.theme.colors.neutral500};
 `;
 
-const DropdownList = styled.div<{ $isOpen: boolean; top: number; left: number; width: number }>`
+const DropdownList = styled.div<{ $isOpen: boolean; $top: number; $left: number; $width: number; $maxHeight: number }>`
   position: fixed;
-  top: ${props => props.top}px;
-  left: ${props => props.left}px;
-  width: ${props => props.width}px;
-  max-height: 400px;
+  top: ${props => props.$top}px;
+  left: ${props => props.$left}px;
+  width: ${props => props.$width}px;
+  max-height: ${props => props.$maxHeight}px;
   overflow-y: auto;
   background: ${(p) => p.theme.colors.neutral0};
   border: 1px solid rgba(128, 128, 128, 0.25);
@@ -142,20 +143,19 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 0 });
+  const [dropdownPos, setDropdownPos] = useState({ top: 0, left: 0, width: 0, maxHeight: 0, openAbove: false });
   const containerRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
 
-  // Calculate dropdown position
+  /** Updates the fixed dropdown coordinates from the trigger button's viewport box. */
   const updatePosition = () => {
     if (buttonRef.current) {
       const rect = buttonRef.current.getBoundingClientRect();
-      setDropdownPos({
-        top: rect.bottom + 4,
-        left: rect.left,
-        width: rect.width,
-      });
+      setDropdownPos(calculateDropdownPosition(
+        { top: rect.top, bottom: rect.bottom, left: rect.left, width: rect.width },
+        { width: window.innerWidth, height: window.innerHeight },
+      ));
     }
   };
 
@@ -213,11 +213,12 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
   };
 
   const dropdownContent = (
-    <DropdownList 
+    <DropdownList
       $isOpen={isOpen}
-      top={dropdownPos.top}
-      left={dropdownPos.left}
-      width={dropdownPos.width}
+      $top={dropdownPos.top}
+      $left={dropdownPos.left}
+      $width={dropdownPos.width}
+      $maxHeight={dropdownPos.maxHeight}
       data-dropdown-portal="true"
     >
       {searchable && (

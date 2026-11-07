@@ -8,13 +8,13 @@ export default ({ strapi }: any) => ({
    * Auto-create license with logged-in admin user data
    */
   async autoCreate(ctx: any) {
+    if (!ctx.state.user) {
+      return ctx.unauthorized('No admin user logged in');
+    }
+
     try {
       // Get the logged-in admin user
       const adminUser = ctx.state.user;
-      
-      if (!adminUser) {
-        return ctx.unauthorized('No admin user logged in');
-      }
 
       const licenseGuard = strapi.plugin('magic-mark').service('license-guard');
       
@@ -47,16 +47,20 @@ export default ({ strapi }: any) => ({
         message: 'License automatically created and activated',
         data: license,
       });
-    } catch (error) {
-      strapi.log.error('Error auto-creating license:', error);
+    } catch {
+      strapi.log.error('Error auto-creating license');
       return ctx.badRequest('Error creating license');
     }
   },
 
   /**
-   * Get current license status
+   * Return operational license status and feature flags without keys or licensee/device identifiers.
    */
   async getStatus(ctx: any) {
+    if (!ctx.state.user) {
+      return ctx.unauthorized('User not authenticated');
+    }
+
     try {
       const licenseGuard = strapi.plugin('magic-mark').service('license-guard');
       const pluginStore = strapi.store({ 
@@ -74,6 +78,57 @@ export default ({ strapi }: any) => ({
         });
       }
 
+      const verification = await licenseGuard.verifyLicense(licenseKey);
+      const license = await licenseGuard.getLicenseByKey(licenseKey);
+
+      return ctx.send({
+        success: true,
+        valid: verification.valid,
+        demo: false,
+        data: {
+          isActive: license?.isActive || false,
+          isExpired: license?.isExpired || false,
+          isOnline: license?.isOnline || false,
+          expiresAt: license?.expiresAt,
+          lastPingAt: license?.lastPingAt,
+          features: {
+            premium: license?.featurePremium || false,
+            advanced: license?.featureAdvanced || false,
+            enterprise: license?.featureEnterprise || false,
+            custom: license?.featureCustom || false,
+          },
+          maxDevices: license?.maxDevices || 1,
+          currentDevices: license?.currentDevices || 0,
+        },
+      });
+    } catch {
+      strapi.log.error('Error getting license status');
+      return ctx.badRequest('Error getting license status');
+    }
+  },
+
+  /**
+   * Return complete license details to an admin with the settings update permission.
+   * The route scope, not a client-side permission check, protects this response.
+   */
+  async getDetails(ctx: any) {
+    if (!ctx.state.user) {
+      return ctx.unauthorized('User not authenticated');
+    }
+
+    try {
+      const pluginStore = strapi.store({ type: 'plugin', name: 'magic-mark' });
+      const licenseKey = await pluginStore.get({ key: 'licenseKey' });
+      if (!licenseKey) {
+        return ctx.send({
+          success: false,
+          demo: true,
+          valid: false,
+          message: 'No license found. Running in demo mode.',
+        });
+      }
+
+      const licenseGuard = strapi.plugin('magic-mark').service('license-guard');
       const verification = await licenseGuard.verifyLicense(licenseKey);
       const license = await licenseGuard.getLicenseByKey(licenseKey);
 
@@ -104,9 +159,9 @@ export default ({ strapi }: any) => ({
           currentDevices: license?.currentDevices || 0,
         },
       });
-    } catch (error) {
-      strapi.log.error('Error getting license status:', error);
-      return ctx.badRequest('Error getting license status');
+    } catch {
+      strapi.log.error('Error getting license details');
+      return ctx.badRequest('Error getting license details');
     }
   },
 
@@ -114,6 +169,10 @@ export default ({ strapi }: any) => ({
    * Create and activate a new license
    */
   async createAndActivate(ctx: any) {
+    if (!ctx.state.user) {
+      return ctx.unauthorized('User not authenticated');
+    }
+
     try {
       const { email, firstName, lastName } = ctx.request.body;
 
@@ -146,8 +205,8 @@ export default ({ strapi }: any) => ({
         message: 'License created and activated successfully',
         data: license,
       });
-    } catch (error) {
-      strapi.log.error('Error creating license:', error);
+    } catch {
+      strapi.log.error('Error creating license');
       return ctx.badRequest('Error creating license');
     }
   },
@@ -156,6 +215,10 @@ export default ({ strapi }: any) => ({
    * Manually ping the current license
    */
   async ping(ctx: any) {
+    if (!ctx.state.user) {
+      return ctx.unauthorized('User not authenticated');
+    }
+
     try {
       const pluginStore = strapi.store({ 
         type: 'plugin', 
@@ -179,8 +242,8 @@ export default ({ strapi }: any) => ({
         message: 'License pinged successfully',
         data: pingResult,
       });
-    } catch (error) {
-      strapi.log.error('Error pinging license:', error);
+    } catch {
+      strapi.log.error('Error pinging license');
       return ctx.badRequest('Error pinging license');
     }
   },
@@ -189,6 +252,10 @@ export default ({ strapi }: any) => ({
    * Store and validate an existing license key
    */
   async storeKey(ctx: any) {
+    if (!ctx.state.user) {
+      return ctx.unauthorized('User not authenticated');
+    }
+
     try {
       const { licenseKey, email } = ctx.request.body;
 
@@ -208,7 +275,7 @@ export default ({ strapi }: any) => ({
       const verification = await licenseGuard.verifyLicense(trimmedKey);
 
       if (!verification.valid) {
-        strapi.log.warn(`[WARN] Invalid license key attempted: ${trimmedKey.substring(0, 8)}...`);
+        strapi.log.warn('[WARN] Invalid license key attempted');
         return ctx.badRequest('Invalid or expired license key');
       }
 
@@ -216,13 +283,13 @@ export default ({ strapi }: any) => ({
       const license = await licenseGuard.getLicenseByKey(trimmedKey);
       
       if (!license) {
-        strapi.log.warn(`[WARN] License not found in database: ${trimmedKey.substring(0, 8)}...`);
+        strapi.log.warn('[WARN] License not found in database');
         return ctx.badRequest('License not found');
       }
 
       // Verify email matches
       if (license.email.toLowerCase() !== trimmedEmail) {
-        strapi.log.warn(`[WARN] Email mismatch for license key: ${trimmedKey.substring(0, 8)}... (Attempted: ${trimmedEmail})`);
+        strapi.log.warn('[WARN] Email mismatch for license key');
         return ctx.badRequest('Email address does not match this license key');
       }
 
@@ -239,15 +306,15 @@ export default ({ strapi }: any) => ({
         data: verification.data,
       };
 
-      strapi.log.info(`[SUCCESS] Existing license key validated and stored: ${trimmedKey.substring(0, 8)}... (Email: ${trimmedEmail})`);
+      strapi.log.info('[SUCCESS] Existing license key validated and stored');
 
       return ctx.send({
         success: true,
         message: 'License key validated and activated successfully',
         data: verification.data,
       });
-    } catch (error) {
-      strapi.log.error('Error storing license key:', error);
+    } catch {
+      strapi.log.error('Error storing license key');
       return ctx.badRequest('Error validating license key');
     }
   },
@@ -256,12 +323,12 @@ export default ({ strapi }: any) => ({
    * Get license limits and feature flags for current user
    */
   async getLimits(ctx: any) {
-    try {
-      const user = ctx.state.user;
-      if (!user) {
-        return ctx.unauthorized('User not authenticated');
-      }
+    const user = ctx.state.user;
+    if (!user) {
+      return ctx.unauthorized('User not authenticated');
+    }
 
+    try {
       const userId = user.documentId || String(user.id);
       const licenseGuard = strapi.plugin('magic-mark').service('license-guard');
       const limits = await licenseGuard.getLicenseLimits(userId);
@@ -270,8 +337,8 @@ export default ({ strapi }: any) => ({
         success: true,
         data: limits,
       });
-    } catch (error) {
-      strapi.log.error('Error getting license limits:', error);
+    } catch {
+      strapi.log.error('Error getting license limits');
       return ctx.badRequest('Error getting license limits');
     }
   },

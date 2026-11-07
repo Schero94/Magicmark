@@ -20,9 +20,9 @@ const unauthorized = (message: string) => {
  */
 const bookmarkService = ({ strapi }: { strapi: Core.Strapi }) => ({
   /**
-   * Find all bookmarks accessible to a user
+   * Find the bookmarks owned by, shared with, or public to a user.
    * @param userId - The admin user's documentId
-   * @returns Array of accessible bookmarks with createdBy info
+   * @returns Accessible bookmarks with the creator's display name, but no email.
    */
   async findAll(userId: string) {
     try {
@@ -83,8 +83,7 @@ const bookmarkService = ({ strapi }: { strapi: Core.Strapi }) => ({
               id: creatorId,
               documentId: creatorId,
               firstname: creator.firstname,
-              lastname: creator.lastname,
-              email: creator.email
+              lastname: creator.lastname
             });
           }
         } catch (err) {

@@ -1,4 +1,5 @@
 // @ts-nocheck
+import qs from 'qs';
 /**
  * Converts URL query string back into QueryBuilder structure
  * Supports deep relation filtering (e.g., filters[user][email][$contains]=admin)
@@ -63,8 +64,6 @@ export const parseQueryToStructure = (queryString: string): ConditionGroup => {
       // Parse the key structure
       const parts = key.match(/\[([^\]]+)\]/g)?.map(p => p.slice(1, -1)) || [];
       
-      console.log('[QueryParser] Parsing key:', key, 'parts:', parts);
-      
       if (parts.length < 2) return; // Need at least [field][$op]
       
       // Check if first part is logic operator ($and/$or)
@@ -115,8 +114,6 @@ export const parseQueryToStructure = (queryString: string): ConditionGroup => {
       } else {
         // Format WITHOUT $and/$or: filters[user][email][$contains] or filters[field][$eq]
         // This happens when there's only a single condition (generator optimization)
-        console.log('[QueryParser] Parsing simple filter without logic operator');
-        
         const extracted = extractFieldPathAndOperator(parts);
         
         if (!extracted) return;
@@ -132,8 +129,6 @@ export const parseQueryToStructure = (queryString: string): ConditionGroup => {
       }
     }
   });
-
-  console.log('[QueryParser] Filter tree:', filterTree);
 
   // Convert tree to QueryBuilder structure
   const rootLogic = Object.keys(filterTree)[0] || 'and';
@@ -165,7 +160,7 @@ export const parseQueryToStructure = (queryString: string): ConditionGroup => {
           field: subItem.field,
           fieldPath: subItem.fieldPath,
           operator: subItem.operator,
-          value: decodeURIComponent(subItem.value),
+          value: subItem.value,
         });
       });
       
@@ -177,7 +172,7 @@ export const parseQueryToStructure = (queryString: string): ConditionGroup => {
         field: item.field,
         fieldPath: item.fieldPath,
         operator: item.operator,
-        value: decodeURIComponent(item.value),
+        value: item.value,
       });
     }
   });
@@ -193,7 +188,6 @@ export const parseQueryToStructure = (queryString: string): ConditionGroup => {
     });
   }
 
-  console.log('[QueryParser] Built structure:', rootGroup);
   return rootGroup;
 };
 
@@ -204,6 +198,15 @@ export interface FilterRow {
   field: string;    // "title" or "user.email" (dot notation)
   operator: string;
   value: string;
+  valueTo?: string;
+  negate?: boolean;
+}
+
+export interface NestedFilterGroup {
+  id: string;
+  logic: 'AND' | 'OR';
+  items: Array<FilterRow | NestedFilterGroup>;
+  isGroup: true;
 }
 
 export interface LogicConnector {
@@ -234,6 +237,121 @@ const flattenGroup = (
     }
   });
   return result;
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null && !Array.isArray(value);
+
+/**
+ * Parse a serialized Strapi filter tree into the recursive structure used by
+ * the advanced filter editor. Query-string values are decoded by `qs` once.
+ * @param queryString URL query parameters, with or without a leading question mark.
+ * @returns A root AND/OR group containing the saved filter tree.
+ */
+export const parseQueryToFilterGroup = (queryString: string): NestedFilterGroup => {
+  let nextId = 0;
+  const createId = (prefix: 'group' | 'row') => `${prefix}_${++nextId}`;
+
+  const parseRows = (
+    node: unknown,
+    fieldPath: string[] = [],
+    negate = false,
+  ): FilterRow[] => {
+    if (!isRecord(node)) return [];
+
+    return Object.entries(node).flatMap(([key, value]) => {
+      if (key === '$not') return parseRows(value, fieldPath, !negate);
+      if (key.startsWith('$')) {
+        if (fieldPath.length === 0) return [];
+        const operator = key.slice(1);
+        const range = operator === 'between' && Array.isArray(value) ? value : undefined;
+        const normalizedValue = range
+          ? String(range[0] ?? '')
+          : Array.isArray(value)
+            ? value.map((entry) => String(entry ?? '')).join(',')
+            : String(value ?? '');
+        return [{
+          id: createId('row'),
+          field: fieldPath.join('.'),
+          operator,
+          value: normalizedValue,
+          ...(range ? { valueTo: String(range[1] ?? '') } : {}),
+          ...(negate ? { negate: true } : {}),
+        }];
+      }
+      if (isRecord(value)) return parseRows(value, [...fieldPath, key], negate);
+      return [];
+    });
+  };
+
+  const parseGroup = (
+    node: unknown,
+    fallbackLogic: 'AND' | 'OR' = 'AND',
+    isRoot = false,
+  ): NestedFilterGroup => {
+    const group: NestedFilterGroup = {
+      id: isRoot ? 'root' : createId('group'),
+      logic: fallbackLogic,
+      items: [],
+      isGroup: true,
+    };
+    if (!isRecord(node)) return group;
+
+    const logicKey = Object.prototype.hasOwnProperty.call(node, '$or')
+      ? '$or'
+      : Object.prototype.hasOwnProperty.call(node, '$and')
+        ? '$and'
+        : null;
+
+    if (!logicKey) {
+      group.items.push(...parseRows(node));
+      return group;
+    }
+
+    group.logic = logicKey === '$or' ? 'OR' : 'AND';
+    const children = node[logicKey];
+    const childNodes = Array.isArray(children)
+      ? children
+      : isRecord(children)
+        ? Object.entries(children)
+            .filter(([index]) => /^(0|[1-9]\d*)$/.test(index))
+            .sort(([left], [right]) => Number(left) - Number(right))
+            .map(([, child]) => child)
+        : [];
+
+    childNodes.forEach((child) => {
+      if (isRecord(child) && (
+        Object.prototype.hasOwnProperty.call(child, '$and') ||
+        Object.prototype.hasOwnProperty.call(child, '$or')
+      )) {
+        group.items.push(parseGroup(child, group.logic));
+      } else {
+        group.items.push(...parseRows(child));
+      }
+    });
+    return group;
+  };
+
+  try {
+    const parsed = qs.parse(queryString.replace(/^\?/, ''), {
+      allowPrototypes: false,
+      depth: 16,
+      parameterLimit: 500,
+    }) as Record<string, unknown>;
+    const filters = isRecord(parsed.filters) ? parsed.filters : {};
+    const root = parseGroup(filters, 'AND', true);
+    if (root.items.length === 0) {
+      root.items.push({ id: createId('row'), field: '', operator: 'eq', value: '' });
+    }
+    return root;
+  } catch {
+    return {
+      id: 'root',
+      logic: 'AND',
+      isGroup: true,
+      items: [{ id: 'row_1', field: '', operator: 'eq', value: '' }],
+    };
+  }
 };
 
 /**
@@ -304,13 +422,13 @@ const parseFilterParam = (key: string, value: string): { logic: string; index: n
         index,
         field,
         operator,
-        value: decodeURIComponent(value),
+        value,
       };
     }
     
     return null;
   } catch (error) {
-    console.error('[QueryParser] Error parsing filter:', key, error);
+    console.error('[QueryParser] Could not parse filter entry');
     return null;
   }
 };

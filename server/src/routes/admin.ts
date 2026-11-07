@@ -15,6 +15,9 @@ const routes = [
       handler: 'bookmarks.getUsers',
       config: {
         policies: [],
+        auth: {
+          scope: ['plugin::magic-mark.settings.update'],
+        },
       },
     },
     // Get all bookmarks
@@ -81,6 +84,17 @@ const routes = [
       },
     },
     {
+      method: 'GET',
+      path: '/license/details',
+      handler: 'license.getDetails',
+      config: {
+        policies: [],
+        auth: {
+          scope: ['plugin::magic-mark.settings.update'],
+        },
+      },
+    },
+    {
       method: 'POST',
       path: '/license/auto-create',
       handler: 'license.autoCreate',
@@ -128,7 +142,7 @@ export default {
     ...route,
     config: {
       ...route.config,
-      auth: {
+      auth: route.config.auth || {
         scope: [`plugin::magic-mark.settings.${route.method === 'GET' ? 'read' : 'update'}`],
       },
     },

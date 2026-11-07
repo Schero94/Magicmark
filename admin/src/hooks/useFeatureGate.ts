@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useFetchClient } from '@strapi/strapi/admin';
+import { isAdvancedTier, isPremiumTier, isTierAtLeast, type LicenseTier } from '../utils/licenseTier';
 
 /**
  * Feature definitions for MagicMark
@@ -14,7 +15,7 @@ export const FEATURES = {
   extendedBookmarks: { tier: 'premium', limit: 50 },
   queryHistory: { tier: 'premium' },
   exportBookmarks: { tier: 'premium' },
-  sharedBookmarks: { tier: 'premium' },
+  sharedBookmarks: { tier: 'free' },
   
   // Advanced tier features
   unlimitedBookmarks: { tier: 'advanced', limit: -1 },
@@ -31,7 +32,7 @@ interface LicenseLimits {
   maxBookmarks: number;
   currentBookmarks: number;
   canCreate: boolean;
-  tier: 'free' | 'premium' | 'advanced';
+  tier: LicenseTier;
   features: {
     queryHistory: boolean;
     export: boolean;
@@ -69,8 +70,8 @@ export const useFeatureGate = (feature: FeatureKey): UseFeatureGateResult => {
         if (response.data?.success) {
           setLimits(response.data.data);
         }
-      } catch (error) {
-        console.error('[useFeatureGate] Error fetching license limits:', error);
+      } catch {
+        console.error('[useFeatureGate] Error fetching license limits');
       } finally {
         setIsLoading(false);
       }
@@ -84,11 +85,10 @@ export const useFeatureGate = (feature: FeatureKey): UseFeatureGateResult => {
   const currentTier = limits?.tier || 'free';
 
   // Determine if feature is available
-  const tierOrder = { free: 0, premium: 1, advanced: 2 };
-  const canUse = tierOrder[currentTier] >= tierOrder[requiredTier];
+  const canUse = isTierAtLeast(currentTier, requiredTier);
 
-  const isPremium = currentTier === 'premium' || currentTier === 'advanced';
-  const isAdvanced = currentTier === 'advanced';
+  const isPremium = isPremiumTier(currentTier);
+  const isAdvanced = isAdvancedTier(currentTier);
 
   const showUpgrade = useCallback(() => {
     // Navigate to upgrade page
@@ -118,19 +118,15 @@ export const useLicenseInfo = () => {
   useEffect(() => {
     const fetchLimits = async () => {
       try {
-        console.log('[useLicenseInfo] Fetching license limits...');
         const response: any = await get('/magic-mark/license/limits');
-        console.log('[useLicenseInfo] Raw API response:', response);
-        console.log('[useLicenseInfo] Response data:', response.data);
         
         if (response.data?.success) {
-          console.log('[useLicenseInfo] Setting limits:', response.data.data);
           setLimits(response.data.data);
         } else {
-          console.warn('[useLicenseInfo] API returned success=false or missing data');
+          console.warn('[useLicenseInfo] API returned no license limits');
         }
-      } catch (error) {
-        console.error('[useLicenseInfo] Error fetching license limits:', error);
+      } catch {
+        console.error('[useLicenseInfo] Error fetching license limits');
       } finally {
         setIsLoading(false);
       }
@@ -140,12 +136,9 @@ export const useLicenseInfo = () => {
   }, []);
 
   const tier = limits?.tier || 'free';
-  const isPremium = tier === 'premium' || tier === 'advanced';
-  const isAdvanced = tier === 'advanced';
+  const isPremium = isPremiumTier(tier);
+  const isAdvanced = isAdvancedTier(tier);
   
-  // Debug log the final computed values
-  console.log('[useLicenseInfo] Computed values:', { tier, isPremium, isAdvanced, limits });
-
   return {
     isLoading,
     limits,
@@ -155,8 +148,7 @@ export const useLicenseInfo = () => {
     isAdvanced,
     canUseFeature: (feature: FeatureKey): boolean => {
       const featureConfig = FEATURES[feature];
-      const tierOrder = { free: 0, premium: 1, advanced: 2 };
-      return tierOrder[tier] >= tierOrder[featureConfig.tier];
+      return isTierAtLeast(tier, featureConfig.tier);
     },
   };
 };

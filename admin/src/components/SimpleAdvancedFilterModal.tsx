@@ -69,12 +69,8 @@ const SimpleAdvancedFilterModal: React.FC<SimpleAdvancedFilterModalProps> = ({
   availableRelations = [],
   currentQuery = '',
 }) => {
-  const { isPremium, isAdvanced, tier, isLoading } = useLicenseInfo();
+  const { isAdvanced } = useLicenseInfo();
   
-  // Debug log for license status
-  React.useEffect(() => {
-    console.log('[SimpleAdvancedFilter] License status:', { isPremium, isAdvanced, tier, isLoading });
-  }, [isPremium, isAdvanced, tier, isLoading]);
   const [queryStructure, setQueryStructure] = useState<ConditionGroup | null>(null);
   const [initialStructure, setInitialStructure] = useState<ConditionGroup | null>(null);
   const [initialFiltersLoaded, setInitialFiltersLoaded] = useState(false);
@@ -85,8 +81,6 @@ const SimpleAdvancedFilterModal: React.FC<SimpleAdvancedFilterModalProps> = ({
   // Load current filters from URL when modal opens
   React.useEffect(() => {
     if (!initialFiltersLoaded) {
-      console.log('[SimpleAdvancedFilter] Loading current query:', currentQuery);
-      
       // Initialize populateFields from availableRelations
       if (availableRelations.length > 0) {
         const initialFields = availableRelations.map(rel => ({
@@ -94,7 +88,6 @@ const SimpleAdvancedFilterModal: React.FC<SimpleAdvancedFilterModalProps> = ({
           enabled: false,
           deep: false,
         }));
-        console.log('[SimpleAdvancedFilter] Initializing populateFields:', initialFields);
         setPopulateFields(initialFields);
       }
       
@@ -145,7 +138,6 @@ const SimpleAdvancedFilterModal: React.FC<SimpleAdvancedFilterModalProps> = ({
       }
       
       setInitialFiltersLoaded(true);
-      console.log('[SimpleAdvancedFilter] Initial structure loaded');
     }
   }, [currentQuery]);
 
@@ -177,7 +169,6 @@ const SimpleAdvancedFilterModal: React.FC<SimpleAdvancedFilterModalProps> = ({
     if (relationsInFilter.size > 0) {
       setPopulateFields(prev => prev.map(p => {
         if (relationsInFilter.has(p.name) && !p.enabled) {
-          console.log('[SimpleAdvancedFilter] Auto-enabling populate for:', p.name);
           return { ...p, enabled: true };
         }
         return p;
@@ -187,7 +178,6 @@ const SimpleAdvancedFilterModal: React.FC<SimpleAdvancedFilterModalProps> = ({
 
   const handleApply = () => {
     if (!queryStructure) {
-      console.warn('[SimpleAdvancedFilter] No query structure defined');
       return;
     }
 
@@ -198,7 +188,6 @@ const SimpleAdvancedFilterModal: React.FC<SimpleAdvancedFilterModalProps> = ({
       populateFields
     );
     
-    console.log('[SimpleAdvancedFilter] Applying query:', queryString);
     onApply(queryString);
     onClose();
   };
@@ -228,19 +217,19 @@ const SimpleAdvancedFilterModal: React.FC<SimpleAdvancedFilterModalProps> = ({
             availableRelations={availableRelations}
             onQueryChange={handleQueryChange}
             initialStructure={initialStructure}
-            isPremium={isPremium || isAdvanced}
-            enableDeepFiltering={isPremium || isAdvanced}
+            canUseSubGroups={isAdvanced}
+            enableDeepFiltering={isAdvanced}
           />
         </Box>
 
-        {/* Upgrade prompt for non-premium users */}
-        {!isPremium && !isAdvanced && (
+        {/* Upgrade prompt for users below the Advanced tier */}
+        {!isAdvanced && (
           <Box marginBottom={4}>
             <UpgradePrompt
               feature="Sub-Groups & Drag & Drop"
-              tier="premium"
+              tier="advanced"
               variant="inline"
-              description="Upgrade to Premium to unlock nested query groups, drag & drop reordering, and more advanced filter options."
+              description="Upgrade to Advanced to unlock nested query groups and more advanced filter options."
             />
           </Box>
         )}

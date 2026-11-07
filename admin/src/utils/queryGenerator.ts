@@ -148,8 +148,6 @@ export const generateQueryString = (
     }
   }
 
-  console.log('[QueryGenerator] Query object:', queryObject);
-
   // Use qs to generate proper URL query string
   let queryString = qs.stringify(queryObject, {
     encodeValuesOnly: true, // Pretty URLs
@@ -161,7 +159,6 @@ export const generateQueryString = (
     queryString = queryString ? `${queryString}&${sortParam}` : sortParam;
   }
 
-  console.log('[QueryGenerator] Generated query string:', queryString);
   return queryString;
 };
 

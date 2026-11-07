@@ -511,8 +511,8 @@ interface QueryBuilderProps {
   availableRelations?: RelationInfo[];
   onQueryChange: (query: ConditionGroup) => void;
   initialStructure?: ConditionGroup | null;
-  isPremium?: boolean;
-  /** Enable deep relation filtering (requires Premium) */
+  canUseSubGroups?: boolean;
+  /** Enable deep relation filtering, an Advanced-tier feature. */
   enableDeepFiltering?: boolean;
 }
 
@@ -537,11 +537,11 @@ const QueryBuilder: React.FC<QueryBuilderProps> = ({
   availableRelations = [],
   onQueryChange,
   initialStructure,
-  isPremium = true,
-  enableDeepFiltering = true,
+  canUseSubGroups = false,
+  enableDeepFiltering = false,
 }) => {
   // Debug log props
-  console.log('[QueryBuilder] Props received:', { isPremium, enableDeepFiltering, availableRelationsCount: availableRelations.length });
+  console.log('[QueryBuilder] Props received:', { canUseSubGroups, enableDeepFiltering, availableRelationsCount: availableRelations.length });
   const [rootGroup, setRootGroup] = useState<ConditionGroup>(
     initialStructure || {
       id: 'root',
@@ -614,9 +614,7 @@ const QueryBuilder: React.FC<QueryBuilderProps> = ({
     const newGroup = JSON.parse(JSON.stringify(rootGroup));
     const parentGroup = findGroup(newGroup, parentGroupId);
     if (parentGroup) {
-      // Free users can add 1 sub-group at root level, Premium users can add nested groups
-      const currentLevel = parentGroupId === 'root' ? 0 : 1;
-      if (!isPremium && currentLevel >= 1) return;
+      if (!canUseSubGroups) return;
       
       const newId = Date.now().toString();
       parentGroup.conditions.push({
@@ -699,7 +697,7 @@ const QueryBuilder: React.FC<QueryBuilderProps> = ({
     const canDelete = group.conditions.length > 1 || level > 0;
     
     // Determine if we should use deep filtering
-    const useDeepFilter = enableDeepFiltering && isPremium && availableRelations.length > 0;
+    const useDeepFilter = enableDeepFiltering && availableRelations.length > 0;
     const fieldPath = condition.fieldPath || [condition.field].filter(Boolean);
     
     // Check if the first selected field is a relation (for two-row layout)
@@ -990,10 +988,10 @@ const QueryBuilder: React.FC<QueryBuilderProps> = ({
               size="S"
               startIcon={<Plus />}
               onClick={() => addGroup(group.id)}
-              disabled={!isPremium && level >= 1}
-              title={!isPremium && level >= 1 ? "Upgrade to Premium for more nested groups" : "Add a sub-group"}
+              disabled={!canUseSubGroups}
+              title={!canUseSubGroups ? "Upgrade to Advanced to add sub-groups" : "Add a sub-group"}
             >
-              Add Sub-Group {!isPremium && level >= 1 && '(Premium)'}
+              Add Sub-Group {!canUseSubGroups && '(Advanced)'}
             </ActionButton>
           )}
         </Flex>

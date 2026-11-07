@@ -16,11 +16,13 @@ import {
 } from '@strapi/design-system';
 import { Cross as CrossIcon } from '@strapi/icons';
 import { Cross } from '@strapi/icons';
+import { useIntl } from 'react-intl';
 import styled from 'styled-components';
 import CustomSelect from './CustomSelect';
 import { useRelationSchema } from '../hooks/useRelationSchema';
 import { generateFromRows, generateFromGroup, getOperatorsForType, type FilterRow, type FilterGroup as FilterGroupType, type LogicConnector } from '../utils/queryGenerator';
-import { parseQueryToRows } from '../utils/queryToStructure';
+import { parseQueryToFilterGroup, parseQueryToRows } from '../utils/queryToStructure';
+import { isFilterQuerySupportedByContentManager } from '../utils/contentManagerFilterCompatibility';
 
 const ModalOverlay = styled.div`
   position: fixed;
@@ -470,6 +472,12 @@ const ModalFooter = styled.div`
   margin-top: 8px;
 `;
 
+const ApplyError = styled.div`
+  margin-top: 12px;
+  color: #b42318;
+  font-size: 13px;
+`;
+
 const GroupContainer = styled.div<{ $logic: 'AND' | 'OR'; $level: number }>`
   border: 2px solid ${(p) => p.$logic === 'AND' ? '#0EA5E9' : '#F97316'};
   border-radius: 8px;
@@ -560,7 +568,7 @@ interface StrapiStyleFilterModalProps {
   availableFields: Array<{ name: string; type: string }>;
   availableRelations?: Array<{ name: string; target?: string }>;
   currentQuery?: string;
-  enableNestedGroups?: boolean; // Premium feature flag
+  enableNestedGroups?: boolean; // Advanced-tier feature flag
 }
 
 /**
@@ -574,6 +582,7 @@ const StrapiStyleFilterModal: React.FC<StrapiStyleFilterModalProps> = ({
   currentQuery = '',
   enableNestedGroups = false,
 }) => {
+  const { formatMessage } = useIntl();
   const { getRelationFields } = useRelationSchema();
   const [fieldOptions, setFieldOptions] = useState<FieldOption[]>([]);
   
@@ -581,6 +590,11 @@ const StrapiStyleFilterModal: React.FC<StrapiStyleFilterModalProps> = ({
   const [rows, setRows] = useState<FilterRow[]>([]);
   const [connectors, setConnectors] = useState<LogicConnector[]>([]);
   const [rootGroup, setRootGroup] = useState<FilterGroupType | null>(null);
+  const [applyError, setApplyError] = useState('');
+
+  useEffect(() => {
+    setApplyError('');
+  }, [rootGroup, rows, connectors]);
 
   const buildFieldOptions = useCallback(async () => {
     const direct: FieldOption[] = availableFields.map(f => ({
@@ -621,7 +635,12 @@ const StrapiStyleFilterModal: React.FC<StrapiStyleFilterModalProps> = ({
 
   useEffect(() => {
     if (enableNestedGroups) {
-      // Initialize with root group
+      if (currentQuery) {
+        setRootGroup(parseQueryToFilterGroup(currentQuery) as FilterGroupType);
+        return;
+      }
+
+      // Start with one blank row when there is no saved query to restore.
       setRootGroup({
         id: 'root',
         logic: 'AND',
@@ -889,11 +908,26 @@ const StrapiStyleFilterModal: React.FC<StrapiStyleFilterModalProps> = ({
     setRootGroup(update(rootGroup));
   };
 
+  /** Applies only query keys that Strapi Admin can parse without truncation. */
+  const tryApplyQuery = (queryString: string): boolean => {
+    if (!isFilterQuerySupportedByContentManager(queryString)) {
+      setApplyError(formatMessage({
+        id: 'magic-mark.error.queryDepth',
+        defaultMessage: 'This filter is deeper than the Content Manager can read. Simplify it to a single top-level AND/OR group.',
+      }));
+      return false;
+    }
+
+    setApplyError('');
+    onApply(queryString);
+    onClose();
+    return true;
+  };
+
   const handleApply = () => {
     if (enableNestedGroups && rootGroup) {
       const queryString = generateFromGroup(rootGroup);
-      onApply(queryString);
-      onClose();
+      tryApplyQuery(queryString);
       return;
     }
     
@@ -910,8 +944,7 @@ const StrapiStyleFilterModal: React.FC<StrapiStyleFilterModalProps> = ({
       return;
     }
     const queryString = generateFromRows(validRows, connectors.slice(0, validRows.length - 1));
-    onApply(queryString);
-    onClose();
+    tryApplyQuery(queryString);
   };
 
   const handleClearAll = () => {
@@ -1209,6 +1242,7 @@ const StrapiStyleFilterModal: React.FC<StrapiStyleFilterModalProps> = ({
               Apply
             </Button>
           </Flex>
+          {applyError && <ApplyError role="alert">{applyError}</ApplyError>}
         </ModalFooter>
       </ModalContent>
     </ModalOverlay>

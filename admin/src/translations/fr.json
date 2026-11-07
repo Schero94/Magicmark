@@ -13,6 +13,9 @@
   "stats.limitReached": "Limite atteinte - Mettre à niveau",
   
   "button.create": "+ Enregistrer le signet",
+  "button.openContentManager": "Ouvrir le Content Manager",
+  "button.checkingLimit": "Vérification de la limite de signets",
+  "button.viewUpgradeOptions": "Voir les options de mise à niveau",
   "button.save": "Enregistrer le signet",
   "button.cancel": "Annuler",
   "button.update": "Mettre à jour",
@@ -35,7 +38,7 @@
   "form.query": "Filtres et tri",
   "form.queryHelp": "Ces filtres seront restaurés lorsque vous cliquerez sur ce signet",
   "form.filterPreview": "Filtres et paramètres capturés",
-  "form.description": "Description (Optionnel)",
+  "form.description": "Description",
   "form.descriptionPlaceholder": "Ajouter une description...",
   "form.sharing": "Options de partage",
   "form.publicAccess": "Public (Tous les utilisateurs admin peuvent voir ce signet)",
@@ -55,6 +58,7 @@
   "error.nameRequired": "Le nom est requis",
   "error.pathRequired": "Le chemin est requis",
   "error.save": "Échec de l'enregistrement du signet",
+  "error.queryDepth": "Ce filtre est trop imbriqué pour le Content Manager. Utilisez un seul groupe AND ou OR.",
   
   "table.emoji": "Emoji",
   "table.name": "Nom",

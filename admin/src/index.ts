@@ -65,7 +65,7 @@ export default {
           id: 'magic-mark-license',
           to: `${pluginId}/license`,
           Component: () => import(/* webpackChunkName: "magic-mark-license" */ './pages/License') as any,
-          permissions: pluginPermissions.accessSettings,
+          permissions: pluginPermissions.updateSettings,
         },
       ]
     );

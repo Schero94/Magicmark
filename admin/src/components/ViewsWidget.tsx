@@ -3,12 +3,13 @@ import { Plus } from '@strapi/icons';
 import { BookmarkIcon } from '@heroicons/react/24/outline';
 import { useIntl } from 'react-intl';
 import { useNavigate } from 'react-router-dom';
-import { useFetchClient } from '@strapi/strapi/admin';
+import { useFetchClient, useRBAC } from '@strapi/strapi/admin';
 import styled from 'styled-components';
 
 import ViewsListPopover from './ViewsListPopover';
 import CreateEditModal from './CreateEditModal';
 import pluginId from '../pluginId';
+import pluginPermissions from '../permissions';
 
 // ================ STYLED COMPONENTS ================
 const WidgetContainer = styled.div`
@@ -34,6 +35,11 @@ const ActionButton = styled.button`
   cursor: pointer;
   transition: all 0.15s ease;
   white-space: nowrap;
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+  }
   
   &:hover {
     background: ${(p) => p.theme.colors.neutral100};
@@ -111,6 +117,13 @@ interface ViewsWidgetProps {
   onShowViews?: () => void;
 }
 
+interface LicenseLimitsResponse {
+  success: boolean;
+  data?: {
+    canCreate: boolean;
+  };
+}
+
 /**
  * Widget for saving and accessing bookmarks in the Content Manager
  */
@@ -118,6 +131,7 @@ const ViewsWidget: React.FC<ViewsWidgetProps> = () => {
   const { formatMessage } = useIntl();
   const navigate = useNavigate();
   const { get } = useFetchClient();
+  const { allowedActions, isLoading: isPermissionLoading } = useRBAC(pluginPermissions.updateSettings);
   const viewsButtonRef = useRef<HTMLButtonElement | null>(null);
   const [showCreateModal, setShowCreateModal] = React.useState(false);
   const [viewsPopoverVisible, setViewsPopoverVisible] = React.useState(false);
@@ -125,6 +139,8 @@ const ViewsWidget: React.FC<ViewsWidgetProps> = () => {
   const [isLoadingViews, setIsLoadingViews] = React.useState(false);
   const [currentPath, setCurrentPath] = React.useState('');
   const [currentQuery, setCurrentQuery] = React.useState('');
+  const [canCreate, setCanCreate] = React.useState(false);
+  const [isCheckingLimit, setIsCheckingLimit] = React.useState(true);
 
   /**
    * Fetches all bookmarks from the API
@@ -137,10 +153,28 @@ const ViewsWidget: React.FC<ViewsWidgetProps> = () => {
       const { data } = await get<{ data?: any[] }>(url);
       setBookmarks(data.data || []);
     } catch (error) {
-      console.error('[Magic-Mark] Error fetching bookmarks:', error);
+      console.error('[Magic-Mark] Error fetching bookmarks');
       setBookmarks([]);
     } finally {
       setIsLoadingViews(false);
+    }
+  };
+
+  /** Loads the server's authoritative bookmark quota before enabling Save. */
+  const getLicenseLimits = async () => {
+    setIsCheckingLimit(true);
+    try {
+      const response = await get<LicenseLimitsResponse>('/magic-mark/license/limits');
+      setCanCreate(
+        allowedActions.canUpdate === true &&
+        response.data?.success === true &&
+        response.data?.data?.canCreate === true,
+      );
+    } catch (error) {
+      console.error('[Magic-Mark] Could not check bookmark limit');
+      setCanCreate(false);
+    } finally {
+      setIsCheckingLimit(false);
     }
   };
 
@@ -148,6 +182,8 @@ const ViewsWidget: React.FC<ViewsWidgetProps> = () => {
    * Opens the create bookmark modal with current path/query
    */
   const handleOpenModal = () => {
+    if (isPermissionLoading || allowedActions.canUpdate !== true || isCheckingLimit || !canCreate) return;
+
     let path = window.location.pathname;
     
     if (path.startsWith('/admin/')) {
@@ -165,6 +201,10 @@ const ViewsWidget: React.FC<ViewsWidgetProps> = () => {
     getBookmarks();
   }, [showCreateModal]);
 
+  React.useEffect(() => {
+    getLicenseLimits();
+  }, [isPermissionLoading, allowedActions.canUpdate]);
+
   /**
    * Navigates to the selected bookmark
    */
@@ -181,10 +221,20 @@ const ViewsWidget: React.FC<ViewsWidgetProps> = () => {
     <WidgetContainer>
       {/* Save Bookmark Button */}
       <ActionButton
+        type="button"
         onClick={handleOpenModal}
-        title={formatMessage({
+        disabled={isPermissionLoading || allowedActions.canUpdate !== true || isCheckingLimit || !canCreate}
+        aria-label={formatMessage({
           id: `${pluginId}.ViewsWidget.actions.create`,
           defaultMessage: 'Save current view as bookmark',
+        })}
+        title={formatMessage({
+          id: `${pluginId}.ViewsWidget.actions.create`,
+          defaultMessage: isCheckingLimit
+            ? 'Checking bookmark limit'
+            : canCreate
+              ? 'Save current view as bookmark'
+              : 'Bookmark limit reached',
         })}
       >
         <Plus />

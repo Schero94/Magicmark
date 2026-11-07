@@ -35,8 +35,6 @@ export const parseQueryString = (queryString: string): ParsedQuery => {
 
   // Parse all parameters
   params.forEach((value, key) => {
-    console.log('[QueryParser] Parsing:', key, '=', value);
-
     // Parse filters
     if (key.startsWith('filters[')) {
       const filter = parseFilterKey(key, value);
@@ -91,7 +89,7 @@ const parseFilterKey = (key: string, value: string): ParsedFilter | null => {
     const operator = operatorMatch ? operatorMatch[1] : 'eq';
 
     if (!field) {
-      console.warn('[QueryParser] Could not extract field from:', key);
+      console.warn('[QueryParser] Could not extract filter field');
       return null;
     }
 
@@ -101,8 +99,8 @@ const parseFilterKey = (key: string, value: string): ParsedFilter | null => {
       value: value,
       logic,
     };
-  } catch (error) {
-    console.error('[QueryParser] Error parsing filter:', key, error);
+  } catch {
+    console.error('[QueryParser] Could not parse filter entry');
     return null;
   }
 };

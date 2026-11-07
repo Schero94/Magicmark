@@ -13,6 +13,9 @@
   "stats.limitReached": "Limit erreicht - Upgrade",
   
   "button.create": "+ Lesezeichen speichern",
+  "button.openContentManager": "Content Manager öffnen",
+  "button.checkingLimit": "Lesezeichen-Limit wird geprüft",
+  "button.viewUpgradeOptions": "Upgrade-Optionen anzeigen",
   "button.save": "Lesezeichen speichern",
   "button.cancel": "Abbrechen",
   "button.update": "Aktualisieren",
@@ -35,7 +38,7 @@
   "form.query": "Filter & Sortierung",
   "form.queryHelp": "Diese Filter werden wiederhergestellt, wenn du auf dieses Lesezeichen klickst",
   "form.filterPreview": "Erfasste Filter & Einstellungen",
-  "form.description": "Beschreibung (Optional)",
+  "form.description": "Beschreibung",
   "form.descriptionPlaceholder": "Beschreibung hinzufügen...",
   "form.sharing": "Freigabe-Optionen",
   "form.publicAccess": "Öffentlich (Alle Admin-Benutzer können dieses Lesezeichen sehen)",
@@ -55,6 +58,7 @@
   "error.nameRequired": "Name ist erforderlich",
   "error.pathRequired": "Pfad ist erforderlich",
   "error.save": "Lesezeichen konnte nicht gespeichert werden",
+  "error.queryDepth": "Dieser Filter ist tiefer verschachtelt, als der Content Manager lesen kann. Verwende nur eine oberste AND- oder OR-Gruppe.",
   
   "table.emoji": "Emoji",
   "table.name": "Name",

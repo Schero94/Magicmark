@@ -1,6 +1,7 @@
 import type { Core } from '@strapi/strapi';
 import { createLogger } from './utils/logger';
 
+/** Initializes license enforcement and omits keys and personal details from logs. */
 export default ({ strapi }: { strapi: Core.Strapi }) => {
   const log = createLogger(strapi);
   
@@ -26,23 +27,20 @@ export default ({ strapi }: { strapi: Core.Strapi }) => {
         log.error('║  a valid license is activated.                                ║');
         log.error('╚════════════════════════════════════════════════════════════════╝');
       } else if (licenseStatus.valid) {
-        // Get license key from store if data is not available (grace period)
-        const pluginStore = strapi.store({
-          type: 'plugin',
-          name: 'magic-mark',
-        });
-        const storedKey = await pluginStore.get({ key: 'licenseKey' }) as string | undefined;
-        
         log.info('╔════════════════════════════════════════════════════════════════╗');
         log.info('║  [SUCCESS] MAGICMARK PLUGIN LICENSE ACTIVE                    ║');
         log.info('║                                                                ║');
         
         if (licenseStatus.data) {
-          log.info(`║  License: ${licenseStatus.data.licenseKey}                    ║`);
-          log.info(`║  User: ${licenseStatus.data.firstName} ${licenseStatus.data.lastName}`.padEnd(66) + '║');
-          log.info(`║  Email: ${licenseStatus.data.email}`.padEnd(66) + '║');
-        } else if (storedKey) {
-          log.info(`║  License: ${storedKey} (Offline Mode)                         ║`);
+          const tier = licenseStatus.data.featureEnterprise
+            ? 'Enterprise'
+            : licenseStatus.data.featureAdvanced
+              ? 'Advanced'
+              : licenseStatus.data.featurePremium
+                ? 'Premium'
+                : 'Free';
+          log.info(`║  Tier: ${tier}`.padEnd(66) + '║');
+        } else {
           log.info(`║  Status: Grace Period Active                                  ║`);
         }
         
@@ -51,8 +49,8 @@ export default ({ strapi }: { strapi: Core.Strapi }) => {
         log.info('╚════════════════════════════════════════════════════════════════╝');
       }
     }, 3000); // Wait 3 seconds for API to be ready
-  } catch (error) {
-    log.error('[ERROR] Error initializing License Guard:', error);
+  } catch {
+    log.error('[ERROR] Error initializing License Guard');
   }
   
   log.info('Plugin bootstrapped successfully');

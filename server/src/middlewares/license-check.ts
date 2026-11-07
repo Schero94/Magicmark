@@ -43,8 +43,8 @@ export default (config: any, { strapi }: any) => {
       }
 
       return await next();
-    } catch (error) {
-      strapi.log.error('Error in license check middleware:', error);
+    } catch {
+      strapi.log.error('Error in license check middleware');
       return await next();
     }
   };

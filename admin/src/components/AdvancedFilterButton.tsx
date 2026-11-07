@@ -6,6 +6,7 @@ import { useFetchClient } from '@strapi/strapi/admin';
 import styled from 'styled-components';
 import StrapiStyleFilterModal from './StrapiStyleFilterModal';
 import { useLicenseInfo } from '../hooks/useFeatureGate';
+import { getFilterableAttributes } from '../utils/filterableAttributes.mjs';
 
 // ================ STYLED COMPONENTS ================
 const FilterButtonGroup = styled.div`
@@ -91,7 +92,7 @@ const AdvancedFilterButton: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { get } = useFetchClient();
-  const { isPremium, isAdvanced } = useLicenseInfo();
+  const { isAdvanced } = useLicenseInfo();
   const [availableFields, setAvailableFields] = useState<Array<{ name: string; type: string }>>([]);
   const [availableRelations, setAvailableRelations] = useState<Array<{ name: string; target: string }>>([]);
   const [hasActiveFilters, setHasActiveFilters] = useState(false);
@@ -122,22 +123,18 @@ const AdvancedFilterButton: React.FC = () => {
     const fetchSchema = async () => {
       const uid = extractContentTypeUid();
       if (!uid) {
-        console.log('[AdvancedFilter] No content type UID found in URL');
         return;
       }
 
       try {
-        console.log('[AdvancedFilter] Fetching schema for:', uid);
-        
         // Step 1: Get the REAL schema from content-type-builder (has correct attribute types)
         let realAttributes: Record<string, any> = {};
         try {
           const schemaResponse = await get(`/content-type-builder/content-types/${uid}`);
           const schemaInfo = schemaResponse.data?.data?.schema || schemaResponse.data?.schema || {};
           realAttributes = schemaInfo.attributes || {};
-          console.log('[AdvancedFilter] Real schema attributes:', realAttributes);
-        } catch (e) {
-          console.log('[AdvancedFilter] Content-type-builder endpoint failed:', e);
+        } catch {
+          // Continue with field metadata if the schema endpoint is unavailable.
         }
         
         // Step 2: Also get configuration for field metadata (labels, etc.)
@@ -146,64 +143,18 @@ const AdvancedFilterButton: React.FC = () => {
           const configResponse = await get(`/content-manager/content-types/${uid}/configuration`);
           const contentTypeData = configResponse.data?.data?.contentType || configResponse.data?.contentType || {};
           metadatas = contentTypeData.metadatas || {};
-          console.log('[AdvancedFilter] Configuration metadatas:', metadatas);
-        } catch (e) {
-          console.log('[AdvancedFilter] Configuration endpoint failed:', e);
+        } catch {
+          // The real schema remains sufficient when display metadata is unavailable.
         }
         
-        // Step 3: Extract fields and relations from REAL attributes
-        const fields: Array<{ name: string; type: string }> = [];
-        const relations: Array<{ name: string; target: string }> = [];
-        const fieldNames = new Set<string>();
-        
-        // Process real attributes (this has correct types!)
-        Object.keys(realAttributes).forEach((key) => {
-          const attr = realAttributes[key];
-          const attrType = attr.type;
-          
-          // Skip internal fields
-          if (['createdBy', 'updatedBy', 'localizations', 'locale'].includes(key)) {
-            return;
-          }
-          
-          // Check if it's a relation
-          if (attrType === 'relation') {
-            relations.push({ name: key, target: attr.target });
-            console.log('[AdvancedFilter] Found relation:', key, '-> target:', attr.target);
-          } else if (attrType === 'component' || attrType === 'dynamiczone') {
-            // Skip components and dynamic zones for filtering
-            console.log('[AdvancedFilter] Skipping component/dynamiczone:', key);
-          } else if (attrType === 'media') {
-            // Skip media for now (complex filtering)
-            console.log('[AdvancedFilter] Skipping media:', key);
-          } else if (!fieldNames.has(key)) {
-            // Regular field
-            fieldNames.add(key);
-            fields.push({ 
-              name: key, 
-              type: attrType || 'string' 
-            });
-          }
-        });
-
-        // Add default fields if not already present
-        ['id', 'documentId', 'createdAt', 'updatedAt'].forEach(defaultField => {
-          if (!fieldNames.has(defaultField)) {
-            let type = 'string';
-            if (defaultField === 'id') type = 'integer';
-            if (defaultField === 'createdAt' || defaultField === 'updatedAt') type = 'datetime';
-            fields.unshift({ name: defaultField, type });
-          }
-        });
-
+        // Exclude private, hidden and unsupported attributes before populating
+        // filters that are serialized into Content Manager requests.
+        const { fields, relations } = getFilterableAttributes(realAttributes, metadatas);
         setAvailableFields(fields);
         setAvailableRelations(relations);
         
-        console.log('[AdvancedFilter] Final fields:', fields);
-        console.log('[AdvancedFilter] Final relations:', relations);
-        
-      } catch (error) {
-        console.error('[AdvancedFilter] Error fetching schema:', error);
+      } catch {
+        console.error('[AdvancedFilter] Error fetching schema');
         // Fallback to basic fields
         setAvailableFields([
           { name: 'id', type: 'integer' },
@@ -218,8 +169,6 @@ const AdvancedFilterButton: React.FC = () => {
   }, [location.pathname]);
 
   const handleApplyFilters = (queryString: string) => {
-    console.log('[AdvancedFilter] Applying filters:', queryString);
-    
     // Get current path
     const currentPath = location.pathname;
     
@@ -244,8 +193,6 @@ const AdvancedFilterButton: React.FC = () => {
     cleanParams.set('page', '1');
     
     const finalUrl = `${currentPath}?${cleanParams.toString()}`;
-    console.log('[AdvancedFilter] Final URL:', finalUrl);
-    
     // Navigate first, then reload to ensure Strapi CM picks up the filters
     navigate(finalUrl);
     
@@ -280,7 +227,6 @@ const AdvancedFilterButton: React.FC = () => {
   const getCurrentFilters = () => {
     const params = new URLSearchParams(location.search);
     const currentQuery = params.toString();
-    console.log('[AdvancedFilter] Current query from URL:', currentQuery);
     return currentQuery;
   };
 
@@ -289,10 +235,11 @@ const AdvancedFilterButton: React.FC = () => {
       <FilterButton
         $isActive={hasActiveFilters}
         onClick={() => setShowModal(true)}
-        title="Open advanced filter builder"
+        title={isAdvanced ? 'Open advanced filter builder' : 'Open filter builder'}
+        aria-label={isAdvanced ? 'Open advanced filter builder' : 'Open filter builder'}
       >
         <Filter />
-        Advanced Filter
+        {isAdvanced ? 'Advanced Filter' : 'Filter'}
         {hasActiveFilters && <ActiveDot />}
       </FilterButton>
 
@@ -310,9 +257,9 @@ const AdvancedFilterButton: React.FC = () => {
           onClose={() => setShowModal(false)}
           onApply={handleApplyFilters}
           availableFields={availableFields}
-          availableRelations={availableRelations}
+          availableRelations={isAdvanced ? availableRelations : []}
           currentQuery={getCurrentFilters()}
-          enableNestedGroups={isPremium || isAdvanced}
+          enableNestedGroups={isAdvanced}
         />
       )}
     </FilterButtonGroup>

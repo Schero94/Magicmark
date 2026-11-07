@@ -69,6 +69,9 @@ const routes = [
       handler: 'bookmarks.getUsers',
       config: {
         policies: [],
+        auth: {
+          scope: ['plugin::magic-mark.settings.update'],
+        },
       },
     },
     // License Management
@@ -76,6 +79,25 @@ const routes = [
       method: 'GET',
       path: '/license/status',
       handler: 'license.getStatus',
+      config: {
+        policies: [],
+      },
+    },
+    {
+      method: 'GET',
+      path: '/license/details',
+      handler: 'license.getDetails',
+      config: {
+        policies: [],
+        auth: {
+          scope: ['plugin::magic-mark.settings.update'],
+        },
+      },
+    },
+    {
+      method: 'POST',
+      path: '/license/auto-create',
+      handler: 'license.autoCreate',
       config: {
         policies: [],
       },
@@ -97,25 +119,17 @@ const routes = [
       },
     },
     {
-      method: 'GET',
-      path: '/license/stats',
-      handler: 'license.getStats',
-      config: {
-        policies: [],
-      },
-    },
-    {
-      method: 'POST',
-      path: '/license/deactivate',
-      handler: 'license.deactivate',
-      config: {
-        policies: [],
-      },
-    },
-    {
       method: 'POST',
       path: '/license/store-key',
       handler: 'license.storeKey',
+      config: {
+        policies: [],
+      },
+    },
+    {
+      method: 'GET',
+      path: '/license/limits',
+      handler: 'license.getLimits',
       config: {
         policies: [],
       },
@@ -128,7 +142,7 @@ module.exports = {
     ...route,
     config: {
       ...route.config,
-      auth: {
+      auth: route.config.auth || {
         scope: [`plugin::magic-mark.settings.${route.method === 'GET' ? 'read' : 'update'}`],
       },
     },

@@ -7,10 +7,11 @@ import {
   TextInput,
   Loader,
 } from '@strapi/design-system';
-import { useFetchClient, useNotification } from '@strapi/strapi/admin';
+import { useFetchClient, useNotification, useRBAC } from '@strapi/strapi/admin';
 import { Check, Key, Cross, Lock, Sparkle, Lightbulb, User, Mail } from '@strapi/icons';
 import { useNavigate } from 'react-router-dom';
 import styled, { keyframes } from 'styled-components';
+import pluginPermissions from '../permissions';
 
 // Animations
 const fadeIn = keyframes`
@@ -148,6 +149,7 @@ const LicenseGuard: React.FC<LicenseGuardProps> = ({ children }) => {
   const { get, post } = useFetchClient();
   const { toggleNotification } = useNotification();
   const navigate = useNavigate();
+  const { allowedActions, isLoading: isPermissionLoading } = useRBAC(pluginPermissions.updateSettings);
 
   const [isChecking, setIsChecking] = useState(true);
   const [needsLicense, setNeedsLicense] = useState(false);
@@ -166,16 +168,19 @@ const LicenseGuard: React.FC<LicenseGuardProps> = ({ children }) => {
 
   useEffect(() => {
     checkLicenseStatus();
-    fetchAdminUser();
   }, []);
+
+  useEffect(() => {
+    if (!isPermissionLoading && allowedActions.canUpdate === true) {
+      fetchAdminUser();
+    }
+  }, [isPermissionLoading, allowedActions.canUpdate]);
 
   const fetchAdminUser = async () => {
     try {
       const response: any = await get('/admin/users/me');
-      console.log('Admin user response:', response);
       // The API returns { data: { data: {...} } } structure
       const userData = response.data?.data || response.data;
-      console.log('User data extracted:', userData);
       if (userData) {
         setAdminUser(userData);
         setFormData({
@@ -183,14 +188,9 @@ const LicenseGuard: React.FC<LicenseGuardProps> = ({ children }) => {
           firstName: userData.firstname || '',
           lastName: userData.lastname || '',
         });
-        console.log('Admin user set:', {
-          email: userData.email,
-          firstname: userData.firstname,
-          lastname: userData.lastname
-        });
       }
-    } catch (error) {
-      console.error('Error fetching admin user:', error);
+    } catch {
+      // User details are only used to prefill the activation form.
     }
   };
 
@@ -204,8 +204,7 @@ const LicenseGuard: React.FC<LicenseGuardProps> = ({ children }) => {
       } else {
         setNeedsLicense(true);
       }
-    } catch (error) {
-      console.error('Error checking license:', error);
+    } catch {
       setNeedsLicense(true);
     } finally {
       setIsChecking(false);
@@ -217,7 +216,6 @@ const LicenseGuard: React.FC<LicenseGuardProps> = ({ children }) => {
     setIsCreating(true);
     
     try {
-      console.log('Auto-creating license with admin user data...');
       const response: any = await post('/magic-mark/license/auto-create', {});
       
       if (response.data && response.data.success) {
@@ -235,7 +233,6 @@ const LicenseGuard: React.FC<LicenseGuardProps> = ({ children }) => {
         throw new Error('Failed to auto-create license');
       }
     } catch (error: any) {
-      console.error('Error auto-creating license:', error);
       toggleNotification({
         type: 'danger',
         message: error?.response?.data?.error?.message || 'Failed to auto-create license. Try manual creation.',
@@ -259,9 +256,7 @@ const LicenseGuard: React.FC<LicenseGuardProps> = ({ children }) => {
     setIsCreating(true);
     
     try {
-      console.log('Creating license with data:', formData);
       const response: any = await post('/magic-mark/license/create', formData);
-      console.log('License creation response:', response);
       
       if (response.data && response.data.success) {
         toggleNotification({
@@ -278,7 +273,6 @@ const LicenseGuard: React.FC<LicenseGuardProps> = ({ children }) => {
         throw new Error('Failed to create license');
       }
     } catch (error: any) {
-      console.error('Error creating license:', error);
       toggleNotification({
         type: 'danger',
         message: error?.response?.data?.error?.message || 'Failed to create license. Please try again.',
@@ -301,7 +295,6 @@ const LicenseGuard: React.FC<LicenseGuardProps> = ({ children }) => {
     setIsCreating(true);
     
     try {
-      console.log('Validating existing license key...');
       const pluginStore: any = await post('/magic-mark/license/store-key', {
         licenseKey: existingLicenseKey.trim(),
         email: existingEmail.trim(),
@@ -322,7 +315,6 @@ const LicenseGuard: React.FC<LicenseGuardProps> = ({ children }) => {
         throw new Error('Invalid license key or email');
       }
     } catch (error: any) {
-      console.error('Error validating license key:', error);
       toggleNotification({
         type: 'danger',
         message: error?.response?.data?.error?.message || 'Invalid license key or email address. Please check and try again.',
@@ -335,12 +327,16 @@ const LicenseGuard: React.FC<LicenseGuardProps> = ({ children }) => {
     navigate('/content-manager');
   };
 
-  if (isChecking) {
+  if (isChecking || isPermissionLoading) {
     return (
       <Box padding={8} style={{ textAlign: 'center' }}>
         <Loader>Checking license...</Loader>
       </Box>
     );
+  }
+
+  if (needsLicense && allowedActions.canUpdate !== true) {
+    return <>{children}</>;
   }
 
   if (needsLicense) {

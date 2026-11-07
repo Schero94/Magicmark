@@ -65,6 +65,31 @@ interface ApiResponse {
   message?: string;
 }
 
+type LicenseTier = 'free' | 'premium' | 'advanced' | 'enterprise';
+
+/**
+ * Resolves an active, unexpired license tier from its feature flags.
+ * @param licenseData Latest available license payload, or null when unlicensed.
+ * @returns Free for inactive or expired licenses; Enterprise takes precedence over lower tiers.
+ */
+const resolveLicenseTier = (licenseData: Partial<LicenseData> | null): LicenseTier => {
+  if (!licenseData?.isActive || licenseData.isExpired) return 'free';
+  if (licenseData?.featureEnterprise) return 'enterprise';
+  if (licenseData?.featureAdvanced) return 'advanced';
+  if (licenseData?.featurePremium) return 'premium';
+  return 'free';
+};
+
+/**
+ * Maps a resolved tier to its server-enforced bookmark quota.
+ * @param tier The effective MagicMark license tier.
+ */
+const getBookmarkQuota = (tier: LicenseTier): number => {
+  if (tier === 'enterprise' || tier === 'advanced') return -1;
+  if (tier === 'premium') return 50;
+  return 10;
+};
+
 const licenseGuardService = ({ strapi }: { strapi: Core.Strapi }) => {
   const log = createLogger(strapi);
   
@@ -98,8 +123,8 @@ const licenseGuardService = ({ strapi }: { strapi: Core.Strapi }) => {
       // Create hash from MAC addresses and hostname
       const identifier = `${macAddresses.join('-')}-${os.hostname()}`;
       return crypto.createHash('sha256').update(identifier).digest('hex').substring(0, 32);
-    } catch (error) {
-      log.error('Error generating device ID:', error);
+    } catch {
+      log.error('Error generating device ID');
       // Fallback to random ID
       return crypto.randomBytes(16).toString('hex');
     }
@@ -179,14 +204,14 @@ const licenseGuardService = ({ strapi }: { strapi: Core.Strapi }) => {
       const data = await response.json() as ApiResponse;
 
       if (data.success) {
-        log.info('[SUCCESS] License created successfully:', data.data.licenseKey);
+        log.info('[SUCCESS] License created successfully');
         return data.data as LicenseData;
       } else {
-        log.error('[ERROR] License creation failed:', data);
+        log.error('[ERROR] License creation failed');
         return null;
       }
-    } catch (error) {
-      log.error('[ERROR] Error creating license:', error);
+    } catch {
+      log.error('[ERROR] Error creating license');
       return null;
     }
   },
@@ -221,7 +246,7 @@ const licenseGuardService = ({ strapi }: { strapi: Core.Strapi }) => {
       if (data.success) {
         const isValid = data.data.isActive && !data.data.isExpired;
         const statusInfo = data.data.isExpired ? 'EXPIRED' : (data.data.isActive ? 'ACTIVE' : 'INACTIVE');
-        log.info(`[SUCCESS] License verified online: ${statusInfo} (Key: ${licenseKey?.substring(0, 8)}...)`);
+        log.info(`[SUCCESS] License verified online: ${statusInfo}`);
         
         // Store last validation timestamp
         if (isValid) {
@@ -237,18 +262,18 @@ const licenseGuardService = ({ strapi }: { strapi: Core.Strapi }) => {
           data: data.data as LicenseData,
         };
       } else {
-        log.warn(`[WARN] License verification failed: ${data.message || 'Unknown error'} (Key: ${licenseKey?.substring(0, 8)}...)`);
+        log.warn('[WARN] License verification failed');
         return { valid: false, data: null };
       }
-    } catch (error: any) {
+    } catch {
       // If grace period is allowed, accept the key anyway
       if (allowGracePeriod) {
-        log.warn(`[WARN] Cannot verify license online: ${error.message} (Key: ${licenseKey?.substring(0, 8)}...)`);
+        log.warn('[WARN] Cannot verify license online');
         log.info(`[GRACE] Grace period active - accepting stored license key`);
         return { valid: true, data: null, gracePeriod: true };
       }
       
-      log.error(`[ERROR] Error verifying license: ${error.message} (Key: ${licenseKey?.substring(0, 8)}...)`);
+      log.error('[ERROR] Error verifying license');
       return { valid: false, data: null };
     }
   },
@@ -274,14 +299,14 @@ const licenseGuardService = ({ strapi }: { strapi: Core.Strapi }) => {
       const data = await response.json() as ApiResponse;
 
       if (data.success) {
-        log.debug(`[PING] License ping successful: ${data.data?.isActive ? 'ACTIVE' : 'INACTIVE'} (Key: ${licenseKey?.substring(0, 8)}...)`);
+        log.debug(`[PING] License ping successful: ${data.data?.isActive ? 'ACTIVE' : 'INACTIVE'}`);
         return data.data;
       } else {
-        log.debug(`[WARN] License ping failed: ${data.message || 'Unknown error'} (Key: ${licenseKey?.substring(0, 8)}...)`);
+        log.debug('[WARN] License ping failed');
         return null;
       }
-    } catch (error: any) {
-      log.debug(`License ping error: ${error.message} (Key: ${licenseKey?.substring(0, 8)}...)`);
+    } catch {
+      log.debug('License ping error');
       return null;
     }
   },
@@ -299,8 +324,8 @@ const licenseGuardService = ({ strapi }: { strapi: Core.Strapi }) => {
         return data.data as LicenseData;
       }
       return null;
-    } catch (error) {
-      log.error('[ERROR] Error fetching license by key:', error);
+    } catch {
+      log.error('[ERROR] Error fetching license details');
       return null;
     }
   },
@@ -324,8 +349,8 @@ const licenseGuardService = ({ strapi }: { strapi: Core.Strapi }) => {
       // Fetch fresh license data from server (includes featurePremium, featureAdvanced, etc.)
       const license = await this.getLicenseByKey(licenseKey);
       return license;
-    } catch (error) {
-      log.error('[LICENSE] Error loading current license:', error);
+    } catch {
+      log.error('[LICENSE] Error loading current license');
       return null;
     }
   },
@@ -379,8 +404,7 @@ const licenseGuardService = ({ strapi }: { strapi: Core.Strapi }) => {
       log.info('──────────────────────────────────────────────────────────');
       log.info(`[STORE] Plugin Store Check:`);
       if (licenseKey) {
-        log.info(`   [OK] License Key found: ${licenseKey}`);
-        log.info(`   [KEY] Key (short): ${licenseKey.substring(0, 8)}...`);
+        log.info('   [OK] License key is stored');
         if (lastValidated) {
           const lastValidatedDate = new Date(lastValidated);
           const hoursAgo = Math.floor((now.getTime() - lastValidatedDate.getTime()) / (1000 * 60 * 60));
@@ -430,9 +454,9 @@ const licenseGuardService = ({ strapi }: { strapi: Core.Strapi }) => {
       log.warn('[WARN] No valid license found. Plugin will run with limited functionality.');
       
       return { valid: false, demo: true };
-    } catch (error: any) {
-      log.error('[ERROR] Error initializing license guard:', error);
-      return { valid: false, error: error.message };
+    } catch {
+      log.error('[ERROR] Error initializing license guard');
+      return { valid: false, error: 'License initialization failed' };
     }
   },
 
@@ -441,7 +465,7 @@ const licenseGuardService = ({ strapi }: { strapi: Core.Strapi }) => {
    */
   async storeLicenseKey(licenseKey: string): Promise<boolean> {
     try {
-      log.info(`[STORE] Storing license key: ${licenseKey}`);
+      log.info('[STORE] Storing license key');
       const pluginStore = strapi.store({ 
         type: 'plugin', 
         name: 'magic-mark' 
@@ -460,47 +484,52 @@ const licenseGuardService = ({ strapi }: { strapi: Core.Strapi }) => {
         log.error('[ERROR] License key storage verification failed');
         return false;
       }
-    } catch (error) {
-      log.error('[ERROR] Error storing license key:', error);
+    } catch {
+      log.error('[ERROR] Error storing license key');
       return false;
     }
   },
 
   /**
-   * Get bookmark limit based on license tier
-   * @returns Bookmark limit: 10 (free), 50 (premium), -1 (advanced/unlimited)
+   * Get the server-enforced bookmark quota for the effective license.
+   * @param licenseData License payload already loaded by the caller, if available.
+   * @returns 10 for Free, 50 for Premium, or -1 for unlimited Advanced/Enterprise.
    */
-  async getBookmarkLimit(): Promise<number> {
+  async getBookmarkLimit(licenseData?: LicenseData | null): Promise<number> {
     try {
-      const licenseGuard = (strapi as any).licenseGuard;
-      const licenseData = licenseGuard?.data;
-      
-      if (licenseData?.featureAdvanced) {
-        return -1; // Unlimited
-      }
-      if (licenseData?.featurePremium) {
-        return 50;
-      }
-      return 10; // Free tier
-    } catch (error) {
+      const effectiveLicense = licenseData === undefined
+        ? await this.getEffectiveLicenseData()
+        : licenseData;
+      return getBookmarkQuota(resolveLicenseTier(effectiveLicense));
+    } catch {
       log.debug('[LICENSE] Error getting bookmark limit, using free tier');
       return 10;
     }
   },
 
   /**
+   * Prefer fresh license details and use the initialized in-memory payload during outages.
+   * @returns Effective license details, or null when no license is available.
+   */
+  async getEffectiveLicenseData(): Promise<LicenseData | null> {
+    const freshLicense = await this.getCurrentLicense();
+    if (freshLicense) {
+      return freshLicense.isActive && !freshLicense.isExpired ? freshLicense : null;
+    }
+
+    const cachedLicense = (strapi as any).licenseGuard?.data as LicenseData | undefined;
+    return cachedLicense?.isActive && !cachedLicense.isExpired ? cachedLicense : null;
+  },
+
+  /**
    * Check if user can create more bookmarks
    * @param userId - User's documentId
-   * @returns Object with canCreate boolean and current/max counts
+   * @param licenseData License payload already loaded by a limits request, if available.
+   * @returns Whether creation is allowed and the actor's current and maximum bookmark counts.
    */
-  async canCreateBookmark(userId: string): Promise<{ canCreate: boolean; current: number; max: number; message?: string }> {
+  async canCreateBookmark(userId: string, licenseData?: LicenseData | null): Promise<{ canCreate: boolean; current: number; max: number; message?: string }> {
     try {
-      const limit = await this.getBookmarkLimit();
-      
-      // Unlimited for advanced tier
-      if (limit === -1) {
-        return { canCreate: true, current: 0, max: -1 };
-      }
+      const limit = await this.getBookmarkLimit(licenseData);
       
       // Count user's current bookmarks
       const BOOKMARK_UID = 'plugin::magic-mark.bookmark';
@@ -508,6 +537,11 @@ const licenseGuardService = ({ strapi }: { strapi: Core.Strapi }) => {
         filters: { creatorId: userId }
       });
       const currentCount = bookmarks?.length || 0;
+
+      // Unlimited tiers still report the real count for the admin UI.
+      if (limit === -1) {
+        return { canCreate: true, current: currentCount, max: -1 };
+      }
       
       if (currentCount >= limit) {
         return {
@@ -519,10 +553,15 @@ const licenseGuardService = ({ strapi }: { strapi: Core.Strapi }) => {
       }
       
       return { canCreate: true, current: currentCount, max: limit };
-    } catch (error) {
-      log.error('[LICENSE] Error checking bookmark limit:', error);
-      // Allow creation on error to not block users
-      return { canCreate: true, current: 0, max: 10 };
+    } catch {
+      log.error('[LICENSE] Error checking bookmark limit');
+      // Fail closed when quota state cannot be confirmed.
+      return {
+        canCreate: false,
+        current: 0,
+        max: 10,
+        message: 'Unable to verify bookmark limit. Try again shortly.',
+      };
     }
   },
 
@@ -535,7 +574,7 @@ const licenseGuardService = ({ strapi }: { strapi: Core.Strapi }) => {
     maxBookmarks: number;
     currentBookmarks: number;
     canCreate: boolean;
-    tier: string;
+    tier: LicenseTier;
     features: {
       queryHistory: boolean;
       export: boolean;
@@ -545,29 +584,15 @@ const licenseGuardService = ({ strapi }: { strapi: Core.Strapi }) => {
     };
   }> {
     try {
-      // Get fresh license data from server (like Magic Mail does)
-      const license = await this.getCurrentLicense();
+      // Use the same effective license payload for UI limits and create enforcement.
+      const license = await this.getEffectiveLicenseData();
+      const tier = resolveLicenseTier(license);
       
-      // Debug log
-      log.info('[LICENSE] getLicenseLimits - license exists:', !!license);
-      if (license) {
-        log.info('[LICENSE] getLicenseLimits - featurePremium:', license.featurePremium);
-        log.info('[LICENSE] getLicenseLimits - featureAdvanced:', license.featureAdvanced);
-      }
-      
-      // Get tier info - check both formats (like Magic Mail)
-      let tier = 'free';
-      if (license?.featureEnterprise === true) tier = 'enterprise';
-      else if (license?.featureAdvanced === true) tier = 'advanced';
-      else if (license?.featurePremium === true) tier = 'premium';
-      
-      const isPremium = tier === 'premium' || tier === 'advanced' || tier === 'enterprise';
+      const isPremium = tier !== 'free';
       const isAdvanced = tier === 'advanced' || tier === 'enterprise';
       
-      log.info('[LICENSE] getLicenseLimits - detected tier:', tier);
-      
       // Get bookmark counts
-      const bookmarkCheck = await this.canCreateBookmark(userId);
+      const bookmarkCheck = await this.canCreateBookmark(userId, license);
       
       return {
         maxBookmarks: bookmarkCheck.max,
@@ -582,12 +607,12 @@ const licenseGuardService = ({ strapi }: { strapi: Core.Strapi }) => {
           customIntegrations: isAdvanced,
         }
       };
-    } catch (error) {
-      log.error('[LICENSE] Error getting license limits:', error);
+    } catch {
+      log.error('[LICENSE] Error getting license limits');
       return {
         maxBookmarks: 10,
         currentBookmarks: 0,
-        canCreate: true,
+        canCreate: false,
         tier: 'free',
         features: {
           queryHistory: false,
@@ -609,9 +634,7 @@ const licenseGuardService = ({ strapi }: { strapi: Core.Strapi }) => {
     try {
       const licenseGuard = (strapi as any).licenseGuard;
       const licenseData = licenseGuard?.data;
-      
-      const isPremium = licenseData?.featurePremium || false;
-      const isAdvanced = licenseData?.featureAdvanced || false;
+      const tier = resolveLicenseTier(licenseData);
 
       // Feature mapping
       const featureRequirements: Record<string, 'free' | 'premium' | 'advanced'> = {
@@ -623,7 +646,7 @@ const licenseGuardService = ({ strapi }: { strapi: Core.Strapi }) => {
         extendedBookmarks: 'premium',
         queryHistory: 'premium',
         exportBookmarks: 'premium',
-        sharedBookmarks: 'premium',
+        sharedBookmarks: 'free',
         
         // Advanced tier
         unlimitedBookmarks: 'advanced',
@@ -637,17 +660,14 @@ const licenseGuardService = ({ strapi }: { strapi: Core.Strapi }) => {
       const requiredTier = featureRequirements[feature] || 'free';
       
       // Determine current tier level
-      let currentTierLevel = 0; // free
-      if (isAdvanced) currentTierLevel = 2;
-      else if (isPremium) currentTierLevel = 1;
-
       const tierLevels: Record<string, number> = {
         free: 0,
         premium: 1,
         advanced: 2,
+        enterprise: 3,
       };
 
-      return currentTierLevel >= tierLevels[requiredTier];
+      return tierLevels[tier] >= tierLevels[requiredTier];
     } catch (error) {
       log.debug('[LICENSE] Error checking feature:', feature);
       return false;
@@ -655,18 +675,15 @@ const licenseGuardService = ({ strapi }: { strapi: Core.Strapi }) => {
   },
 
   /**
-   * Get current tier name
-   * @returns 'free' | 'premium' | 'advanced'
+   * Get the current tier name from the initialized license payload.
+   * @returns The resolved Free, Premium, Advanced, or Enterprise tier.
    */
-  getCurrentTier(): 'free' | 'premium' | 'advanced' {
+  getCurrentTier(): LicenseTier {
     try {
       const licenseGuard = (strapi as any).licenseGuard;
       const licenseData = licenseGuard?.data;
-      
-      if (licenseData?.featureAdvanced) return 'advanced';
-      if (licenseData?.featurePremium) return 'premium';
-      return 'free';
-    } catch (error) {
+      return resolveLicenseTier(licenseData);
+    } catch {
       return 'free';
     }
   },

@@ -670,8 +670,8 @@ const CreateEditModal: React.FC<CreateEditModalProps> = ({
       const response = await get(`/${pluginId}/roles`);
       const roles = response.data?.data?.data || response.data?.data || response.data || [];
       setAvailableRoles(roles);
-    } catch (error) {
-      console.error('[Magic-Mark] Error fetching roles:', error);
+    } catch {
+      console.error('[Magic-Mark] Error fetching roles');
     } finally {
       setLoadingRoles(false);
     }
@@ -698,8 +698,8 @@ const CreateEditModal: React.FC<CreateEditModalProps> = ({
       }) : [];
       
       setAvailableUsers(users);
-    } catch (error) {
-      console.error('[Magic-Mark] Error fetching users:', error);
+    } catch {
+      console.error('[Magic-Mark] Error fetching users');
       try {
         const response = await get(`/${pluginId}/users`);
         const users = response.data?.data?.data || response.data?.data || response.data || [];
@@ -761,8 +761,8 @@ const CreateEditModal: React.FC<CreateEditModalProps> = ({
       }
 
       onSuccess();
-    } catch (error) {
-      console.error('[Magic-Mark] Error saving bookmark:', error);
+    } catch {
+      console.error('[Magic-Mark] Error saving bookmark');
       setError(formatMessage({ id: `${pluginId}.error.save`, defaultMessage: 'Failed to save bookmark' }));
     } finally {
       setIsSubmitting(false);

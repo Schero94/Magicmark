@@ -13,6 +13,9 @@
   "stats.limitReached": "Limit Reached - Upgrade",
   
   "button.create": "+ Save Bookmark",
+  "button.openContentManager": "Open Content Manager",
+  "button.checkingLimit": "Checking bookmark limit",
+  "button.viewUpgradeOptions": "View upgrade options",
   "button.save": "Save Bookmark",
   "button.cancel": "Cancel",
   "button.update": "Update",
@@ -35,7 +38,7 @@
   "form.query": "Filters & Sorting",
   "form.queryHelp": "These filters will be restored when you click this bookmark",
   "form.filterPreview": "Captured Filters & Settings",
-  "form.description": "Description (Optional)",
+  "form.description": "Description",
   "form.descriptionPlaceholder": "Add a description...",
   "form.sharing": "Sharing Options",
   "form.publicAccess": "Public (All admin users can see this bookmark)",
@@ -55,6 +58,7 @@
   "error.nameRequired": "Name is required",
   "error.pathRequired": "Path is required",
   "error.save": "Failed to save bookmark",
+  "error.queryDepth": "This filter is deeper than the Content Manager can read. Simplify it to a single top-level AND/OR group.",
   
   "table.emoji": "Emoji",
   "table.name": "Name",

@@ -175,9 +175,11 @@ test('admin routes use registered permission scopes and never disable authentica
     const routes = routeModule.exports.default || routeModule.exports;
     for (const route of routes.routes) {
       assert.notEqual(route.config?.auth, false, `${route.method} ${route.path} must require admin authentication`);
-      const expectedScope = route.method === 'GET'
-        ? 'plugin::magic-mark.settings.read'
-        : 'plugin::magic-mark.settings.update';
+      const expectedScope = ['/license/details', '/users'].includes(route.path)
+        ? 'plugin::magic-mark.settings.update'
+        : route.method === 'GET'
+          ? 'plugin::magic-mark.settings.read'
+          : 'plugin::magic-mark.settings.update';
       assert.deepEqual(route.config?.auth?.scope, [expectedScope], `${route.method} ${route.path} must require ${expectedScope}`);
     }
   }

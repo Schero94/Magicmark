@@ -114,15 +114,15 @@ const LicensePage: React.FC = () => {
   const [licenseData, setLicenseData] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
 
+  /** Loads full license details through the update-scoped admin route. */
   const fetchLicenseStatus = async () => {
     setLoading(true);
     setError(null);
     
     try {
-      const response: any = await get('/magic-mark/license/status');
+      const response: any = await get('/magic-mark/license/details');
       setLicenseData(response.data);
-    } catch (err) {
-      console.error('Error fetching license:', err);
+    } catch {
       setError('Failed to load license information');
     } finally {
       setLoading(false);
@@ -136,7 +136,7 @@ const LicensePage: React.FC = () => {
         type: 'success',
         message: 'License key copied to clipboard!',
       });
-    } catch (err) {
+    } catch {
       toggleNotification({
         type: 'danger',
         message: 'Failed to copy license key',
@@ -186,7 +186,7 @@ Generated:   ${new Date().toLocaleString()}
         type: 'success',
         message: 'License key downloaded successfully!',
       });
-    } catch (err) {
+    } catch {
       toggleNotification({
         type: 'danger',
         message: 'Failed to download license key',
@@ -223,6 +223,8 @@ Generated:   ${new Date().toLocaleString()}
   const isValid = licenseData?.valid;
   const isDemo = licenseData?.demo;
   const data = licenseData?.data || {};
+  const hasPremiumFeatures = data.features?.premium || data.features?.advanced || data.features?.enterprise;
+  const hasAdvancedFeatures = data.features?.advanced || data.features?.enterprise;
 
   return (
     <Container>
@@ -422,9 +424,9 @@ Generated:   ${new Date().toLocaleString()}
                         Premium Features
                       </Typography>
                       <Flex alignItems="center" gap={1}>
-                        {data.features?.premium ? <Check fill="success600" /> : <Cross fill="danger600" />}
+                        {hasPremiumFeatures ? <Check fill="success600" /> : <Cross fill="danger600" />}
                         <Typography variant="omega" fontWeight="semiBold">
-                          {data.features?.premium ? 'Enabled' : 'Disabled'}
+                          {hasPremiumFeatures ? 'Enabled' : 'Disabled'}
                         </Typography>
                       </Flex>
                     </Box>
@@ -433,9 +435,9 @@ Generated:   ${new Date().toLocaleString()}
                         Advanced Features
                       </Typography>
                       <Flex alignItems="center" gap={1}>
-                        {data.features?.advanced ? <Check fill="success600" /> : <Cross fill="danger600" />}
+                        {hasAdvancedFeatures ? <Check fill="success600" /> : <Cross fill="danger600" />}
                         <Typography variant="omega" fontWeight="semiBold">
-                          {data.features?.advanced ? 'Enabled' : 'Disabled'}
+                          {hasAdvancedFeatures ? 'Enabled' : 'Disabled'}
                         </Typography>
                       </Flex>
                     </Box>

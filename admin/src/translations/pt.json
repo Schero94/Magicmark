@@ -13,6 +13,9 @@
   "stats.limitReached": "Limite atingido - Atualizar",
   
   "button.create": "+ Salvar marcador",
+  "button.openContentManager": "Abrir o Content Manager",
+  "button.checkingLimit": "Verificando o limite de marcadores",
+  "button.viewUpgradeOptions": "Ver opções de upgrade",
   "button.save": "Salvar marcador",
   "button.cancel": "Cancelar",
   "button.update": "Atualizar",
@@ -35,7 +38,7 @@
   "form.query": "Filtros e ordenação",
   "form.queryHelp": "Estes filtros serão restaurados quando você clicar neste marcador",
   "form.filterPreview": "Filtros e configurações capturados",
-  "form.description": "Descrição (Opcional)",
+  "form.description": "Descrição",
   "form.descriptionPlaceholder": "Adicionar uma descrição...",
   "form.sharing": "Opções de compartilhamento",
   "form.publicAccess": "Público (Todos os usuários admin podem ver este marcador)",
@@ -55,6 +58,7 @@
   "error.nameRequired": "Nome é obrigatório",
   "error.pathRequired": "Caminho é obrigatório",
   "error.save": "Falha ao salvar o marcador",
+  "error.queryDepth": "Este filtro tem níveis demais para o Content Manager. Use apenas um grupo AND ou OR.",
   
   "table.emoji": "Emoji",
   "table.name": "Nome",

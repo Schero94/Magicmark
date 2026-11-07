@@ -46,8 +46,8 @@ export default async (policyContext: any, config: any, { strapi }: any) => {
 
     // License is valid - allow access
     return true;
-  } catch (error) {
-    strapi.log.error('Error checking license:', error);
+  } catch {
+    strapi.log.error('Error checking license');
     // In case of error, deny access for security
     return policyContext.unauthorized('Error verifying license. Please try again.');
   }

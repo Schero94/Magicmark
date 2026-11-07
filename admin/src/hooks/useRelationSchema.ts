@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { useState, useCallback, useRef } from 'react';
 import { useFetchClient } from '@strapi/strapi/admin';
+import { getFilterableAttributes } from '../utils/filterableAttributes.mjs';
 
 interface SchemaAttribute {
   type: string;
@@ -88,43 +89,20 @@ export const useRelationSchema = () => {
     const attributes = await fetchSchema(uid);
     if (!attributes) return [];
 
-    const fields: RelationField[] = [];
-    const skipFields = ['createdBy', 'updatedBy', 'localizations', 'locale'];
+      const filterable = getFilterableAttributes(attributes);
+      const fields: RelationField[] = filterable.fields.map((field) => ({
+        ...field,
+        isRelation: false,
+      }));
 
-    Object.entries(attributes).forEach(([name, attr]) => {
-      // Skip internal fields
-      if (skipFields.includes(name)) return;
+      fields.push(...filterable.relations.map((relation) => ({
+        name: relation.name,
+        type: 'relation',
+        isRelation: true,
+        target: relation.target,
+      })));
 
-      // Skip media, components, dynamiczones
-      if (['media', 'component', 'dynamiczone'].includes(attr.type)) return;
-
-      const isRelation = attr.type === 'relation';
-      
-      fields.push({
-        name,
-        type: attr.type,
-        isRelation,
-        target: isRelation ? attr.target : undefined,
-      });
-    });
-
-    // Add default fields
-    const defaultFields = [
-      { name: 'id', type: 'integer', isRelation: false },
-      { name: 'documentId', type: 'string', isRelation: false },
-      { name: 'createdAt', type: 'datetime', isRelation: false },
-      { name: 'updatedAt', type: 'datetime', isRelation: false },
-    ];
-
-    // Prepend defaults if not already present
-    const existingNames = new Set(fields.map(f => f.name));
-    defaultFields.forEach(df => {
-      if (!existingNames.has(df.name)) {
-        fields.unshift(df);
-      }
-    });
-
-    return fields;
+      return fields;
   }, [fetchSchema]);
 
   /**

@@ -34,13 +34,14 @@ import {
   ClockIcon,
   MagnifyingGlassIcon,
   BookOpenIcon,
+  ChevronUpIcon,
+  ChevronDownIcon,
 } from '@heroicons/react/24/outline';
-import { useFetchClient } from '@strapi/strapi/admin';
+import { useFetchClient, useRBAC } from '@strapi/strapi/admin';
 import pluginId from '../pluginId';
+import pluginPermissions from '../permissions';
 import CreateEditModal, { getIconById } from '../components/CreateEditModal';
 import FilterPreview from '../components/FilterPreview';
-import { useLicenseInfo } from '../hooks/useFeatureGate';
-import UpgradePrompt from '../components/UpgradePrompt';
 
 // ================ THEME ================
 const theme = {
@@ -396,6 +397,7 @@ const ActionButtons = styled(Flex)`
   transition: all ${theme.transitions.fast};
   gap: ${theme.spacing.xs};
   justify-content: flex-end;
+  flex-wrap: wrap;
 `;
 
 const FloatingIcon = styled.div`
@@ -484,7 +486,8 @@ const HomePageModern: React.FC = () => {
   const { formatMessage } = useIntl();
   const navigate = useNavigate();
   const { get, post, del } = useFetchClient();
-  const { isPremium, isAdvanced, tier, canUseFeature } = useLicenseInfo();
+  const { allowedActions, isLoading: isPermissionLoading } = useRBAC(pluginPermissions.updateSettings);
+  const canManageBookmarks = !isPermissionLoading && allowedActions.canUpdate === true;
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [bookmarks, setBookmarks] = useState<Bookmark[]>([]);
   const [loading, setLoading] = useState(true);
@@ -496,10 +499,11 @@ const HomePageModern: React.FC = () => {
   const [entriesPerPage, setEntriesPerPage] = useState('10');
   const [availableRoles, setAvailableRoles] = useState<any[]>([]);
   const [availableUsers, setAvailableUsers] = useState<any[]>([]);
+  const [licenseLimitsLoaded, setLicenseLimitsLoaded] = useState(false);
   const [licenseLimits, setLicenseLimits] = useState<any>({
     maxBookmarks: 10,
     currentBookmarks: 0,
-    canCreate: true,
+    canCreate: false,
     tier: 'free',
     features: {}
   });
@@ -516,10 +520,9 @@ const HomePageModern: React.FC = () => {
     try {
       const response = await get(`/${pluginId}/roles`);
       const roles = response.data?.data?.data || response.data?.data || [];
-      console.log('[Magic-Mark] Available roles in HomePage:', roles);
       setAvailableRoles(roles);
-    } catch (error) {
-      console.error('[Magic-Mark] Error fetching roles:', error);
+    } catch {
+      console.error('[Magic-Mark] Error fetching roles');
     }
   };
 
@@ -527,25 +530,22 @@ const HomePageModern: React.FC = () => {
     try {
       // Use Strapi's existing admin API directly
       const response = await get('/admin/users?pageSize=100&page=1&sort=firstname');
-      console.log('[Magic-Mark] Admin users API response:', response);
       
       // Extract users from response - they are in response.data.data.results
       const allUsers = response.data?.data?.results || response.data?.results || [];
-      console.log('[Magic-Mark] All users from API in HomePage:', allUsers);
       
       // Filter out current user if we have their ID
       const users = currentUser && Array.isArray(allUsers) ? allUsers.filter(u => u.id !== currentUser.id) : allUsers;
       
-      console.log('[Magic-Mark] Available users in HomePage:', users);
       setAvailableUsers(users);
-    } catch (error) {
-      console.error('[Magic-Mark] Error fetching users from admin API:', error);
+    } catch {
+      console.error('[Magic-Mark] Error fetching users from admin API');
       // Fallback to custom endpoint
       try {
         const response = await get(`/${pluginId}/users`);
         const users = response.data?.data?.data || response.data?.data || [];
         setAvailableUsers(users);
-      } catch (fallbackError) {
+      } catch {
         console.warn('[Magic-Mark] Both user endpoints failed');
         setAvailableUsers([]);
       }
@@ -555,13 +555,11 @@ const HomePageModern: React.FC = () => {
   const fetchCurrentUser = async () => {
     try {
       const response = await get('/admin/users/me');
-      console.log('[Magic-Mark] Current user response:', response);
       // The response structure may vary, handle both cases
       const userData = response.data?.data || response.data || response;
       setCurrentUser(userData);
-      console.log('[Magic-Mark] Current user set to:', userData);
-    } catch (error) {
-      console.error('[Magic-Mark] Error fetching current user:', error);
+    } catch {
+      console.error('[Magic-Mark] Error fetching current user');
     }
   };
 
@@ -589,18 +587,17 @@ const HomePageModern: React.FC = () => {
     return false;
   };
 
-  /**
-   * Fetch license limits and feature flags
-   */
+  /** Loads the server quota used to enable the bookmark creation control. */
   const fetchLicenseLimits = async () => {
     try {
       const response = await get(`/${pluginId}/license/limits`);
       if (response.data?.success) {
         setLicenseLimits(response.data.data);
-        console.log('[Magic-Mark] License limits loaded:', response.data.data);
       }
-    } catch (error) {
-      console.error('[Magic-Mark] Error fetching license limits:', error);
+    } catch {
+      console.error('[Magic-Mark] Error fetching license limits');
+    } finally {
+      setLicenseLimitsLoaded(true);
     }
   };
 
@@ -609,11 +606,9 @@ const HomePageModern: React.FC = () => {
     setLoadError(false);
     try {
       const { data } = await get(`/${pluginId}/bookmarks`);
-      console.log('[Magic-Mark HomePage] Bookmarks loaded:', data);
-      console.log('[Magic-Mark HomePage] Current user state:', currentUser);
       setBookmarks(data.data || []);
-    } catch (error) {
-      console.error('[Magic-Mark HomePage] Error fetching bookmarks:', error);
+    } catch {
+      console.error('[Magic-Mark HomePage] Error fetching bookmarks');
       setBookmarks([]);
       setLoadError(true);
     } finally {
@@ -637,10 +632,9 @@ const HomePageModern: React.FC = () => {
     
     try {
       await del(`/${pluginId}/bookmarks/${deleteId}`);
-      console.log('[Magic-Mark HomePage] Bookmark deleted:', deleteId);
       fetchBookmarks();
-    } catch (error) {
-      console.error('[Magic-Mark HomePage] Error deleting bookmark:', error);
+    } catch {
+      console.error('[Magic-Mark HomePage] Error deleting bookmark');
     }
   };
 
@@ -655,10 +649,44 @@ const HomePageModern: React.FC = () => {
       await post(`/${pluginId}/bookmarks/${pinId}/pin`, {
         isPinned: !bookmark.isPinned
       });
-      console.log('[Magic-Mark HomePage] Bookmark pinned:', pinId);
       fetchBookmarks();
-    } catch (error) {
-      console.error('[Magic-Mark HomePage] Error pinning bookmark:', error);
+    } catch {
+      console.error('[Magic-Mark HomePage] Error pinning bookmark');
+    }
+  };
+
+  /** Returns this user's bookmarks in their persisted manual order. */
+  const getOwnedBookmarksInOrder = (): Bookmark[] =>
+    bookmarks
+      .filter(isCurrentUserOwner)
+      .slice()
+      .sort((left, right) => left.order - right.order);
+
+  /** Finds a bookmark's position among items this admin is allowed to reorder. */
+  const getOwnedBookmarkPosition = (bookmark: Bookmark): number => {
+    const bookmarkId = bookmark.documentId || bookmark.id;
+    return getOwnedBookmarksInOrder().findIndex(
+      (item) => (item.documentId || item.id) === bookmarkId,
+    );
+  };
+
+  /** Persists a one-step reorder of the current user's bookmarks. */
+  const handleReorder = async (bookmark: Bookmark, direction: 'up' | 'down') => {
+    if (!canManageBookmarks || !isCurrentUserOwner(bookmark)) return;
+
+    const ordered = getOwnedBookmarksInOrder();
+    const currentIndex = getOwnedBookmarkPosition(bookmark);
+    const nextIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1;
+    if (currentIndex < 0 || nextIndex < 0 || nextIndex >= ordered.length) return;
+
+    [ordered[currentIndex], ordered[nextIndex]] = [ordered[nextIndex], ordered[currentIndex]];
+    const bookmarkIds = ordered.map((item) => item.documentId || item.id);
+
+    try {
+      await post(`/${pluginId}/bookmarks/reorder`, { bookmarkIds });
+      await fetchBookmarks();
+    } catch {
+      console.error('[Magic-Mark] Error reordering bookmarks');
     }
   };
 
@@ -667,15 +695,17 @@ const HomePageModern: React.FC = () => {
     setShowModal(true);
   };
 
-  const handleCreate = () => {
+  /** Opens Content Manager so a new bookmark can capture a real view path and query. */
+  const handleOpenContentManager = () => {
+    if (!canManageBookmarks || !licenseLimitsLoaded) return;
+
     // Check if bookmark limit is reached
     if (!licenseLimits.canCreate && licenseLimits.maxBookmarks !== -1) {
       alert(`Bookmark limit reached (${licenseLimits.currentBookmarks}/${licenseLimits.maxBookmarks}). Please upgrade to create more bookmarks.`);
       navigate(`/settings/${pluginId}/upgrade`);
       return;
     }
-    setEditingBookmark(null);
-    setShowModal(true);
+    navigate('/content-manager');
   };
 
   const handleModalClose = () => {
@@ -703,7 +733,6 @@ const HomePageModern: React.FC = () => {
         ? `${path}?${bookmark.query}` 
         : path;
       
-      console.log('[HomePage] Navigating to:', url);
       navigate(url);
     }
   };
@@ -734,13 +763,29 @@ const HomePageModern: React.FC = () => {
     <Container padding={8}>
       {/* Gradient Header */}
       <Header>
-        <HeaderContent direction="column" alignItems="flex-start" gap={2}>
-          <Title>
-            <BookOpenIcon /> MagicMark
-          </Title>
-          <Subtitle>
-            Save filtered views and navigate with one click
-          </Subtitle>
+        <HeaderContent direction="row" alignItems="center" justifyContent="space-between" gap={4} style={{ flexWrap: 'wrap' }}>
+          <Flex direction="column" alignItems="flex-start" gap={2}>
+            <Title>
+              <BookOpenIcon /> MagicMark
+            </Title>
+            <Subtitle>
+              Save filtered views and navigate with one click
+            </Subtitle>
+          </Flex>
+          {canManageBookmarks && (
+            <Button
+              onClick={handleOpenContentManager}
+              variant="secondary"
+              aria-label={formatMessage({ id: `${pluginId}.button.openContentManager`, defaultMessage: 'Open Content Manager' })}
+              disabled={!licenseLimitsLoaded}
+            >
+              <Plus /> {!licenseLimitsLoaded
+                ? formatMessage({ id: `${pluginId}.button.checkingLimit`, defaultMessage: 'Checking bookmark limit' })
+                : licenseLimits.canCreate
+                  ? formatMessage({ id: `${pluginId}.button.openContentManager`, defaultMessage: 'Open Content Manager' })
+                  : formatMessage({ id: `${pluginId}.button.viewUpgradeOptions`, defaultMessage: 'View upgrade options' })}
+            </Button>
+          )}
         </HeaderContent>
       </Header>
 
@@ -773,8 +818,8 @@ const HomePageModern: React.FC = () => {
         <StatCard 
           $delay="0.4s" 
           $color={licenseLimits.canCreate ? theme.colors.neutral[600] : theme.colors.danger[500]}
-          onClick={() => !licenseLimits.canCreate && navigate(`/settings/${pluginId}/upgrade`)}
-          style={{ cursor: !licenseLimits.canCreate ? 'pointer' : 'default' }}
+          onClick={() => licenseLimitsLoaded && !licenseLimits.canCreate && navigate(`/settings/${pluginId}/upgrade`)}
+          style={{ cursor: licenseLimitsLoaded && !licenseLimits.canCreate ? 'pointer' : 'default' }}
         >
           <StatIcon 
             className="stat-icon" 
@@ -787,7 +832,9 @@ const HomePageModern: React.FC = () => {
             {licenseLimits.currentBookmarks}/{licenseLimits.maxBookmarks === -1 ? '∞' : licenseLimits.maxBookmarks}
           </StatValue>
           <StatLabel>
-            {licenseLimits.canCreate 
+            {!licenseLimitsLoaded
+              ? 'Checking bookmark limit'
+              : licenseLimits.canCreate
               ? formatMessage({ id: `${pluginId}.stats.limit`, defaultMessage: 'Bookmark Limit' })
               : formatMessage({ id: `${pluginId}.stats.limitReached`, defaultMessage: 'Limit Reached - Upgrade' })
             }
@@ -992,7 +1039,33 @@ const HomePageModern: React.FC = () => {
                       <ActionButtons 
                         className="action-buttons"
                       >
-                        {isCurrentUserOwner(bookmark) && <Button
+                        {canManageBookmarks && isCurrentUserOwner(bookmark) && <Button
+                          variant="ghost"
+                          size="S"
+                          aria-label={`Move bookmark up: ${bookmark.name}`}
+                          title={`Move bookmark up: ${bookmark.name}`}
+                          disabled={getOwnedBookmarkPosition(bookmark) === 0}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleReorder(bookmark, 'up');
+                          }}
+                        >
+                          <ChevronUpIcon style={{ width: 16, height: 16 }} />
+                        </Button>}
+                        {canManageBookmarks && isCurrentUserOwner(bookmark) && <Button
+                          variant="ghost"
+                          size="S"
+                          aria-label={`Move bookmark down: ${bookmark.name}`}
+                          title={`Move bookmark down: ${bookmark.name}`}
+                          disabled={getOwnedBookmarkPosition(bookmark) === getOwnedBookmarksInOrder().length - 1}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleReorder(bookmark, 'down');
+                          }}
+                        >
+                          <ChevronDownIcon style={{ width: 16, height: 16 }} />
+                        </Button>}
+                        {canManageBookmarks && isCurrentUserOwner(bookmark) && <Button
                           variant={bookmark.isPinned ? "secondary" : "ghost"}
                           size="S"
                           aria-label={formatMessage({
@@ -1030,12 +1103,12 @@ const HomePageModern: React.FC = () => {
                             e.stopPropagation();
                             handleEdit(bookmark);
                           }}
-                          disabled={!isCurrentUserOwner(bookmark)}
+                          disabled={!canManageBookmarks || !isCurrentUserOwner(bookmark)}
                         >
                           <Pencil />
                         </Button>
                         {/* Show delete for owned bookmarks */}
-                        {isCurrentUserOwner(bookmark) && (
+                        {canManageBookmarks && isCurrentUserOwner(bookmark) && (
                           <Button
                             variant="ghost"
                             size="S"

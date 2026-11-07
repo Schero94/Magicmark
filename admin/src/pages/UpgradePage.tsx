@@ -259,7 +259,7 @@ const UpgradePage: React.FC = () => {
       const licenseData = response.data || {};
       
       let tier = 'free';
-      if (licenseData.data?.features?.advanced) {
+      if (licenseData.data?.features?.enterprise || licenseData.data?.features?.advanced) {
         tier = 'advanced';
       } else if (licenseData.data?.features?.premium) {
         tier = 'premium';
@@ -268,8 +268,8 @@ const UpgradePage: React.FC = () => {
       setCurrentTier(tier);
       setLimits(licenseData.limits);
       setLoading(false);
-    } catch (error) {
-      console.error('[magic-mark] Failed to fetch license info:', error);
+    } catch {
+      console.error('[magic-mark] Failed to fetch license info');
       setLoading(false);
     }
   };
@@ -313,7 +313,7 @@ const UpgradePage: React.FC = () => {
       color: 'linear-gradient(135deg, #6B7280, #4B5563)',
       features: [
         { name: '10 Bookmarks', included: true },
-        { name: 'Advanced Filters', included: true },
+        { name: 'Advanced Filters', included: false },
         { name: 'Role Sharing', included: true },
         { name: 'Drag & Drop', included: true },
         { name: 'Quick Access', included: true },
@@ -338,7 +338,7 @@ const UpgradePage: React.FC = () => {
       featured: true,
       features: [
         { name: '50 Bookmarks', included: true },
-        { name: 'Advanced Filters', included: true },
+        { name: 'Advanced Filters', included: false },
         { name: 'Role Sharing', included: true },
         { name: 'Drag & Drop', included: true },
         { name: 'Quick Access', included: true },

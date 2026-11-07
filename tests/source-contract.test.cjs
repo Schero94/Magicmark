@@ -104,3 +104,9 @@ test('badges avoid the Badge primary variant, which fails contrast in the dark t
   assert.doesNotMatch(page, /variant: 'primary'/);
   assert.match(page, /backgroundColor: 'primary100',\s*textColor: 'primary700'/);
 });
+
+test('the bookmarks table keeps row actions visible at tablet widths (ACC-UI-04)', () => {
+  const page = read(path.join(root, 'admin/src/pages/BookmarksPage.tsx'));
+  assert.match(page, /const showFiltersColumn = useIsDesktop\(\);/);
+  assert.match(page, /colCount=\{showFiltersColumn \? 6 : 5\}/);
+});

@@ -33,6 +33,7 @@ import {
   Pagination,
   SearchInput,
   useClipboard,
+  useIsDesktop,
   useIsMobile,
   useNotification,
   useQueryParams,
@@ -94,8 +95,6 @@ const VISIBILITY_BADGE: Record<
   },
 };
 
-const COLUMNS = 6;
-
 /**
  * Bookmarks page component, protected by `bookmarks.read` in App.
  */
@@ -106,6 +105,9 @@ export const BookmarksPage = () => {
   const openBookmark = useOpenBookmark();
   const { copy } = useClipboard();
   const isMobile = useIsMobile();
+  // Tablet widths (768-1079 px) drop the Filters column so the row actions stay visible
+  // without horizontal scrolling; the edit dialog still shows the saved filters.
+  const showFiltersColumn = useIsDesktop();
   const { names } = useContentTypeNames();
   const { allowedActions } = useRBAC(ALL_PERMISSIONS);
   const [{ query }, setQuery] = useQueryParams<PageQuery>();
@@ -520,7 +522,7 @@ export const BookmarksPage = () => {
               ))}
             </Flex>
           ) : (
-            <Table colCount={COLUMNS} rowCount={bookmarks.length + 1}>
+            <Table colCount={showFiltersColumn ? 6 : 5} rowCount={bookmarks.length + 1}>
               <Thead>
                 <Tr>
                   {sortHeader('name', formatMessage(msg('table.name', 'Name')))}
@@ -529,11 +531,13 @@ export const BookmarksPage = () => {
                       {formatMessage(msg('table.contentType', 'Content type'))}
                     </Typography>
                   </Th>
-                  <Th>
-                    <Typography variant="sigma" textColor="neutral600">
-                      {formatMessage(msg('table.filters', 'Filters'))}
-                    </Typography>
-                  </Th>
+                  {showFiltersColumn ? (
+                    <Th>
+                      <Typography variant="sigma" textColor="neutral600">
+                        {formatMessage(msg('table.filters', 'Filters'))}
+                      </Typography>
+                    </Th>
+                  ) : null}
                   <Th>
                     <Typography variant="sigma" textColor="neutral600">
                       {formatMessage(msg('table.visibility', 'Visibility'))}
@@ -558,19 +562,21 @@ export const BookmarksPage = () => {
                     <Td>
                       <Typography textColor="neutral800">{contentTypeLabel(bookmark)}</Typography>
                     </Td>
-                    <Td>
-                      <Typography textColor="neutral800">
-                        {formatMessage(
-                          msg(
-                            'table.conditionCount',
-                            '{count, plural, =0 {No filters} one {# filter} other {# filters}}'
-                          ),
-                          {
-                            count: conditions(bookmark),
-                          }
-                        )}
-                      </Typography>
-                    </Td>
+                    {showFiltersColumn ? (
+                      <Td>
+                        <Typography textColor="neutral800">
+                          {formatMessage(
+                            msg(
+                              'table.conditionCount',
+                              '{count, plural, =0 {No filters} one {# filter} other {# filters}}'
+                            ),
+                            {
+                              count: conditions(bookmark),
+                            }
+                          )}
+                        </Typography>
+                      </Td>
+                    ) : null}
                     <Td>
                       <Badge
                         backgroundColor={VISIBILITY_BADGE[bookmark.visibility].backgroundColor}

@@ -66,6 +66,13 @@ const SCALAR_SUB_TYPES = new Set([
   'enumeration',
 ]);
 
+/**
+ * Component keys that `/content-manager/init` lists but that are not editor fields. Components
+ * have no `documentId` column (filtering on it makes the list request fail with a 500), and the
+ * internal component `id` means nothing to editors.
+ */
+const COMPONENT_INTERNAL_KEYS = new Set(['id', 'documentId']);
+
 const mainFieldName = (meta?: Metadata): string | undefined => {
   const main = meta?.list?.mainField ?? meta?.edit?.mainField;
   return typeof main === 'string' ? main : main?.name;
@@ -120,6 +127,7 @@ export const buildFieldOptions = (
     if (attribute.type === 'component' && !attribute.repeatable && attribute.component) {
       const component = init.components.find((c) => c.uid === attribute.component);
       for (const [subName, sub] of Object.entries(component?.attributes ?? {})) {
+        if (COMPONENT_INTERNAL_KEYS.has(subName)) continue;
         if (!SCALAR_SUB_TYPES.has(sub.type) || sub.private) continue;
         fields.push({
           path: `${name}.${subName}`,

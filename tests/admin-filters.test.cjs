@@ -168,7 +168,13 @@ test('filterable fields come from the Content Manager schema (no CTB access need
     components: [
       {
         uid: 'shared.seo',
-        attributes: { metaTitle: { type: 'string' }, image: { type: 'media' } },
+        // Shape returned by /content-manager/init in 5.61: id and documentId are listed too.
+        attributes: {
+          id: { type: 'integer' },
+          metaTitle: { type: 'string' },
+          image: { type: 'media' },
+          documentId: { type: 'string' },
+        },
       },
     ],
   };

@@ -1,7 +1,7 @@
-import bookmarkService from './service';
-import licenseGuard from './license-guard';
+import bookmarks from './bookmarks';
+import maintenance from './maintenance';
 
 export default {
-  bookmarks: bookmarkService,
-  'license-guard': licenseGuard,
+  bookmarks,
+  maintenance,
 };

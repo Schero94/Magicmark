@@ -1,150 +1,45 @@
-const routes = [
-    // Get available roles for sharing
-    {
-      method: 'GET',
-      path: '/roles',
-      handler: 'bookmarks.getRoles',
-      config: {
-        policies: [],
-      },
-    },
-    // Get available users for sharing
-    {
-      method: 'GET',
-      path: '/users',
-      handler: 'bookmarks.getUsers',
-      config: {
-        policies: [],
-        auth: {
-          scope: ['plugin::magic-mark.settings.update'],
-        },
-      },
-    },
-    // Get all bookmarks
-    {
-      method: 'GET',
-      path: '/bookmarks',
-      handler: 'bookmarks.getAll',
-      config: {
-        policies: [],
-      },
-    },
-    // Reorder bookmarks (SPECIFIC - must come before :id routes)
-    {
-      method: 'POST',
-      path: '/bookmarks/reorder',
-      handler: 'bookmarks.reorder',
-      config: {
-        policies: [],
-      },
-    },
-    // Pin/Unpin bookmark (SPECIFIC - must come before generic :id)
-    {
-      method: 'POST',
-      path: '/bookmarks/:id/pin',
-      handler: 'bookmarks.pin',
-      config: {
-        policies: [],
-      },
-    },
-    // Create bookmark
-    {
-      method: 'POST',
-      path: '/bookmarks',
-      handler: 'bookmarks.create',
-      config: {
-        policies: [],
-      },
-    },
-    // Update bookmark
-    {
-      method: 'PUT',
-      path: '/bookmarks/:id',
-      handler: 'bookmarks.update',
-      config: {
-        policies: [],
-      },
-    },
-    // Delete bookmark
-    {
-      method: 'DELETE',
-      path: '/bookmarks/:id',
-      handler: 'bookmarks.delete',
-      config: {
-        policies: [],
-      },
-    },
-    // License Management
-    {
-      method: 'GET',
-      path: '/license/status',
-      handler: 'license.getStatus',
-      config: {
-        policies: [],
-      },
-    },
-    {
-      method: 'GET',
-      path: '/license/details',
-      handler: 'license.getDetails',
-      config: {
-        policies: [],
-        auth: {
-          scope: ['plugin::magic-mark.settings.update'],
-        },
-      },
-    },
-    {
-      method: 'POST',
-      path: '/license/auto-create',
-      handler: 'license.autoCreate',
-      config: {
-        policies: [],
-      },
-    },
-    {
-      method: 'POST',
-      path: '/license/create',
-      handler: 'license.createAndActivate',
-      config: {
-        policies: [],
-      },
-    },
-    {
-      method: 'POST',
-      path: '/license/ping',
-      handler: 'license.ping',
-      config: {
-        policies: [],
-      },
-    },
-    {
-      method: 'POST',
-      path: '/license/store-key',
-      handler: 'license.storeKey',
-      config: {
-        policies: [],
-      },
-    },
-    {
-      method: 'GET',
-      path: '/license/limits',
-      handler: 'license.getLimits',
-      config: {
-        policies: [],
-      },
-    },
+/**
+ * Admin routes, served at `/magic-mark/...` and reachable only with an admin session or an
+ * admin API token. Every route requires an authenticated admin and the listed Magic Mark
+ * actions (`admin::hasPermissions` requires all of them). Owner checks happen in the service.
+ */
+import { type ActionKey, actionId } from '../constants';
+
+type Method = 'GET' | 'POST' | 'PUT' | 'DELETE';
+
+/**
+ * Builds a route that requires the given actions.
+ * @param method - HTTP method.
+ * @param path - Path below the plugin prefix.
+ * @param handler - `controller.action`.
+ * @param actions - Action keys the caller must all hold.
+ */
+const route = (method: Method, path: string, handler: string, actions: ActionKey[]) => ({
+  method,
+  path,
+  handler,
+  config: {
+    policies: [
+      'admin::isAuthenticatedAdmin',
+      { name: 'admin::hasPermissions', config: { actions: actions.map(actionId) } },
+    ],
+  },
+});
+
+export const routes = [
+  route('GET', '/bookmarks', 'bookmarks.find', ['read']),
+  route('POST', '/bookmarks', 'bookmarks.create', ['read', 'create']),
+  route('GET', '/bookmarks/:id', 'bookmarks.findOne', ['read']),
+  route('PUT', '/bookmarks/:id', 'bookmarks.update', ['read', 'update']),
+  route('DELETE', '/bookmarks/:id', 'bookmarks.delete', ['read', 'delete']),
+  route('PUT', '/bookmarks/:id/view', 'bookmarks.updateView', ['read', 'update']),
+  route('POST', '/bookmarks/:id/duplicate', 'bookmarks.duplicate', ['read', 'create']),
+  route('PUT', '/bookmarks/:id/pin', 'bookmarks.pin', ['read']),
+  route('GET', '/sharing/roles', 'bookmarks.roles', ['share']),
+  route('GET', '/sharing/users', 'bookmarks.users', ['share']),
 ];
 
 export default {
   type: 'admin' as const,
-  routes: routes.map((route) => ({
-    ...route,
-    config: {
-      ...route.config,
-      auth: route.config.auth || {
-        scope: [`plugin::magic-mark.settings.${route.method === 'GET' ? 'read' : 'update'}`],
-      },
-    },
-  })),
+  routes,
 };

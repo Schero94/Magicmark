@@ -149,7 +149,13 @@ export const BookmarksPopover = ({
           </IconButton>
         </Popover.Trigger>
         <Popover.Content side="bottom" align="end" sideOffset={4}>
-          <Box width="32rem" maxWidth="calc(100vw - 32px)" padding={3}>
+          <Box
+            width="32rem"
+            maxWidth="calc(100vw - 32px)"
+            maxHeight="var(--radix-popover-content-available-height)"
+            overflow="auto"
+            padding={3}
+          >
             <Flex direction="column" alignItems="stretch" gap={3}>
               <Flex justifyContent="space-between" gap={2}>
                 <Typography variant="sigma" textColor="neutral600" tag="h2">
@@ -253,20 +259,6 @@ export const BookmarksPopover = ({
                               ) : null}
                             </Flex>
                           </Flex>
-                          <IconButton
-                            label={formatMessage(
-                              bookmark.isPinned
-                                ? msg('actions.unpinNamed', 'Unpin {name}')
-                                : msg('actions.pinNamed', 'Pin {name}'),
-                              { name: bookmark.name }
-                            )}
-                            variant={bookmark.isPinned ? 'secondary' : 'ghost'}
-                            disabled={busyId === bookmark.documentId}
-                            onClick={() => togglePin(bookmark)}
-                            aria-pressed={bookmark.isPinned}
-                          >
-                            <Pin />
-                          </IconButton>
                           {canUpdate && bookmark.canEdit && !isCurrent ? (
                             <IconButton
                               label={formatMessage(
@@ -282,6 +274,20 @@ export const BookmarksPopover = ({
                               <ArrowClockwise />
                             </IconButton>
                           ) : null}
+                          <IconButton
+                            label={formatMessage(
+                              bookmark.isPinned
+                                ? msg('actions.unpinNamed', 'Unpin {name}')
+                                : msg('actions.pinNamed', 'Pin {name}'),
+                              { name: bookmark.name }
+                            )}
+                            variant={bookmark.isPinned ? 'secondary' : 'ghost'}
+                            disabled={busyId === bookmark.documentId}
+                            onClick={() => togglePin(bookmark)}
+                            aria-pressed={bookmark.isPinned}
+                          >
+                            <Pin />
+                          </IconButton>
                         </Flex>
                       );
                     })}

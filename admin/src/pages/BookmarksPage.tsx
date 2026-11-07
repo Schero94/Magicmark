@@ -11,6 +11,7 @@ import {
   EmptyStateLayout,
   Flex,
   IconButton,
+  Link,
   LinkButton,
   SingleSelect,
   SingleSelectOption,
@@ -279,11 +280,9 @@ export const BookmarksPage = () => {
         </Box>
         <Flex direction="column" alignItems="flex-start" minWidth={0}>
           {target ? (
-            <Typography
+            <Link
               tag={NavLink}
               to={target}
-              fontWeight="semiBold"
-              textColor="primary600"
               onClick={(event: React.MouseEvent) => {
                 if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
                 event.preventDefault();
@@ -291,7 +290,7 @@ export const BookmarksPage = () => {
               }}
             >
               {bookmark.name}
-            </Typography>
+            </Link>
           ) : (
             <Typography fontWeight="semiBold">{bookmark.name}</Typography>
           )}

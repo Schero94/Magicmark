@@ -88,7 +88,7 @@ const controller = ({ strapi }: { strapi: Core.Strapi }) => {
      * @access bookmarks.read; 404 when not visible. Sharing lists only for owner/manager.
      */
     async findOne(ctx: AdminContext) {
-      const { id } = parse(idParamSchema, ctx.params);
+      const { id } = parse(idParamSchema, { id: ctx.params.id });
       ctx.body = { data: await service().findOne(await getViewer(strapi, ctx), id) };
     },
 
@@ -107,7 +107,7 @@ const controller = ({ strapi }: { strapi: Core.Strapi }) => {
      * @access bookmarks.read + bookmarks.update, owner or bookmarks.manage.
      */
     async update(ctx: AdminContext) {
-      const { id } = parse(idParamSchema, ctx.params);
+      const { id } = parse(idParamSchema, { id: ctx.params.id });
       const input = parse(updateBookmarkSchema, ctx.request.body);
       ctx.body = { data: await service().update(await getViewer(strapi, ctx), id, input) };
     },
@@ -117,7 +117,7 @@ const controller = ({ strapi }: { strapi: Core.Strapi }) => {
      * @access bookmarks.read + bookmarks.update, owner or bookmarks.manage.
      */
     async updateView(ctx: AdminContext) {
-      const { id } = parse(idParamSchema, ctx.params);
+      const { id } = parse(idParamSchema, { id: ctx.params.id });
       const { query } = parse(updateViewSchema, ctx.request.body);
       ctx.body = { data: await service().updateView(await getViewer(strapi, ctx), id, query) };
     },
@@ -127,7 +127,7 @@ const controller = ({ strapi }: { strapi: Core.Strapi }) => {
      * @access bookmarks.read + bookmarks.create; the copy is private and owned by the caller.
      */
     async duplicate(ctx: AdminContext) {
-      const { id } = parse(idParamSchema, ctx.params);
+      const { id } = parse(idParamSchema, { id: ctx.params.id });
       const { name } = parse(duplicateSchema, ctx.request.body);
       ctx.body = { data: await service().duplicate(await getViewer(strapi, ctx), id, name) };
     },
@@ -137,7 +137,7 @@ const controller = ({ strapi }: { strapi: Core.Strapi }) => {
      * @access bookmarks.read; pins only for the caller.
      */
     async pin(ctx: AdminContext) {
-      const { id } = parse(idParamSchema, ctx.params);
+      const { id } = parse(idParamSchema, { id: ctx.params.id });
       const { pinned } = parse(pinSchema, ctx.request.body);
       ctx.body = { data: await service().setPinned(await getViewer(strapi, ctx), id, pinned) };
     },
@@ -147,7 +147,7 @@ const controller = ({ strapi }: { strapi: Core.Strapi }) => {
      * @access bookmarks.read + bookmarks.delete, owner or bookmarks.manage.
      */
     async delete(ctx: AdminContext) {
-      const { id } = parse(idParamSchema, ctx.params);
+      const { id } = parse(idParamSchema, { id: ctx.params.id });
       ctx.body = { data: await service().delete(await getViewer(strapi, ctx), id) };
     },
 

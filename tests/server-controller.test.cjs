@@ -78,3 +78,15 @@ test('list response carries pagination and the caller permissions', async () => 
   assert.deepEqual(c.body.meta.pagination, { page: 1, pageSize: 10, pageCount: 1, total: 1 });
   assert.deepEqual(c.body.meta.permissions, { canShare: false, canManage: true });
 });
+
+test('route params from the router (which may carry extra keys) only pass the id', async () => {
+  const { controller } = setup();
+  const created = ctx({ body: { name: 'A', path: PATH } });
+  await controller.create(created);
+  const c = ctx({ params: { id: created.body.data.documentId, 0: 'bookmarks' } });
+  await controller.findOne(c);
+  assert.equal(c.body.data.name, 'A');
+  await assert.rejects(controller.findOne(ctx({ params: { id: '../etc' } })), {
+    name: 'ValidationError',
+  });
+});

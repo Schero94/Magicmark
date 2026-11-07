@@ -25,7 +25,10 @@ Magic Mark is now free, rebuilt on the Strapi Design System and secured on the s
 - Opening a bookmark replaces the Content Manager's remembered list settings for that content type.
 - Bookmark paths work with a custom admin URL; saved views no longer include the page number.
 - Advanced filters read fields from the Content Manager, so roles without Content-Type Builder
-  access can use them.
+  access can use them. Internal component keys (`id`, `documentId`) are not offered; a condition
+  on a component `documentId` made the list request fail.
+- Closing a changed bookmark dialog asks first (Cancel keeps the edits), and deleting a bookmark
+  keeps keyboard focus in the page.
 
 ### Features
 

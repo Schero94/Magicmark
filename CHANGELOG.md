@@ -108,6 +108,8 @@ on several Strapi processes at once.
   dialog says why instead of showing a generic error.
 - The Bookmarks popover requests pinned bookmarks separately, so a pin is never cut off, and
   links to the Magic Mark page when a content type has more than 100 bookmarks.
+- Unknown paths below the Magic Mark page (old links to pages that no longer exist) show the
+  native "Page not found" state with a link back to Magic Mark instead of "Something went wrong".
 
 ### Security
 

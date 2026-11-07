@@ -335,7 +335,8 @@ Strapi. On the first start:
 - A bookmark pinned in 3.x stays pinned for its owner. Pins are per user from now on.
 - The custom order (move up and down) is gone; lists are sorted by name or by last update.
 - The license key and its validation date are deleted. The Upgrade and License settings pages are
-  gone; every feature is available to everyone.
+  gone; every feature is available to everyone. Old browser bookmarks to those settings pages
+  open an empty settings area, which is how Strapi treats any unknown settings path.
 - The 3.x icon ids are kept and shown with Strapi icons.
 
 Breaking changes for code that called the plugin directly: the routes `/license/*`, `/roles`,

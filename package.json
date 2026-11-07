@@ -1,16 +1,30 @@
 {
+  "name": "strapi-plugin-magic-mark",
   "version": "3.4.0",
+  "description": "Bookmarks for the Strapi 5 Content Manager: save list views with their filters, sort order, search and locale, pin them and share them with roles or admin users.",
   "keywords": [
     "strapi",
     "strapi-plugin",
     "strapi-v5",
-    "bookmarks",
-    "query-builder",
+    "strapi-5",
     "content-manager",
+    "bookmarks",
+    "saved-views",
+    "saved-filters",
     "filters",
-    "productivity",
+    "list-view",
     "admin-panel"
   ],
+  "homepage": "https://schero94.github.io/Magicmark/",
+  "bugs": {
+    "url": "https://github.com/Schero94/Magicmark/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Schero94/Magicmark.git"
+  },
+  "license": "MIT",
+  "author": "Schero D.",
   "type": "commonjs",
   "exports": {
     "./package.json": "./package.json",
@@ -52,6 +66,7 @@
     "prepublishOnly": "npm test && npm run build && npm run verify && npm run verify:runtime"
   },
   "dependencies": {
+    "@strapi/utils": "^5.57.0",
     "qs": "^6.17.1",
     "zod": "^4.6.7"
   },
@@ -68,7 +83,6 @@
     "@strapi/sdk-plugin": "^6.1.1",
     "@strapi/strapi": "5.61.0",
     "@strapi/typescript-utils": "5.61.0",
-    "@strapi/utils": "5.61.0",
     "@types/qs": "^6.15.1",
     "@types/react": "^18.3.31",
     "@types/react-dom": "^18.3.7",
@@ -90,12 +104,29 @@
     "@strapi/design-system": "^2.0.0",
     "@strapi/icons": "^2.0.0",
     "@strapi/strapi": "^5.57.0",
-    "@strapi/utils": "^5.57.0",
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
+    "react": "^18.0.0",
+    "react-dom": "^18.0.0",
     "react-intl": "^6.0.0",
     "react-router-dom": "^6.0.0",
     "styled-components": "^6.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@strapi/design-system": {
+      "optional": true
+    },
+    "@strapi/icons": {
+      "optional": true
+    },
+    "react-intl": {
+      "optional": true
+    }
+  },
+  "engines": {
+    "node": "^22.22.2 || >=24.15.0",
+    "npm": ">=6.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "strapi": {
     "kind": "plugin",
@@ -103,24 +134,5 @@
     "displayName": "Magic Mark",
     "description": "Save Content Manager list views with their filters as bookmarks and share them with roles and users."
   },
-  "name": "strapi-plugin-magic-mark",
-  "description": "Bookmarks and advanced filters for the Strapi 5 Content Manager: save list views, share them with roles and users. Free and open source.",
-  "license": "MIT",
-  "private": false,
-  "author": "Schero D.",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/Schero94/Magicmark.git"
-  },
-  "bugs": {
-    "url": "https://github.com/Schero94/Magicmark/issues"
-  },
-  "homepage": "https://github.com/Schero94/Magicmark#readme",
-  "engines": {
-    "node": "^22.22.2 || >=24.15.0",
-    "npm": ">=6.0.0"
-  },
-  "publishConfig": {
-    "access": "public"
-  }
+  "private": false
 }

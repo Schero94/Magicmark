@@ -335,6 +335,10 @@ export const BookmarksPage = () => {
             <Link
               tag={NavLink}
               to={target}
+              // The link text is 20 px tall; 6 px above and below give the 32 px target size the
+              // admin uses on small screens (WCAG 2.5.8 asks for 24 px).
+              paddingTop="0.6rem"
+              paddingBottom="0.6rem"
               onClick={(event: React.MouseEvent) => {
                 if (event.metaKey || event.ctrlKey || event.shiftKey || event.button !== 0) return;
                 event.preventDefault();

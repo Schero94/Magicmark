@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Schero94/Magicmark/main/docs/site/img/icon.svg" alt="Magic Mark icon" width="96" height="96" />
+</p>
+
 # Magic Mark
 
 **Saved views for the Strapi 5 Content Manager.** Filter a list once, save it as a bookmark and

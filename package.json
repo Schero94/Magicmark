@@ -1,6 +1,6 @@
 {
   "name": "strapi-plugin-magic-mark",
-  "version": "3.4.0",
+  "version": "4.0.0",
   "description": "Bookmarks for the Strapi 5 Content Manager: save list views with their filters, sort order, search and locale, pin them and share them with roles or admin users.",
   "keywords": [
     "strapi",

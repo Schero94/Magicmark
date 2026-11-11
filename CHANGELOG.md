@@ -1,3 +1,45 @@
+# [4.0.0](https://github.com/Schero94/Magicmark/compare/v3.4.0...v4.0.0) (2026-11-11)
+
+
+### Bug Fixes
+
+* **admin:** ask before closing a changed bookmark form and keep focus after delete ([c3cf5bb](https://github.com/Schero94/Magicmark/commit/c3cf5bb71a84bbba2b9a33dc0c1f738aa9714a70))
+* **admin:** close the row menu with Escape and return focus after row dialogs ([7383059](https://github.com/Schero94/Magicmark/commit/738305963fd2d2ad25ef99cf4f7160b8133ec846))
+* **admin:** do not offer internal component id fields in advanced filters ([a7b8547](https://github.com/Schero94/Magicmark/commit/a7b85472b3c3647b462d266f8ff92d788e7f5261))
+* **admin:** keep bookmark row actions visible at tablet widths ([46f3a3c](https://github.com/Schero94/Magicmark/commit/46f3a3ca5bc075e4825368eb97d7a8260233eccf))
+* **admin:** keep the row menu trigger tooltip from covering menu items ([18708ec](https://github.com/Schero94/Magicmark/commit/18708ec2e1b013a572e5f7d29fa3c98445a5d93c))
+* **admin:** show bookmark cards below the large breakpoint ([236b004](https://github.com/Schero94/Magicmark/commit/236b00432c92392132a97b09e4617c626d3f9af5))
+* **admin:** show every row menu action without scrolling ([8c4678b](https://github.com/Schero94/Magicmark/commit/8c4678bc292b28b4649ec4e9823373ca81ffc1c6))
+* **admin:** use contrast-safe colours for the Shared badge in dark mode ([abfa5df](https://github.com/Schero94/Magicmark/commit/abfa5df266817bd157b02cd73839444fd0982d58))
+* align CI installs with lockfile settings ([528f657](https://github.com/Schero94/Magicmark/commit/528f65731a7dabaf1063d6957b4c273f73b04b42))
+* build exports before verification in CI ([4bb428e](https://github.com/Schero94/Magicmark/commit/4bb428ed169c34ce1fe8eac56227d84a60d18276))
+* close the re-attack findings on manage scope, legacy queries and saving ([48823d1](https://github.com/Schero94/Magicmark/commit/48823d152697164151d5a76d9a11115a890a65c4))
+* pass only the id route param and fit the bookmarks popover on small screens ([2dd67d7](https://github.com/Schero94/Magicmark/commit/2dd67d737c5900e942de6382df5fedad2a457e64))
+* require bookmark ownership before deletion ([aa5968c](https://github.com/Schero94/Magicmark/commit/aa5968ca43b004e7169fa09eee40eaa5d7f00d54))
+
+
+### Build System
+
+* ship Magic Mark 4.0 as a free plugin with multi-process fixes and new docs ([#3](https://github.com/Schero94/Magicmark/issues/3)) ([8e93d2a](https://github.com/Schero94/Magicmark/commit/8e93d2a90b58eb81c466700816a64c08c23e347f))
+
+
+### Features
+
+* **admin:** rebuild the admin UI on the Strapi Design System ([cc3e2da](https://github.com/Schero94/Magicmark/commit/cc3e2dae915c43f61dc4e9855967f7a9202320a7))
+* enforce bookmark ownership and improve dashboard ([b2c864f](https://github.com/Schero94/Magicmark/commit/b2c864f55786fa2930350a87d7d485cf697f1e60))
+* **server:** make Magic Mark free and secure the bookmark API ([78623b6](https://github.com/Schero94/Magicmark/commit/78623b68d14de96fab08004e22c7698920a0cc55))
+
+
+### BREAKING CHANGES
+
+* Magic Mark 4 needs @strapi/strapi 5.57 or newer. The
+plugin-internal routes /license/*, /roles, /users and /bookmarks/reorder are
+removed (sharing lookups moved to /sharing/roles and /sharing/users), every
+admin route now checks the new bookmark permissions, and the 3.x permissions
+settings.read and settings.update are replaced by six bookmark permissions.
+Roles, shares and pins are migrated on the first start; see the CHANGELOG
+migration notes.
+
 ## [Unreleased]
 
 Magic Mark 4.0 is free, rebuilt on the Strapi Design System, secured on the server and safe to run

@@ -315,7 +315,7 @@ restarts crashed workers).
 
 | Magic Mark | Strapi              | Node.js                                 | Notes                                                                                                                |
 | ---------- | ------------------- | --------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| 4.x        | 5.57.0 or newer 5.x | 22.22.2 or newer 22.x, 24.15.0 or newer | Free. Acceptance host: Strapi 5.61.0 on SQLite and Postgres 16. 3.x data and permissions migrate on the first start. |
+| 4.x        | 5.57.0 or newer 5.x | 22.22.2 or newer 22.x, 24.15.0 or newer | Free. Acceptance host: Strapi 5.62.0 on SQLite and Postgres 16. 3.x data and permissions migrate on the first start. |
 | 3.x        | 5.x                 | 22                                      | Contained the license system. No longer maintained.                                                                  |
 
 Install with npm, yarn 1 or pnpm. The plugin's peers match what a new Strapi 5 app already has:

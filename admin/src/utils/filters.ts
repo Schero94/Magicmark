@@ -113,6 +113,43 @@ export const operatorsForType = (type: string, isSubField = false): string[] => 
     : ops;
 };
 
+/** The only boolean filter values the editor sends. */
+export const BOOLEAN_VALUES = ['true', 'false'];
+
+const DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * True for a `YYYY-MM-DD` value. On a `datetime` field Strapi 5.62's Content Manager reads it
+ * as the whole local day (`toApiFilters` in `@strapi/admin`), so it must stay date-only.
+ * @param value - Filter value.
+ */
+export const isDateOnly = (value: string | undefined): boolean => DATE_ONLY.test(value ?? '');
+
+/**
+ * Stored `datetime` filter value -> value for the editor input. An ISO instant becomes
+ * `YYYY-MM-DDTHH:mm` in the user's time zone (for `<input type="datetime-local">`); a
+ * date-only value and anything unreadable stay unchanged.
+ * @param value - Stored value.
+ */
+export const datetimeToInput = (value: string): string => {
+  const date = new Date(value);
+  if (!value.includes('T') || Number.isNaN(date.getTime())) return value;
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+};
+
+/**
+ * Editor input -> stored `datetime` filter value. A local date and time becomes an ISO
+ * instant (UTC). A date-only value is kept as it is, so it still means the whole day; turning
+ * it into an instant would make it UTC midnight.
+ * @param value - Input value.
+ */
+export const inputToDatetime = (value: string): string => {
+  if (!value || isDateOnly(value)) return value;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? value : date.toISOString();
+};
+
 /**
  * Splits a comma separated list into trimmed, non-empty values.
  * @param value - e.g. "a, b,,c".
@@ -140,6 +177,8 @@ export const validateRow = (
     return 'operator';
   }
   if (NO_VALUE_OPERATORS.includes(row.operator)) return null;
+  // Strapi 5.62 answers 400 for any other boolean value (empty, "1", "yes", padded, ...).
+  if (field.type === 'boolean') return BOOLEAN_VALUES.includes(row.value) ? null : 'value';
   if (LIST_OPERATORS.includes(row.operator)) return splitList(row.value).length ? null : 'value';
   if (!row.value.trim()) return 'value';
   if (RANGE_OPERATORS.includes(row.operator) && !(row.valueTo ?? '').trim()) return 'valueTo';

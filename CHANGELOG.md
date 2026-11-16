@@ -1,3 +1,10 @@
+## [4.0.1](https://github.com/Schero94/Magicmark/compare/v4.0.0...v4.0.1) (2026-11-16)
+
+
+### Bug Fixes
+
+* keep saved filters valid for Strapi 5.62 ([#6](https://github.com/Schero94/Magicmark/issues/6)) ([4e97c70](https://github.com/Schero94/Magicmark/commit/4e97c70daac8fd4eb8f99aed41e6dbcb69b57479))
+
 # [4.0.0](https://github.com/Schero94/Magicmark/compare/v3.4.0...v4.0.0) (2026-11-11)
 
 

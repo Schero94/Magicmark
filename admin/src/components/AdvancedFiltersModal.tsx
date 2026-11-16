@@ -38,7 +38,10 @@ import {
   type FilterRow,
   type MatchMode,
   buildFilters,
+  datetimeToInput,
   fitsAdminQueryDepth,
+  inputToDatetime,
+  isDateOnly,
   nextRowId,
   operatorsForType,
   parseFilters,
@@ -66,20 +69,6 @@ const INPUT_TYPES: Record<string, string> = {
   email: 'text',
 };
 
-/** ISO date-time -> value for <input type="datetime-local"> in the user's time zone. */
-const isoToLocalInput = (value: string) => {
-  const date = new Date(value);
-  if (!value.includes('T') || Number.isNaN(date.getTime())) return value;
-  const pad = (n: number) => String(n).padStart(2, '0');
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
-};
-
-/** <input type="datetime-local"> value -> ISO date-time (UTC). */
-const localInputToIso = (value: string) => {
-  const date = new Date(value);
-  return value && !Number.isNaN(date.getTime()) ? date.toISOString() : value;
-};
-
 const emptyRow = (): FilterRow => ({ id: nextRowId(), field: '', operator: '$eq', value: '' });
 
 /**
@@ -98,8 +87,8 @@ export const AdvancedFiltersModal = ({ open, onOpenChange, uid }: AdvancedFilter
     initial.rows.length
       ? initial.rows.map((row) => ({
           ...row,
-          value: isoToLocalInput(row.value),
-          valueTo: row.valueTo && isoToLocalInput(row.valueTo),
+          value: datetimeToInput(row.value),
+          valueTo: row.valueTo && datetimeToInput(row.valueTo),
         }))
       : [emptyRow()]
   );
@@ -120,8 +109,8 @@ export const AdvancedFiltersModal = ({ open, onOpenChange, uid }: AdvancedFilter
       fieldMap.get(row.field)?.type === 'datetime'
         ? {
             ...row,
-            value: localInputToIso(row.value),
-            valueTo: row.valueTo && localInputToIso(row.valueTo),
+            value: inputToDatetime(row.value),
+            valueTo: row.valueTo && inputToDatetime(row.valueTo),
           }
         : row
     );
@@ -450,7 +439,10 @@ const ValueInput = ({ row, field, onChange, errorText }: ValueInputProps) => {
     );
   }
 
-  const inputType = isList ? 'text' : (INPUT_TYPES[type] ?? 'text');
+  // A date-only value on a datetime field (as the native 5.62 filters save it) means the whole
+  // day; a date input keeps it date-only instead of showing an empty date-time input.
+  const keepsDay = type === 'datetime' && !isRange && isDateOnly(row.value);
+  const inputType = isList ? 'text' : keepsDay ? 'date' : (INPUT_TYPES[type] ?? 'text');
 
   if (isRange) {
     return (

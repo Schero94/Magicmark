@@ -14,7 +14,11 @@ const configCache = new Map<string, Promise<Record<string, Metadata>>>();
 
 type Get = ReturnType<typeof useFetchClient>['get'];
 
-const loadInit = (get: Get): Promise<InitData> => {
+/**
+ * Schemas from `/content-manager/init`, loaded once per admin session.
+ * @param get - `useFetchClient().get`.
+ */
+export const loadInit = (get: Get): Promise<InitData> => {
   if (!initCache) {
     initCache = get<{ data: InitData }>('/content-manager/init')
       .then(({ data }) => data.data)

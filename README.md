@@ -1,6 +1,4 @@
-<p align="center">
-  <img src="https://raw.githubusercontent.com/Schero94/Magicmark/main/docs/site/img/icon.svg" alt="Magic Mark icon" width="96" height="96" />
-</p>
+![Magic Mark icon](https://schero94.github.io/Magicmark/img/icon-128.png)
 
 # Magic Mark
 
@@ -16,13 +14,13 @@ to external servers.
 [![npm downloads](https://img.shields.io/npm/dm/strapi-plugin-magic-mark.svg)](https://www.npmjs.com/package/strapi-plugin-magic-mark)
 [![Test & Verify](https://github.com/Schero94/Magicmark/actions/workflows/test.yml/badge.svg)](https://github.com/Schero94/Magicmark/actions/workflows/test.yml)
 [![Strapi 5.57+](https://img.shields.io/badge/Strapi-5.57%2B-4945ff.svg)](#compatibility)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/Schero94/Magicmark/blob/main/LICENSE)
 
 Website: [schero94.github.io/Magicmark](https://schero94.github.io/Magicmark/) ·
 npm: [strapi-plugin-magic-mark](https://www.npmjs.com/package/strapi-plugin-magic-mark) ·
 Issues: [github.com/Schero94/Magicmark/issues](https://github.com/Schero94/Magicmark/issues)
 
-![The Bookmarks popover next to View settings in the Content Manager list view](https://raw.githubusercontent.com/Schero94/Magicmark/main/pics/list-view-bookmarks.png)
+![The Bookmarks popover next to View settings in the Content Manager list view](https://schero94.github.io/Magicmark/img/list-view-bookmarks.png)
 
 ## Contents
 
@@ -114,15 +112,15 @@ Super Admins have every Magic Mark permission. For other roles, turn on what the
 
 All screenshots use synthetic data on an isolated Strapi 5.61 host.
 
-| Bookmarks in the list view                                                                                                                                          | Advanced filters                                                                                                                      |
-| ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| ![Bookmarks popover next to View settings in the Content Manager list view](https://raw.githubusercontent.com/Schero94/Magicmark/main/pics/list-view-bookmarks.png) | ![Advanced filters dialog with two conditions](https://raw.githubusercontent.com/Schero94/Magicmark/main/pics/advanced-filters.png)   |
-| **Save view as bookmark**                                                                                                                                           | **Magic Mark page**                                                                                                                   |
-| ![Save view dialog with the captured filters and sharing options](https://raw.githubusercontent.com/Schero94/Magicmark/main/pics/save-view.png)                     | ![Bookmarks page with table, search and filters](https://raw.githubusercontent.com/Schero94/Magicmark/main/pics/bookmarks.png)        |
-| **Dark mode**                                                                                                                                                       | **Homepage widget**                                                                                                                   |
-| ![Bookmarks page in dark mode](https://raw.githubusercontent.com/Schero94/Magicmark/main/pics/bookmarks-dark.png)                                                   | ![Pinned bookmarks widget on the Strapi homepage](https://raw.githubusercontent.com/Schero94/Magicmark/main/pics/homepage-widget.png) |
-| **Delete confirmation**                                                                                                                                             | **Mobile, 390 px**                                                                                                                    |
-| ![Delete bookmark confirmation dialog](https://raw.githubusercontent.com/Schero94/Magicmark/main/pics/delete-bookmark.png)                                          | ![Bookmarks page at 390 px width](https://raw.githubusercontent.com/Schero94/Magicmark/main/pics/mobile-bookmarks.png)                |
+| Advanced filters                                                                                                | Save view as bookmark                                                                                                     |
+| --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| ![Advanced filters dialog with two conditions](https://schero94.github.io/Magicmark/img/advanced-filters.png)   | ![Save view dialog with the captured filters and sharing options](https://schero94.github.io/Magicmark/img/save-view.png) |
+| **Magic Mark page**                                                                                             | **Dark mode**                                                                                                             |
+| ![Bookmarks page with table, search and filters](https://schero94.github.io/Magicmark/img/bookmarks.png)        | ![Bookmarks page in dark mode](https://schero94.github.io/Magicmark/img/bookmarks-dark.png)                               |
+| **Homepage widget**                                                                                             | **Delete confirmation**                                                                                                   |
+| ![Pinned bookmarks widget on the Strapi homepage](https://schero94.github.io/Magicmark/img/homepage-widget.png) | ![Delete bookmark confirmation dialog](https://schero94.github.io/Magicmark/img/delete-bookmark.png)                      |
+| **Mobile, 390 px**                                                                                              |                                                                                                                           |
+| ![Bookmarks page at 390 px width](https://schero94.github.io/Magicmark/img/mobile-bookmarks.png)                |                                                                                                                           |
 
 ## How it works
 
@@ -424,8 +422,8 @@ and 24, and type-checks, tests and builds once more against the lowest supported
 
 Releases are published to npm by semantic-release from `main`. Dependabot proposes dependency
 updates weekly; patch and minor updates are merged after lint, tests, type checks, build and
-verify pass, and Strapi peer majors are updated by hand. See [CHANGELOG.md](./CHANGELOG.md).
+verify pass, and Strapi peer majors are updated by hand. See [CHANGELOG.md](https://github.com/Schero94/Magicmark/blob/main/CHANGELOG.md).
 
 ## License
 
-[MIT](./LICENSE)
+[MIT](https://github.com/Schero94/Magicmark/blob/main/LICENSE)

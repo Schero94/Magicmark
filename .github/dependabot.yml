@@ -48,7 +48,9 @@ updates:
       # @strapi/sdk-plugin 6.1.1 and typescript-eslint 8 require TypeScript 5.x (< 6.1).
       - dependency-name: 'typescript'
         update-types: ['version-update:semver-major']
-      # Keep the Design System on the version the Strapi admin ships (2.2.x).
+      # Keep the Design System and icons on the minor that the Strapi baseline's @strapi/admin
+      # ships (Strapi 5.62.0 ships 2.3.1). Raise them by hand together with each Strapi baseline
+      # bump, so the plugin never builds against a newer Design System than the admin uses.
       - dependency-name: '@strapi/design-system'
         update-types: ['version-update:semver-major', 'version-update:semver-minor']
       - dependency-name: '@strapi/icons'

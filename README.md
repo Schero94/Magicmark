@@ -322,6 +322,10 @@ required peers; `@strapi/design-system`, `@strapi/icons` and `react-intl` are op
 because a Strapi app gets them through `@strapi/admin`. Installing the plugin into a new Strapi
 5.61 app with npm 11, yarn 1.22 or pnpm prints no warning caused by the plugin.
 
+The plugin develops against the `@strapi/design-system` and `@strapi/icons` minor that the
+Strapi baseline's admin ships (2.3.x for Strapi 5.62). Dependabot does not propose newer minors
+of these two packages; they are raised by hand with each Strapi baseline bump.
+
 ## Upgrading from 3.x
 
 There are no manual steps. Update the package, rebuild the admin (`npm run build`) and start

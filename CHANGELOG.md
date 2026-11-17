@@ -1,4 +1,10 @@
-## [Unreleased]
+## [4.0.2](https://github.com/Schero94/Magicmark/compare/v4.0.1...v4.0.2) (2026-11-17)
+
+
+### Bug Fixes
+
+* **readme:** make images and links work on the Strapi marketplace ([#8](https://github.com/Schero94/Magicmark/issues/8)) ([cdace5d](https://github.com/Schero94/Magicmark/commit/cdace5d61dd60dbb56fac392f4cefad7837f5a10))
+
 
 ### Fixed
 

@@ -47,7 +47,7 @@ settings.read and settings.update are replaced by six bookmark permissions.
 Roles, shares and pins are migrated on the first start; see the CHANGELOG
 migration notes.
 
-## [Unreleased]
+## 4.0.0 details (written before the release)
 
 Magic Mark 4.0 is free, rebuilt on the Strapi Design System, secured on the server and safe to run
 on several Strapi processes at once.

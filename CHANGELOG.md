@@ -1,3 +1,9 @@
+## [Unreleased]
+
+### Fixed
+
+* README images and links work on npm and the Strapi marketplace: images load from the GitHub Pages copy, LICENSE and CHANGELOG links are absolute, the icon no longer depends on the stripped `align` attribute, and the hero screenshot is no longer repeated in the screenshot table.
+
 ## [4.0.1](https://github.com/Schero94/Magicmark/compare/v4.0.0...v4.0.1) (2026-11-16)
 
 

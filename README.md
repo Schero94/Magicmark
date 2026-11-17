@@ -12,9 +12,10 @@ to external servers.
 
 [![npm version](https://img.shields.io/npm/v/strapi-plugin-magic-mark.svg)](https://www.npmjs.com/package/strapi-plugin-magic-mark)
 [![npm downloads](https://img.shields.io/npm/dm/strapi-plugin-magic-mark.svg)](https://www.npmjs.com/package/strapi-plugin-magic-mark)
-[![Test & Verify](https://github.com/Schero94/Magicmark/actions/workflows/test.yml/badge.svg)](https://github.com/Schero94/Magicmark/actions/workflows/test.yml)
-[![Strapi 5.57+](https://img.shields.io/badge/Strapi-5.57%2B-4945ff.svg)](#compatibility)
-[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/Schero94/Magicmark/blob/main/LICENSE)
+[![CI](https://img.shields.io/github/actions/workflow/status/Schero94/Magicmark/test.yml?branch=main&label=CI&logo=github)](https://github.com/Schero94/Magicmark/actions/workflows/test.yml?query=branch%3Amain)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/Schero94/Magicmark/blob/main/LICENSE)
+[![Strapi 5.57+](https://img.shields.io/badge/Strapi-5.57%2B-4945FF.svg)](https://github.com/Schero94/Magicmark#compatibility)
+[![Docs](https://img.shields.io/badge/docs-project%20site-6d4aff.svg)](https://schero94.github.io/Magicmark/)
 
 Website: [schero94.github.io/Magicmark](https://schero94.github.io/Magicmark/) ·
 npm: [strapi-plugin-magic-mark](https://www.npmjs.com/package/strapi-plugin-magic-mark) ·

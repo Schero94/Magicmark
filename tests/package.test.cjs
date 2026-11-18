@@ -125,7 +125,7 @@ test('CI and Dependabot are set up like the other plugins (CI-1, REL-2)', () => 
     assert.ok(ci.includes(step), step);
   }
   // Only the informational React 19 job may fail without blocking (peers stay React ^18).
-  const react19 = ci.match(/\n  react-19:\n[\s\S]*?(?=\n  [a-z][\w-]*:\n|$)/);
+  const react19 = ci.match(/\n {2}react-19:\n[\s\S]*?(?=\n {2}[a-z][\w-]*:\n|$)/);
   assert.ok(react19, 'react-19 job');
   assert.match(react19[0], /continue-on-error: true/);
   assert.match(react19[0], /react@19 react-dom@19/);

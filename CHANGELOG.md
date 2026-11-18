@@ -1,4 +1,10 @@
-## [Unreleased]
+## [4.0.3](https://github.com/Schero94/Magicmark/compare/v4.0.2...v4.0.3) (2026-11-18)
+
+
+### Bug Fixes
+
+* keep advanced filters within the list limits of Strapi 5.63 ([#13](https://github.com/Schero94/Magicmark/issues/13)) ([e5d7dcb](https://github.com/Schero94/Magicmark/commit/e5d7dcbca72bca47d42035a3c9839f9dc819a2db))
+
 
 ### Fixed
 

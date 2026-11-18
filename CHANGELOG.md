@@ -1,3 +1,11 @@
+## [Unreleased]
+
+### Fixed
+
+* Advanced filters stay within what Strapi accepts: at most 100 values for "is one of" / "is none of" and at most 100 conditions with "Any condition" (the `arrayLimit` of Strapi's `strapi::query` middleware; Strapi 5.63 answers a longer list with 400), and at most 20 conditions with "All conditions" (with more, the Content Manager list view does not render on Strapi 5.62 and 5.63). The editor says so next to the fields, in all five admin languages, instead of applying a filter that fails.
+* Opening a bookmark whose filters exceed these limits shows a notice that explains how to fix it, instead of a list view that fails. Magic Mark 4.x already refuses to save more than 100 items in one list; older bookmarks can still hold more.
+* The Advanced filters dialog no longer logs the Radix "Missing `Description`" warning: its title is its only label (`aria-describedby={undefined}`).
+
 ## [4.0.2](https://github.com/Schero94/Magicmark/compare/v4.0.1...v4.0.2) (2026-11-17)
 
 

@@ -1,4 +1,10 @@
-## [Unreleased]
+## [4.0.4](https://github.com/Schero94/Magicmark/compare/v4.0.3...v4.0.4) (2026-11-18)
+
+
+### Bug Fixes
+
+* **admin:** keep the shared schema cache alive across StrictMode remounts ([#14](https://github.com/Schero94/Magicmark/issues/14)) ([494ba2c](https://github.com/Schero94/Magicmark/commit/494ba2c4a2f3d699c233182f5b539206dd9bc8ba))
+
 
 ### Fixed
 

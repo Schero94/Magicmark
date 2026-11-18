@@ -24,6 +24,7 @@ import {
   SingleSelectOption,
   TextButton,
   TextInput,
+  Typography,
 } from '@strapi/design-system';
 import { Plus, Trash } from '@strapi/icons';
 import { deepEncodeQueryValues, useQueryParams, withEncodedUserParams } from '@strapi/strapi/admin';
@@ -32,7 +33,9 @@ import { useIntl } from 'react-intl';
 import { useFilterFields } from '../hooks/useSchemas';
 import {
   LIST_OPERATORS,
+  MAX_LIST_ITEMS,
   NO_VALUE_OPERATORS,
+  maxConditions,
   RANGE_OPERATORS,
   type FieldOption,
   type FilterRow,
@@ -40,6 +43,7 @@ import {
   buildFilters,
   datetimeToInput,
   fitsAdminQueryDepth,
+  hasTooManyValues,
   inputToDatetime,
   isDateOnly,
   nextRowId,
@@ -100,7 +104,12 @@ export const AdvancedFiltersModal = ({ open, onOpenChange, uid }: AdvancedFilter
 
   const activeRows = rows.filter((row) => row.field || row.value);
   const rowErrors = new Map(activeRows.map((row) => [row.id, validateRow(row, fieldMap)]));
-  const hasErrors = [...rowErrors.values()].some(Boolean);
+  // Strapi accepts at most 100 conditions in one $or list (400 above that); with "all" the
+  // Content Manager list renders at most 20 (see maxConditions).
+  const rowLimit = maxConditions(match);
+  const tooManyRows = activeRows.length > rowLimit;
+  const atRowLimit = rows.length >= rowLimit;
+  const hasErrors = tooManyRows || [...rowErrors.values()].some(Boolean);
 
   const apply = () => {
     setShowErrors(true);
@@ -133,6 +142,16 @@ export const AdvancedFiltersModal = ({ open, onOpenChange, uid }: AdvancedFilter
   };
 
   const errorText = (row: FilterRow, part: string) => {
+    // A list that is too long is shown while typing, so the limit is clear before applying.
+    if (part === 'value' && hasTooManyValues(row)) {
+      return formatMessage(
+        msg(
+          'filters.errorTooManyValues',
+          'Enter at most {max} values. Strapi does not accept longer lists.'
+        ),
+        { max: MAX_LIST_ITEMS }
+      );
+    }
     if (!showErrors || rowErrors.get(row.id) !== part) return undefined;
     if (part === 'field') return formatMessage(msg('filters.errorField', 'Choose a field.'));
     if (part === 'operator')
@@ -142,7 +161,7 @@ export const AdvancedFiltersModal = ({ open, onOpenChange, uid }: AdvancedFilter
 
   return (
     <Modal.Root open={open} onOpenChange={onOpenChange}>
-      <Modal.Content onKeyDown={keepFocusInside}>
+      <Modal.Content onKeyDown={keepFocusInside} aria-describedby={undefined}>
         <Modal.Header closeLabel={formatMessage(msg('form.close', 'Close'))}>
           <Modal.Title>{formatMessage(msg('filters.title', 'Advanced filters'))}</Modal.Title>
         </Modal.Header>
@@ -239,15 +258,48 @@ export const AdvancedFiltersModal = ({ open, onOpenChange, uid }: AdvancedFilter
                   </Box>
                 ))}
               </Flex>
-              <Box>
+              <Flex direction="column" alignItems="flex-start" gap={2}>
                 <TextButton
                   startIcon={<Plus />}
                   {...TEXT_BUTTON_TARGET}
+                  disabled={atRowLimit}
+                  aria-describedby={atRowLimit ? 'magic-mark-filters-row-limit' : undefined}
                   onClick={() => setRows((prev) => [...prev, emptyRow()])}
                 >
                   {formatMessage(msg('filters.add', 'Add condition'))}
                 </TextButton>
-              </Box>
+                {atRowLimit ? (
+                  <Typography
+                    id="magic-mark-filters-row-limit"
+                    variant="pi"
+                    textColor={tooManyRows ? 'danger600' : 'neutral600'}
+                    role={tooManyRows ? 'alert' : undefined}
+                  >
+                    {formatMessage(
+                      match === 'all'
+                        ? tooManyRows
+                          ? msg(
+                              'filters.errorTooManyConditionsAll',
+                              'With All conditions, keep at most {max} conditions: the Content Manager list does not open with more. Remove conditions or choose Any condition.'
+                            )
+                          : msg(
+                              'filters.maxConditionsAll',
+                              'With All conditions, a filter can have at most {max} conditions. The Content Manager list does not open with more.'
+                            )
+                        : tooManyRows
+                          ? msg(
+                              'filters.errorTooManyConditions',
+                              'Remove conditions until at most {max} are left. Strapi does not accept more.'
+                            )
+                          : msg(
+                              'filters.maxConditions',
+                              'A filter can have at most {max} conditions, the most Strapi accepts.'
+                            ),
+                      { max: rowLimit }
+                    )}
+                  </Typography>
+                ) : null}
+              </Flex>
             </Flex>
           )}
         </Modal.Body>

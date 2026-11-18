@@ -147,6 +147,14 @@ appear as filter tags and can be removed one by one. With **Any condition** the 
 correctly, but Strapi does not show those conditions as tags; open Advanced filters to change or
 clear them.
 
+A filter can have at most 100 values for "is one of" / "is none of" and at most 100 conditions
+with **Any condition**: that is the `arrayLimit` of Strapi's `strapi::query` middleware, and from
+Strapi 5.63 a longer list is answered with 400. With **All conditions** the limit is 20, because
+the Content Manager list view does not open with more `$and` conditions in the URL (Strapi 5.62
+and 5.63). Advanced filters shows these limits next to the fields, and a bookmark with a longer
+list is not opened: a notice asks you to narrow the filters and save the current view into the
+bookmark again.
+
 ## Configuration
 
 Magic Mark has no configuration options and reads no environment variables. Access is controlled
@@ -364,6 +372,7 @@ you deploy the upgrade.
 | Users are listed without email                                                        | Email is shown only to admins who can read admin users.                                                                                                        |
 | Advanced filters show only some fields                                                | The role can read only those fields of the content type in the Content Manager.                                                                                |
 | "This bookmark does not point to a list view"                                         | A 3.x bookmark had an unusual path. Delete it and save the view again.                                                                                         |
+| "This bookmark was not opened: a filter in it has more than 100 values or conditions" | Strapi accepts at most 100 items in one filter list. Open the list, narrow that filter, then save the current view into the bookmark.                          |
 | After an upgrade with several instances, some processes stopped with "already exists" | Strapi's schema sync ran in several processes at once. Restart them; see [Running several instances](#running-several-instances-railway-replicas-pm2-cluster). |
 | The plugin does not show up after installing                                          | Rebuild the admin panel (`npm run build`) and restart Strapi.                                                                                                  |
 

@@ -53,6 +53,29 @@ export const NO_VALUE_OPERATORS = ['$null', '$notNull'];
 export const LIST_OPERATORS = ['$in', '$notIn'];
 export const RANGE_OPERATORS = ['$between'];
 
+/**
+ * Most items Strapi accepts in one list of the query string. The `strapi::query` middleware
+ * parses with qs `arrayLimit: 100`; a longer list arrives as an object keyed by index, and from
+ * Strapi 5.63 the Content API and Content Manager answer it with 400. It applies to the values
+ * of `$in` / `$notIn` and to the conditions of `$and` / `$or`.
+ */
+export const MAX_LIST_ITEMS = 100;
+
+/**
+ * Most conditions for match "all". The admin parses the URL with qs defaults (`arrayLimit: 20`),
+ * so a longer `$and` list becomes an object keyed by index, and the Content Manager list view
+ * (`Filters` reads `query.filters.$and` with `.reduce`, Strapi 5.62 and 5.63) fails to render.
+ * `$or` lists are not read that way and keep {@link MAX_LIST_ITEMS}.
+ */
+export const MAX_ALL_CONDITIONS = 20;
+
+/**
+ * Most conditions a filter can have for a match mode.
+ * @param match - "all" or "any".
+ */
+export const maxConditions = (match: MatchMode): number =>
+  match === 'all' ? MAX_ALL_CONDITIONS : MAX_LIST_ITEMS;
+
 const BASE = ['$eq', '$ne', '$null', '$notNull'];
 const NUMERIC = ['$gt', '$gte', '$lt', '$lte'];
 const SENSITIVE = ['$eqi', '$nei'];
@@ -162,6 +185,13 @@ export const splitList = (value: string): string[] =>
     .filter(Boolean);
 
 /**
+ * True when a `$in` / `$notIn` row has more values than Strapi accepts ({@link MAX_LIST_ITEMS}).
+ * @param row - The row.
+ */
+export const hasTooManyValues = (row: Pick<FilterRow, 'operator' | 'value'>): boolean =>
+  LIST_OPERATORS.includes(row.operator) && splitList(row.value).length > MAX_LIST_ITEMS;
+
+/**
  * Validates one row against the available fields.
  * @param row - The row.
  * @param fields - Field options by path.
@@ -179,7 +209,10 @@ export const validateRow = (
   if (NO_VALUE_OPERATORS.includes(row.operator)) return null;
   // Strapi 5.62 answers 400 for any other boolean value (empty, "1", "yes", padded, ...).
   if (field.type === 'boolean') return BOOLEAN_VALUES.includes(row.value) ? null : 'value';
-  if (LIST_OPERATORS.includes(row.operator)) return splitList(row.value).length ? null : 'value';
+  if (LIST_OPERATORS.includes(row.operator)) {
+    const count = splitList(row.value).length;
+    return count && count <= MAX_LIST_ITEMS ? null : 'value';
+  }
   if (!row.value.trim()) return 'value';
   if (RANGE_OPERATORS.includes(row.operator) && !(row.valueTo ?? '').trim()) return 'valueTo';
   return null;
@@ -345,4 +378,46 @@ export const countConditions = (filters: unknown): number => {
     }
   }
   return count;
+};
+
+const INDEX_KEY = /^\d+$/;
+
+/** Number of items in a parsed list: an array, or an object keyed only by indexes. */
+const listLength = (value: unknown): number => {
+  if (Array.isArray(value)) return value.length;
+  if (!value || typeof value !== 'object') return 0;
+  const keys = Object.keys(value);
+  return keys.length && keys.every((key) => INDEX_KEY.test(key))
+    ? Math.max(...keys.map(Number)) + 1
+    : 0;
+};
+
+/** True when an array or index-keyed object at any depth has more than {@link MAX_LIST_ITEMS} items. */
+const exceedsItemLimit = (value: unknown): boolean => {
+  if (Array.isArray(value)) {
+    return value.length > MAX_LIST_ITEMS || value.some(exceedsItemLimit);
+  }
+  if (!value || typeof value !== 'object') return false;
+  const keys = Object.keys(value);
+  if (keys.length && keys.every((key) => INDEX_KEY.test(key))) {
+    if (keys.some((key) => Number(key) >= MAX_LIST_ITEMS)) return true;
+  }
+  return Object.values(value as Record<string, unknown>).some(exceedsItemLimit);
+};
+
+/**
+ * True when a parsed query holds a list that Strapi 5.63 rejects with 400: an array with more
+ * than {@link MAX_LIST_ITEMS} items, or an object keyed only by indexes with an index of
+ * {@link MAX_LIST_ITEMS} or more (what qs makes of such a list with `arrayLimit: 100`). Also true
+ * for a root `$and` with more than {@link MAX_ALL_CONDITIONS} conditions, which the Content
+ * Manager list view cannot render.
+ * @param value - Parsed query, or any part of it.
+ * @returns True when a list is too long.
+ */
+export const exceedsListLimit = (value: unknown): boolean => {
+  const filters = (value as { filters?: unknown } | null)?.filters;
+  if (filters && typeof filters === 'object') {
+    if (listLength((filters as Record<string, unknown>).$and) > MAX_ALL_CONDITIONS) return true;
+  }
+  return exceedsItemLimit(value);
 };

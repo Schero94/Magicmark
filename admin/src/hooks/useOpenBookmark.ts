@@ -5,7 +5,10 @@
  * stored value can never send the user to another admin page or off-site. Before navigating,
  * boolean filter values are normalised for Strapi 5.62 (see `utils/booleanFilters`), and the
  * Content Manager's remembered list settings for that content type are replaced by the
- * bookmark's own, so remembered filters do not mix into the bookmark.
+ * bookmark's own, so remembered filters do not mix into the bookmark. A bookmark with a list
+ * longer than Strapi accepts (more than 100 `$in` values or `$or` conditions, which Strapi 5.63
+ * answers with 400, or more than 20 `$and` conditions, which the Content Manager list cannot
+ * render) is not opened: the user gets a notice that says how to fix it instead of an error.
  */
 import { useFetchClient, useNotification } from '@strapi/strapi/admin';
 import { useCallback } from 'react';
@@ -13,6 +16,7 @@ import { useIntl } from 'react-intl';
 import { useNavigate } from 'react-router-dom';
 import type { Bookmark } from '../types';
 import { createAttributeResolver, sanitizeBooleanFilters } from '../utils/booleanFilters';
+import { exceedsListLimit } from '../utils/filters';
 import type { InitData } from '../utils/fieldOptions';
 import { parseListViewPath, syncPersistedListSettings } from '../utils/listView';
 import { parseQuery, stringifyQuery } from '../utils/query';
@@ -74,6 +78,19 @@ export const useOpenBookmark = () => {
         return;
       }
       const parsed = parseQuery(bookmark.query);
+      if (exceedsListLimit(parsed)) {
+        toggleNotification({
+          type: 'warning',
+          timeout: 15000,
+          message: formatMessage(
+            msg(
+              'notification.listTooLong',
+              'This bookmark was not opened: its filters have more values or conditions than Strapi accepts. Open the list, narrow the filters, then save the current view in this bookmark.'
+            )
+          ),
+        });
+        return;
+      }
       let saved = parsed;
       try {
         saved = normalizeSavedQuery(parsed, await loadInit(get), location.uid);

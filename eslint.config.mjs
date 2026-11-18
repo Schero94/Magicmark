@@ -6,6 +6,7 @@
  * - Admin panel: browser globals, JSX, React Hooks recommended rules.
  * - Server: Node globals, `strapi` as a readonly global.
  * - Tests and scripts: Node globals, module type per file extension.
+ * - Admin StrictMode harness (tests/admin): JSX, Node and browser (jsdom) globals, React Hooks.
  * - `eslint-config-prettier` last, so formatting stays with Prettier.
  *
  * eslint-plugin-jsx-a11y is not used: its latest release (6.10.2) declares
@@ -80,6 +81,18 @@ export default defineConfig([
       sourceType: 'module',
       globals: { ...globals.node },
     },
+  },
+  // Admin StrictMode harness and tests: Node test runner with a jsdom window
+  {
+    files: ['tests/admin/**/*.{mjs,jsx}'],
+    extends: [js.configs.recommended, reactHooks.configs.flat.recommended],
+    languageOptions: {
+      ecmaVersion: 'latest',
+      sourceType: 'module',
+      parserOptions: { ecmaFeatures: { jsx: true } },
+      globals: { ...globals.node, ...globals.browser },
+    },
+    rules: { 'no-unused-vars': unusedVars },
   },
   // Playwright evaluate callbacks run in the browser
   {

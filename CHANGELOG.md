@@ -1,3 +1,14 @@
+## [Unreleased]
+
+### Fixed
+
+* Content type names and filter fields load again after a component that started loading them unmounts. The schema cache (`/content-manager/init` and the list view configuration) is shared by the list view toolbar, the bookmark popover, the homepage widget and the bookmark page, but its requests ran on the abort signal of the first component; when that component unmounted (React StrictMode does this once on every mount), every other component got the aborted request and showed raw content type ids or "Fields could not be loaded". The cache now uses a fetch client that is not bound to one component.
+* The bookmark dialog no longer logs the Radix "Missing `Description`" warning: its title is its only label (`aria-describedby={undefined}`), as in the Advanced filters dialog since 4.0.3.
+
+### Tests
+
+* `npm run test:admin`: StrictMode tests for every admin entry point (no duplicate requests, no leaked timers, listeners, connections or observers after unmount, no console errors or warnings), also run against React 19 in an informational CI job.
+
 ## [4.0.3](https://github.com/Schero94/Magicmark/compare/v4.0.2...v4.0.3) (2026-11-18)
 
 

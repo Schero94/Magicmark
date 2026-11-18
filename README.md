@@ -413,6 +413,7 @@ npm ci --legacy-peer-deps
 npm run lint
 npm run format:check
 npm test
+npm run test:admin
 npm run test:ts:front
 npm run test:ts:back
 npm run build
@@ -426,6 +427,14 @@ policy, lifecycles and the 3.x migrations (also with 8 parallel runs), the admin
 view helpers, translation completeness and package rules. CI runs every command above on Node 22
 and 24, and type-checks, tests and builds once more against the lowest supported Strapi version
 (5.57.0).
+
+`npm run test:admin` renders every admin entry point (the bookmark page, the homepage widget, the
+list view toolbar with its popover and filter dialog, the bookmark dialog) inside
+`React.StrictMode` with the providers of the Strapi admin, in jsdom with a fake network. It fails
+on a mutation sent twice, a read repeated without aborting the first one, an interval, listener,
+connection or observer left after unmount, and any console error or warning. A separate CI job
+runs the same tests against React 19 for information only: the plugin's peer range is React 18,
+like the Strapi 5 admin.
 
 ## Contributing and support
 

@@ -4,7 +4,7 @@
  * Every admin who can use the Content Manager may call both, unlike the Content-Type
  * Builder API, which needs builder permissions.
  */
-import { useAuth, useFetchClient } from '@strapi/strapi/admin';
+import { getFetchClient, useAuth } from '@strapi/strapi/admin';
 import { useEffect, useMemo, useState } from 'react';
 import type { FieldOption } from '../utils/filters';
 import { buildFieldOptions, type InitData, type Metadata } from '../utils/fieldOptions';
@@ -12,15 +12,22 @@ import { buildFieldOptions, type InitData, type Metadata } from '../utils/fieldO
 let initCache: Promise<InitData> | null = null;
 const configCache = new Map<string, Promise<Record<string, Metadata>>>();
 
-type Get = ReturnType<typeof useFetchClient>['get'];
+/**
+ * GET for the session-wide caches below. They are shared by every component, so their requests
+ * must not belong to one component: `useFetchClient` aborts its requests when its component
+ * unmounts (React StrictMode unmounts once on mount), which would reject the cached promise for
+ * every other consumer. `getFetchClient()` has no component-bound abort signal.
+ * @param url - Admin API path.
+ * @returns The fetch client response.
+ */
+const sessionGet = <T>(url: string) => getFetchClient().get<T>(url);
 
 /**
  * Schemas from `/content-manager/init`, loaded once per admin session.
- * @param get - `useFetchClient().get`.
  */
-export const loadInit = (get: Get): Promise<InitData> => {
+export const loadInit = (): Promise<InitData> => {
   if (!initCache) {
-    initCache = get<{ data: InitData }>('/content-manager/init')
+    initCache = sessionGet<{ data: InitData }>('/content-manager/init')
       .then(({ data }) => data.data)
       .catch((error) => {
         initCache = null;
@@ -30,10 +37,10 @@ export const loadInit = (get: Get): Promise<InitData> => {
   return initCache;
 };
 
-const loadMetadatas = (get: Get, uid: string): Promise<Record<string, Metadata>> => {
+const loadMetadatas = (uid: string): Promise<Record<string, Metadata>> => {
   let promise = configCache.get(uid);
   if (!promise) {
-    promise = get<{ data: { contentType: { metadatas: Record<string, Metadata> } } }>(
+    promise = sessionGet<{ data: { contentType: { metadatas: Record<string, Metadata> } } }>(
       `/content-manager/content-types/${uid}/configuration`
     )
       .then(({ data }) => data.data.contentType.metadatas ?? {})
@@ -51,7 +58,6 @@ const loadMetadatas = (get: Get, uid: string): Promise<Record<string, Metadata>>
  * @returns `{ names, isLoading, error }`.
  */
 export const useContentTypeNames = () => {
-  const { get } = useFetchClient();
   const [state, setState] = useState<{
     names: Map<string, string>;
     isLoading: boolean;
@@ -63,7 +69,7 @@ export const useContentTypeNames = () => {
   });
   useEffect(() => {
     let active = true;
-    loadInit(get)
+    loadInit()
       .then((init) => {
         if (!active) return;
         setState({
@@ -76,7 +82,7 @@ export const useContentTypeNames = () => {
     return () => {
       active = false;
     };
-  }, [get]);
+  }, []);
   return state;
 };
 
@@ -86,7 +92,6 @@ export const useContentTypeNames = () => {
  * @returns `{ fields, isLoading, error, retry }`.
  */
 export const useFilterFields = (uid: string | null) => {
-  const { get } = useFetchClient();
   const permissions = useAuth('MagicMarkFilters', (state) => state.permissions);
   const [attempt, setAttempt] = useState(0);
   // Results are stored with the request key, so a new uid or a retry shows "loading"
@@ -110,7 +115,7 @@ export const useFilterFields = (uid: string | null) => {
   useEffect(() => {
     if (!uid) return undefined;
     let active = true;
-    Promise.all([loadInit(get), loadMetadatas(get, uid)])
+    Promise.all([loadInit(), loadMetadatas(uid)])
       .then(([init, metadatas]) => {
         if (active) {
           setState({ key, fields: buildFieldOptions(uid, init, metadatas, readable), error: null });
@@ -120,7 +125,7 @@ export const useFilterFields = (uid: string | null) => {
     return () => {
       active = false;
     };
-  }, [get, uid, readable, key]);
+  }, [uid, readable, key]);
 
   const current = state.key === key;
   return {

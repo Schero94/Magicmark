@@ -10,7 +10,7 @@
  * answers with 400, or more than 20 `$and` conditions, which the Content Manager list cannot
  * render) is not opened: the user gets a notice that says how to fix it instead of an error.
  */
-import { useFetchClient, useNotification } from '@strapi/strapi/admin';
+import { useNotification } from '@strapi/strapi/admin';
 import { useCallback } from 'react';
 import { useIntl } from 'react-intl';
 import { useNavigate } from 'react-router-dom';
@@ -61,7 +61,6 @@ export const normalizeSavedQuery = (
  */
 export const useOpenBookmark = () => {
   const navigate = useNavigate();
-  const { get } = useFetchClient();
   const { toggleNotification } = useNotification();
   const { formatMessage } = useIntl();
 
@@ -93,7 +92,7 @@ export const useOpenBookmark = () => {
       }
       let saved = parsed;
       try {
-        saved = normalizeSavedQuery(parsed, await loadInit(get), location.uid);
+        saved = normalizeSavedQuery(parsed, await loadInit(), location.uid);
       } catch {
         // Schemas unavailable: open the bookmark as it was saved.
       }
@@ -105,6 +104,6 @@ export const useOpenBookmark = () => {
       }
       navigate({ pathname: location.path, search: search ? `?${search}` : '' });
     },
-    [get, navigate, toggleNotification, formatMessage]
+    [navigate, toggleNotification, formatMessage]
   );
 };

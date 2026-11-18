@@ -253,7 +253,11 @@ export const BookmarkFormModal = ({
   return (
     <>
       <Modal.Root open={open} onOpenChange={handleOpenChange}>
-        <Modal.Content onKeyDown={keepFocusInside}>
+        <Modal.Content
+          onKeyDown={keepFocusInside}
+          // The title names the dialog; there is no separate description (Radix Dialog opt-out).
+          aria-describedby={undefined}
+        >
           <Modal.Header closeLabel={formatMessage(msg('form.close', 'Close'))}>
             <Modal.Title>{title}</Modal.Title>
           </Modal.Header>

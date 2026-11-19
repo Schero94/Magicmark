@@ -1,3 +1,10 @@
+## [Unreleased]
+
+### Security
+
+* zod [GHSA-mrhx-c7xc-m3w5](https://github.com/advisories/GHSA-mrhx-c7xc-m3w5) (a large array can exhaust memory during validation; fixed in zod 4.6.6). The plugin's own request validation already runs on zod ^4.6.7, and every array it parses has an upper bound. `@strapi/utils` 5.63.0, a runtime dependency of the plugin, pins zod 4.4.3: the plugin's lockfile now overrides that copy to ^4.6.7, and a regression test fails when any zod 4 below 4.6.6 comes back into the lockfile.
+* npm reads `overrides` only in the root project, so a Strapi 5.63 app still installs zod 4.4.3 for its own `@strapi/*` packages until Strapi raises that pin. To patch the app now, add `"overrides": { "zod@4.4.3": "^4.6.7" }` to the app's `package.json`, reinstall and run your tests: zod 4.5 made some string formats stricter.
+
 ## [4.0.4](https://github.com/Schero94/Magicmark/compare/v4.0.3...v4.0.4) (2026-11-18)
 
 

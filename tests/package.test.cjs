@@ -138,7 +138,7 @@ test('CI and Dependabot are set up like the other plugins (CI-1, REL-2)', () => 
     '.github/workflows/dependency-auto-merge.yml',
   ]) {
     const text = fs.readFileSync(path.join(root, file), 'utf8');
-    for (const uses of text.match(/uses: \S+/g) ?? [])
+    for (const uses of text.match(/(?<![\w-])uses: \S+/g) ?? [])
       assert.match(uses, /@[0-9a-f]{40}$/, `${file}: ${uses} is SHA-pinned`);
   }
   assert.ok(fs.existsSync(path.join(root, '.github/dependabot.yml')));

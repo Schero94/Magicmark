@@ -8,26 +8,25 @@
     </title>
     <meta
       name="description"
-      content="Magic Mark is a free Strapi 5 plugin: save Content Manager list views with their filters as bookmarks, share them with roles and admin users, pin them and use advanced filters."
+      content="Magic Mark (Magicmark) for Strapi 5: save Content Manager list views as bookmarks, share them with roles and users, pin them and use advanced filters."
     />
-    <meta name="color-scheme" content="light dark" />
-    <meta name="theme-color" content="#f5f7fb" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#10131f" media="(prefers-color-scheme: dark)" />
     <link rel="canonical" href="https://schero94.github.io/Magicmark/" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta name="author" content="Schero D." />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#12151d" />
     <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="Magic Mark" />
+    <meta property="og:site_name" content="Magic Mark documentation" />
+    <meta property="og:locale" content="en_US" />
     <meta property="og:title" content="Magic Mark: saved views for the Strapi 5 Content Manager" />
     <meta
       property="og:description"
       content="Save filtered list views as bookmarks, share them with roles and users, pin them to the homepage and filter with any-condition logic. Free and open source."
     />
     <meta property="og:url" content="https://schero94.github.io/Magicmark/" />
-    <meta
-      property="og:image"
-      content="https://schero94.github.io/Magicmark/img/list-view-bookmarks.png"
-    />
-    <meta property="og:image:width" content="1440" />
-    <meta property="og:image:height" content="900" />
+    <meta property="og:image" content="https://schero94.github.io/Magicmark/img/og.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
     <meta
       property="og:image:alt"
       content="Bookmarks popover next to View settings in the Strapi Content Manager"
@@ -38,64 +37,184 @@
       name="twitter:description"
       content="Free Strapi 5 plugin: bookmarks for filtered list views, sharing by role, pins and advanced filters."
     />
-    <meta
-      name="twitter:image"
-      content="https://schero94.github.io/Magicmark/img/list-view-bookmarks.png"
-    />
-    <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "SoftwareApplication",
-        "name": "Magic Mark",
-        "alternateName": "strapi-plugin-magic-mark",
-        "applicationCategory": "DeveloperApplication",
-        "operatingSystem": "Node.js",
-        "description": "Strapi 5 plugin: save Content Manager list views as bookmarks, share them with roles and admin users, pin them and use advanced filters.",
-        "license": "https://opensource.org/licenses/MIT",
-        "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" },
-        "url": "https://schero94.github.io/Magicmark/",
-        "codeRepository": "https://github.com/Schero94/Magicmark"
-      }
-    </script>
+    <meta name="twitter:image" content="https://schero94.github.io/Magicmark/img/og.jpg" />
     <link rel="icon" href="./img/icon.svg" type="image/svg+xml" />
     <link rel="icon" href="./img/icon-128.png" type="image/png" sizes="128x128" />
     <link rel="apple-touch-icon" href="./img/icon-512.png" />
+    <link rel="alternate" type="text/plain" href="./llms.txt" title="llms.txt" />
+    <link
+      rel="preload"
+      as="image"
+      href="./img/list-view-bookmarks.webp"
+      type="image/webp"
+      fetchpriority="high"
+    />
     <link rel="stylesheet" href="./site.css" />
     <link rel="stylesheet" href="./site-extra.css" />
+    <script src="./site.js" defer></script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@graph": [
+          {
+            "@type": "SoftwareApplication",
+            "@id": "https://schero94.github.io/Magicmark/#software",
+            "name": "Magic Mark",
+            "alternateName": ["Magicmark", "strapi-plugin-magic-mark"],
+            "description": "Free Strapi 5 plugin that saves Content Manager list views (filters, sort order, page size, search and locale) as bookmarks, shares them with roles and admin users, pins them to the homepage and adds advanced filters.",
+            "applicationCategory": "DeveloperApplication",
+            "applicationSubCategory": "Strapi plugin",
+            "operatingSystem": "Node.js 22+ / Strapi 5",
+            "softwareRequirements": "Strapi ^5.57.0, Node.js ^22.22.2 || >=24.15.0",
+            "license": "https://opensource.org/licenses/MIT",
+            "isAccessibleForFree": true,
+            "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+            "url": "https://schero94.github.io/Magicmark/",
+            "downloadUrl": "https://www.npmjs.com/package/strapi-plugin-magic-mark",
+            "codeRepository": "https://github.com/Schero94/Magicmark",
+            "screenshot": "https://schero94.github.io/Magicmark/img/list-view-bookmarks.png",
+            "author": {
+              "@type": "Person",
+              "name": "Schero D.",
+              "url": "https://schero94.github.io/"
+            },
+            "sameAs": [
+              "https://github.com/Schero94/Magicmark",
+              "https://www.npmjs.com/package/strapi-plugin-magic-mark",
+              "https://schero94.github.io/plugins/magic-mark/"
+            ]
+          },
+          {
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+              {
+                "@type": "ListItem",
+                "position": 1,
+                "name": "Schero94",
+                "item": "https://schero94.github.io/"
+              },
+              {
+                "@type": "ListItem",
+                "position": 2,
+                "name": "Plugins",
+                "item": "https://schero94.github.io/plugins/"
+              },
+              {
+                "@type": "ListItem",
+                "position": 3,
+                "name": "Magic Mark",
+                "item": "https://schero94.github.io/Magicmark/"
+              }
+            ]
+          },
+          {
+            "@type": "FAQPage",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "Is Magic Mark free?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Yes. Every feature is available to everyone under the MIT license."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Does the plugin send data anywhere?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "No. It makes no outbound requests and has no telemetry, not even an install ping."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Can managers see private bookmarks of other admins?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "No, also not as Super Admin. Managers see public and shared bookmarks of everyone under Show > All shared bookmarks, including ones whose owner was deleted."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Does a bookmark open on the page I saved it on?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "No. The page number is not saved, so a bookmark opens on page 1 with its filters, sort, page size, search and locale."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Why do \"Any condition\" filters not show as filter tags?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Strapi shows only $and filters as tags. The list is still filtered correctly; open Advanced filters to change or clear them."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "Are the list view columns saved?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "No. Columns are a per-user Content Manager setting and stay as they are."
+                }
+              }
+            ]
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
     <a class="skip-link" href="#main-content">Skip to content</a>
-
     <header class="topbar">
       <div class="topbar-inner">
-        <a class="brand" href="#main-content" aria-label="Magic Mark documentation home">
+        <a class="brand" href="#top" aria-label="Magic Mark documentation, back to top">
           <img class="brand-logo" src="./img/icon.svg" alt="" width="32" height="32" />
           <span>Magic Mark</span>
         </a>
-        <nav class="top-links" aria-label="Primary navigation">
+        <nav class="top-links" aria-label="Project links">
           <a href="#install">Install</a>
           <a href="https://github.com/Schero94/Magicmark">GitHub</a>
           <a href="https://www.npmjs.com/package/strapi-plugin-magic-mark">npm</a>
+          <a href="https://github.com/Schero94/Magicmark/blob/main/CHANGELOG.md">Changelog</a>
         </nav>
       </div>
     </header>
 
-    <div class="hero-wrap">
+    <div class="hero-wrap" id="top">
       <section class="hero" aria-labelledby="page-title">
         <div class="hero-grid">
           <div class="hero-copy">
-            <span class="eyebrow">Strapi 5 plugin</span>
+            <nav class="crumbs" aria-label="Breadcrumb">
+              <ol>
+                <li><a href="https://schero94.github.io/">Schero94</a></li>
+                <li><a href="https://schero94.github.io/plugins/">Plugins</a></li>
+                <li><span aria-current="page">Magic Mark docs</span></li>
+              </ol>
+            </nav>
             <h1 id="page-title">Save the view. Open it again with one click.</h1>
+            <p class="definition">
+              Magic Mark is a free, MIT-licensed Strapi 5 plugin that saves Content Manager list
+              views (filters, sort order, page size, search and locale) as bookmarks you open with
+              one click and share with roles or admin users.
+            </p>
             <p>
-              Magic Mark adds saved views to the Strapi Content Manager. Filter a list once, save it
-              as a bookmark and share it with roles or admin users. Free under the MIT license, with
-              no license key, no limits and no external calls.
+              Pin favourites to the Strapi homepage and build filters the native filter bar cannot
+              express. No license key, no limits and no external calls.
             </p>
             <div class="hero-actions">
               <a class="button primary" href="#install">Install in one minute</a>
-              <a class="button" href="https://github.com/Schero94/Magicmark">Source on GitHub</a>
+              <a class="button" href="https://github.com/Schero94/Magicmark#readme"
+                >Read the README</a
+              >
             </div>
             <code class="hero-install">npm install strapi-plugin-magic-mark</code>
+            <ul class="badges" aria-label="Compatibility">
+              <li>Strapi 5.57+ (tested on 5.63)</li>
+              <li>Node 22 and 24</li>
+              <li>npm, yarn, pnpm</li>
+              <li>MIT license</li>
+            </ul>
             <p class="shields" aria-label="Project status badges">
               <a href="https://www.npmjs.com/package/strapi-plugin-magic-mark"
                 ><img
@@ -135,16 +254,11 @@
                   height="20"
               /></a>
             </p>
-            <div class="badges" aria-label="Compatibility">
-              <span class="badge">Strapi 5.57+ (tested on 5.63)</span>
-              <span class="badge">Node 22 and 24</span>
-              <span class="badge">npm, yarn, pnpm</span>
-              <span class="badge">MIT license</span>
-            </div>
           </div>
           <figure class="hero-shot">
             <img
-              src="./img/list-view-bookmarks.png"
+              src="./img/list-view-bookmarks.webp"
+              fetchpriority="high"
               alt="The Bookmarks popover open next to View settings in the Content Manager list view"
               width="1440"
               height="900"
@@ -156,6 +270,7 @@
 
     <main class="layout" id="main-content">
       <nav class="side-nav" aria-label="Documentation sections">
+        <a href="#fit">Is it a fit?</a>
         <a href="#features">Features</a>
         <a href="#how">How it works</a>
         <a href="#install">Install</a>
@@ -171,6 +286,46 @@
       </nav>
 
       <div class="content">
+        <section class="section summary" id="fit" aria-labelledby="fit-title">
+          <h2 id="fit-title">Is Magic Mark the right fit?</h2>
+          <div class="fit-grid">
+            <div class="fit fit-yes">
+              <h3>Use it when</h3>
+              <ul>
+                <li>Editors rebuild the same Content Manager filters by hand every day.</li>
+                <li>
+                  Saved lists should be shared with roles or single admin users, not passed around
+                  as URLs.
+                </li>
+                <li>Favourite lists belong on the Strapi homepage, pinned per user.</li>
+                <li>
+                  You need "any condition", "is one of", "is between" or relation and component
+                  fields in a filter.
+                </li>
+              </ul>
+            </div>
+            <div class="fit fit-no">
+              <h3>Skip it when</h3>
+              <ul>
+                <li>Your project runs Strapi 4, or Strapi 5 older than 5.57.0.</li>
+                <li>Your servers run Node.js 20, or Node.js 22 older than 22.22.2.</li>
+                <li>A bookmark must reopen a list on a specific page. Bookmarks open on page 1.</li>
+              </ul>
+            </div>
+            <div class="fit fit-req">
+              <h3>Requirements</h3>
+              <ul>
+                <li>Strapi <code>^5.57.0</code></li>
+                <li>Node.js <code>^22.22.2 || &gt;=24.15.0</code></li>
+                <li>Tested on SQLite and PostgreSQL 16</li>
+                <li>
+                  No configuration and no environment variables; access is set with role permissions
+                </li>
+              </ul>
+            </div>
+          </div>
+        </section>
+
         <section class="section" id="features" aria-labelledby="features-title">
           <h2 id="features-title">Features</h2>
           <p class="section-lead">
@@ -601,39 +756,43 @@ npm run develop</code></pre>
 
         <section class="section" id="faq" aria-labelledby="faq-title">
           <h2 id="faq-title">FAQ</h2>
-          <details>
-            <summary>Is Magic Mark free?</summary>
-            <p>Yes. Every feature is available to everyone under the MIT license.</p>
-          </details>
-          <details>
-            <summary>Does the plugin send data anywhere?</summary>
-            <p>No. It makes no outbound requests and has no telemetry, not even an install ping.</p>
-          </details>
-          <details>
-            <summary>Can managers see private bookmarks of other admins?</summary>
-            <p>
-              No, also not as Super Admin. Managers see public and shared bookmarks of everyone
-              under Show &gt; All shared bookmarks, including ones whose owner was deleted.
-            </p>
-          </details>
-          <details>
-            <summary>Does a bookmark open on the page I saved it on?</summary>
-            <p>
-              No. The page number is not saved, so a bookmark opens on page 1 with its filters,
-              sort, page size, search and locale.
-            </p>
-          </details>
-          <details>
-            <summary>Why do "Any condition" filters not show as filter tags?</summary>
-            <p>
-              Strapi shows only <code>$and</code> filters as tags. The list is still filtered
-              correctly; open Advanced filters to change or clear them.
-            </p>
-          </details>
-          <details>
-            <summary>Are the list view columns saved?</summary>
-            <p>No. Columns are a per-user Content Manager setting and stay as they are.</p>
-          </details>
+          <div class="faq">
+            <details>
+              <summary>Is Magic Mark free?</summary>
+              <p>Yes. Every feature is available to everyone under the MIT license.</p>
+            </details>
+            <details>
+              <summary>Does the plugin send data anywhere?</summary>
+              <p>
+                No. It makes no outbound requests and has no telemetry, not even an install ping.
+              </p>
+            </details>
+            <details>
+              <summary>Can managers see private bookmarks of other admins?</summary>
+              <p>
+                No, also not as Super Admin. Managers see public and shared bookmarks of everyone
+                under Show &gt; All shared bookmarks, including ones whose owner was deleted.
+              </p>
+            </details>
+            <details>
+              <summary>Does a bookmark open on the page I saved it on?</summary>
+              <p>
+                No. The page number is not saved, so a bookmark opens on page 1 with its filters,
+                sort, page size, search and locale.
+              </p>
+            </details>
+            <details>
+              <summary>Why do "Any condition" filters not show as filter tags?</summary>
+              <p>
+                Strapi shows only <code>$and</code> filters as tags. The list is still filtered
+                correctly; open Advanced filters to change or clear them.
+              </p>
+            </details>
+            <details>
+              <summary>Are the list view columns saved?</summary>
+              <p>No. Columns are a per-user Content Manager setting and stay as they are.</p>
+            </details>
+          </div>
         </section>
 
         <section class="section" id="releases" aria-labelledby="releases-title">
@@ -690,8 +849,42 @@ npm run verify</code></pre>
     </main>
 
     <footer class="footer">
-      <p>Magic Mark (Magicmark) is free software under the MIT license.</p>
-      <p><a href="https://github.com/Schero94/Magicmark">Source code and issue tracker</a></p>
+      <div class="footer-inner">
+        <div>
+          <p class="footer-name">Magic Mark</p>
+          <p>
+            Saved views and bookmarks for the Strapi 5 Content Manager. MIT licensed, maintained by
+            <a href="https://schero94.github.io/">Schero D.</a>
+          </p>
+          <p>
+            Overview and the other plugins:
+            <a href="https://schero94.github.io/plugins/magic-mark/">Magic Mark on the plugin hub</a
+            >.
+          </p>
+        </div>
+        <div>
+          <h2>Project</h2>
+          <ul>
+            <li><a href="https://github.com/Schero94/Magicmark">GitHub repository</a></li>
+            <li>
+              <a href="https://www.npmjs.com/package/strapi-plugin-magic-mark">npm package</a>
+            </li>
+            <li>
+              <a href="https://github.com/Schero94/Magicmark/blob/main/CHANGELOG.md">Changelog</a>
+            </li>
+            <li><a href="https://github.com/Schero94/Magicmark/issues">Issues</a></li>
+          </ul>
+        </div>
+        <div>
+          <h2>Docs</h2>
+          <ul>
+            <li><a href="https://github.com/Schero94/Magicmark#readme">README</a></li>
+            <li><a href="#api">Admin API</a></li>
+            <li><a href="#configuration">Permissions</a></li>
+            <li><a href="./llms.txt">llms.txt</a></li>
+          </ul>
+        </div>
+      </div>
     </footer>
   </body>
 </html>

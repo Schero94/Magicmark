@@ -143,3 +143,27 @@ test('CI and Dependabot are set up like the other plugins (CI-1, REL-2)', () => 
   }
   assert.ok(fs.existsSync(path.join(root, '.github/dependabot.yml')));
 });
+
+test('every zod 4 in the lockfile has the GHSA-mrhx-c7xc-m3w5 fix (DEP-02)', () => {
+  // zod < 4.6.6 collects one issue per failing array element without a cap, so a large array
+  // can exhaust memory. @strapi/utils 5.63.0 (a runtime dependency) pins zod 4.4.3; the
+  // `zod@4.4.3` override lifts that copy to the plugin's own ^4.6.7. zod 3.25.76 (koa-body and
+  // koa-session under the @strapi/strapi devDependency) has no patched 3.x release and is dev-only.
+  assert.equal(pkg.overrides?.['zod@4.4.3'], pkg.dependencies.zod);
+  const lock = JSON.parse(fs.readFileSync(path.join(root, 'package-lock.json'), 'utf8'));
+  const atLeast = (version, [major, minor, patch]) => {
+    const [a, b, c] = version.split('.').map((part) => Number.parseInt(part, 10));
+    return a !== major ? a > major : b !== minor ? b > minor : c >= patch;
+  };
+  const copies = Object.entries(lock.packages).filter(([key]) =>
+    /(^|\/)node_modules\/zod$/.test(key)
+  );
+  assert.ok(copies.length > 0, 'zod is in the lockfile');
+  for (const [key, entry] of copies) {
+    if (entry.version.startsWith('3.')) {
+      assert.equal(entry.dev, true, `${key} ${entry.version} is dev-only`);
+      continue;
+    }
+    assert.ok(atLeast(entry.version, [4, 6, 6]), `${key} is ${entry.version}, needs >= 4.6.6`);
+  }
+});

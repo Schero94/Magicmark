@@ -1,0 +1,46 @@
+# Magic Mark (Magicmark) for Strapi 5
+
+> Magic Mark (npm: strapi-plugin-magic-mark, plugin id: magic-mark, repository: Magicmark) is a free, MIT-licensed Strapi 5 plugin that saves Content Manager list views (content type, filters, sort order, page size, search text and locale) as bookmarks. Bookmarks open with one click, can be shared with roles, single admin users or all admins, pinned per user to the Strapi homepage, and combined with advanced filters.
+
+The current version is on npm (link below). No license key, no limits, no telemetry and no outbound requests.
+
+What it does:
+
+- "Save view" in the list view toolbar stores the current list; a bookmark opens its list without a page reload, always on page 1.
+- Sharing: private, shared with roles and admin users, or public to all admins. Recipients can open, pin and duplicate; only the owner or a manager can change a bookmark. Private bookmarks stay private, also for managers and Super Admins.
+- Pins per user, shown first in the toolbar and in the "Pinned bookmarks" homepage widget.
+- Advanced filters: "all conditions" or "any condition", the operators "is one of", "is none of" and "is between", and fields of relations and non-repeatable components.
+- Every permission and owner check runs on the server. Safe with several Strapi processes on one database (tested with 8 processes on PostgreSQL 16).
+
+Requirements:
+
+- Strapi `^5.57.0`
+- Node.js `^22.22.2 || >=24.15.0`
+- No configuration options and no environment variables
+
+Install:
+
+```bash
+npm install strapi-plugin-magic-mark
+npm run build
+npm run develop
+```
+
+Strapi enables installed plugins by itself; if `config/plugins` lists plugins explicitly, add `'magic-mark': { enabled: true }`. Then open a collection type in the Content Manager, set a filter, open Bookmarks next to View settings and choose Save view.
+
+Configuration essentials:
+
+- Admin permissions under Settings > Roles > Plugins > Magic Mark: `plugin::magic-mark.bookmarks.read`, `create`, `update`, `delete`, `share`, `manage`. Super Admins have all of them; other roles have none until granted.
+- Admin API under `/magic-mark` (`/bookmarks`, `/bookmarks/:id`, `/bookmarks/:id/view`, `/bookmarks/:id/duplicate`, `/bookmarks/:id/pin`, `/sharing/roles`, `/sharing/users`). There are no Content API routes.
+
+## Docs
+
+- [Documentation site](https://schero94.github.io/Magicmark/): features, how it works, install, screens, permissions, examples, admin API, security, several instances, upgrading from 3.x, FAQ
+- [README](https://github.com/Schero94/Magicmark#readme): features, quick start, configuration, permissions, admin API, security and privacy, performance, compatibility, troubleshooting
+- [CHANGELOG](https://github.com/Schero94/Magicmark/blob/main/CHANGELOG.md)
+- [npm package](https://www.npmjs.com/package/strapi-plugin-magic-mark)
+
+## Optional
+
+- [Releases](https://github.com/Schero94/Magicmark/releases)
+- [Plugin hub overview](https://schero94.github.io/plugins/magic-mark/)

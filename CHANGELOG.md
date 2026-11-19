@@ -1,4 +1,10 @@
-## [Unreleased]
+## [4.0.5](https://github.com/Schero94/Magicmark/compare/v4.0.4...v4.0.5) (2026-11-19)
+
+
+### Bug Fixes
+
+* **deps:** lift the zod copy of @strapi/utils to 4.6.7 (GHSA-mrhx-c7xc-m3w5) ([#15](https://github.com/Schero94/Magicmark/issues/15)) ([3014725](https://github.com/Schero94/Magicmark/commit/3014725f2c063680b22e5e683f4b166480ba3b86))
+
 
 ### Security
 

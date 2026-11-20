@@ -9,7 +9,7 @@ What it does:
 - "Save view" in the list view toolbar stores the current list; a bookmark opens its list without a page reload, always on page 1.
 - Sharing: private, shared with roles and admin users, or public to all admins. Recipients can open, pin and duplicate; only the owner or a manager can change a bookmark. Private bookmarks stay private, also for managers and Super Admins.
 - Pins per user, shown first in the toolbar and in the "Pinned bookmarks" homepage widget.
-- Advanced filters: "all conditions" or "any condition", the operators "is one of", "is none of" and "is between", and fields of relations and non-repeatable components.
+- Advanced filters: AND / OR filter builder ("all" or "any" conditions plus one level of groups), field-aware inputs, a live count of matching entries, undo, and a toolbar chip that shows the active filter as a sentence. Groups use Strapi's implicit AND because the Content Manager parses the URL with a qs depth of 5.
 - Every permission and owner check runs on the server. Safe with several Strapi processes on one database (tested with 8 processes on PostgreSQL 16).
 
 Requirements:

@@ -145,10 +145,10 @@
               },
               {
                 "@type": "Question",
-                "name": "Why do \"Any condition\" filters not show as filter tags?",
+                "name": "Why do \"any condition\" filters not show as filter tags?",
                 "acceptedAnswer": {
                   "@type": "Answer",
-                  "text": "Strapi shows only $and filters as tags. The list is still filtered correctly; open Advanced filters to change or clear them."
+                  "text": "Strapi shows only $and filters as tags. The list is still filtered correctly, and a chip in the toolbar shows the whole filter as a sentence; select it to change the filter."
                 }
               },
               {
@@ -300,8 +300,8 @@
                 </li>
                 <li>Favourite lists belong on the Strapi homepage, pinned per user.</li>
                 <li>
-                  You need "any condition", "is one of", "is between" or relation and component
-                  fields in a filter.
+                  You need AND / OR with a group, "is one of", "is between" or relation and
+                  component fields in a filter.
                 </li>
               </ul>
             </div>
@@ -346,9 +346,9 @@
             <article class="card">
               <h3>Advanced filters</h3>
               <p>
-                Match all or any condition, use "is one of", "is none of" and "is between", and
-                filter on relation and component fields. "All conditions" filters show as native
-                filter tags.
+                Build AND / OR filters as plain sentences, with one optional group such as "news and
+                any of (popular, by Ben)". Inputs follow the field type, a live count shows the
+                matching entries before you apply, and a chip shows the active filter.
               </p>
             </article>
             <article class="card">
@@ -446,12 +446,14 @@ npm run develop</code></pre>
             <figure class="shot">
               <img
                 src="./img/advanced-filters.png"
-                alt="Advanced filters dialog with two conditions"
+                alt="Advanced filters with two conditions and an any-of group, and the live count"
                 width="1440"
                 height="900"
                 loading="lazy"
               />
-              <figcaption>Advanced filters with any-condition logic and native wording.</figcaption>
+              <figcaption>
+                Advanced filters: all conditions plus one any-of group, with a live count.
+              </figcaption>
             </figure>
             <figure class="shot">
               <img
@@ -588,8 +590,14 @@ npm run develop</code></pre>
           </p>
           <h3>A personal working set</h3>
           <p>
-            In Advanced filters choose Any condition, add "stage is one of idea, review" and "author
+            In Advanced filters choose any condition, add "stage is one of idea, review" and "author
             is anna.beispiel", apply, save it as a private bookmark and pin it.
+          </p>
+          <h3>News that is popular or by one author</h3>
+          <p>
+            Keep all conditions, add "Category is news", then add an "any of" group with "Views is
+            greater than 100" and "Author (name) is Ben Muster". The count shows the result before
+            you apply.
           </p>
           <h3>Read bookmarks from a script</h3>
           <div class="code-card">
@@ -783,10 +791,11 @@ npm run develop</code></pre>
               </p>
             </details>
             <details>
-              <summary>Why do "Any condition" filters not show as filter tags?</summary>
+              <summary>Why do "any condition" filters not show as filter tags?</summary>
               <p>
                 Strapi shows only <code>$and</code> filters as tags. The list is still filtered
-                correctly; open Advanced filters to change or clear them.
+                correctly, and a chip in the toolbar shows the whole filter as a sentence; select it
+                to change the filter.
               </p>
             </details>
             <details>

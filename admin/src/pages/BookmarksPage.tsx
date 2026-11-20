@@ -51,7 +51,8 @@ import { bookmarkLocation, useOpenBookmark } from '../hooks/useOpenBookmark';
 import { useContentTypeNames } from '../hooks/useSchemas';
 import { ALL_PERMISSIONS } from '../permissions';
 import type { Bookmark, BookmarkList, Visibility } from '../types';
-import { countConditions } from '../utils/filters';
+import { FilterSummaryText } from '../components/FilterSummary';
+import { parseFilterTree, treeConditions } from '../utils/filters';
 import { getIcon } from '../utils/icons';
 import { parseQuery } from '../utils/query';
 import { msg } from '../utils/translations';
@@ -309,7 +310,8 @@ export const BookmarksPage = () => {
   const contentTypeLabel = (bookmark: Bookmark) =>
     bookmark.contentType ? (names.get(bookmark.contentType) ?? bookmark.contentType) : '—';
 
-  const conditions = (bookmark: Bookmark) => countConditions(parseQuery(bookmark.query).filters);
+  const conditions = (bookmark: Bookmark) =>
+    treeConditions(parseFilterTree(parseQuery(bookmark.query).filters)).length;
 
   const actionsFor = (bookmark: Bookmark, parts: 'all' | 'pin' | 'menu' = 'all') => (
     <BookmarkActions
@@ -593,18 +595,11 @@ export const BookmarksPage = () => {
                     <Td>
                       <Typography textColor="neutral800">{contentTypeLabel(bookmark)}</Typography>
                     </Td>
-                    <Td>
-                      <Typography textColor="neutral800">
-                        {formatMessage(
-                          msg(
-                            'table.conditionCount',
-                            '{count, plural, =0 {No filters} one {# filter} other {# filters}}'
-                          ),
-                          {
-                            count: conditions(bookmark),
-                          }
-                        )}
-                      </Typography>
+                    <Td maxWidth="32rem">
+                      <FilterSummaryText
+                        contentType={bookmark.contentType}
+                        query={bookmark.query}
+                      />
                     </Td>
                     <Td>
                       <Badge

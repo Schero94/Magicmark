@@ -1,7 +1,7 @@
 /**
  * Builds the advanced filter field list from Content Manager schemas. Pure module.
  */
-import type { FieldOption } from './filters';
+import { STATUS_FIELD, STATUS_TYPE, STATUS_VALUES, type FieldOption } from './filters';
 
 export interface Attribute {
   type: string;
@@ -24,6 +24,7 @@ export interface InitData {
   contentTypes: {
     uid: string;
     info?: { displayName?: string };
+    options?: { draftAndPublish?: boolean };
     attributes: Record<string, Attribute>;
   }[];
   components: {
@@ -80,7 +81,8 @@ const mainFieldName = (meta?: Metadata): string | undefined => {
 
 /**
  * Builds the filterable fields of a content type, the way the native filters do, plus
- * relation main fields and the scalar fields of non-repeatable components.
+ * relation main fields, the scalar fields of non-repeatable components and, for draft & publish
+ * content types, the publication status ({@link STATUS_FIELD}).
  * @param uid - Content type uid.
  * @param init - Schemas from /content-manager/init.
  * @param metadatas - List metadatas of the content type.
@@ -99,6 +101,10 @@ export const buildFieldOptions = (
     { path: 'id', label: 'id', type: 'integer' },
     { path: 'documentId', label: 'documentId', type: 'string' },
   ];
+  // The native list view offers the publication status for draft & publish types (5.57+).
+  if (schema.options?.draftAndPublish) {
+    fields.push({ path: STATUS_FIELD, label: 'Status', type: STATUS_TYPE, enum: STATUS_VALUES });
+  }
   const canRead = (name: string) =>
     readable === null || readable.some((field) => field === name || field.startsWith(`${name}.`));
 
@@ -118,6 +124,7 @@ export const buildFieldOptions = (
           label: `${label} (${main})`,
           type: mainType,
           group: label,
+          relation: { target, mainField: main },
         });
       }
       fields.push({ path: `${name}.id`, label: `${label} (id)`, type: 'integer', group: label });

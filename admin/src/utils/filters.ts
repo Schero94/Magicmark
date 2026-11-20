@@ -28,6 +28,8 @@ export interface FieldOption {
   enum?: string[];
   /** Group label for the picker: the content type, a relation or a component. */
   group?: string;
+  /** For a relation's main field: the target content type, to suggest existing values. */
+  relation?: { target: string; mainField: string };
 }
 
 export interface FilterRow {
@@ -68,6 +70,17 @@ export const MAX_LIST_ITEMS = 100;
  * `$or` lists are not read that way and keep {@link MAX_LIST_ITEMS}.
  */
 export const MAX_ALL_CONDITIONS = 20;
+
+/**
+ * Publication status pseudo-field of the Content Manager list view (Strapi 5.57+). The list API
+ * reads `{ __status: { $eq } }` only from the root `$and` list (`normalizeStatusFromFilters` in
+ * `@strapi/content-manager` server `controllers/collection-types`); anywhere else it answers 400.
+ */
+export const STATUS_FIELD = '__status';
+/** Attribute type the editor uses for {@link STATUS_FIELD}. */
+export const STATUS_TYPE = 'status';
+/** Values the Content Manager accepts for {@link STATUS_FIELD}. */
+export const STATUS_VALUES = ['draft', 'published', 'published-modified', 'published-unmodified'];
 
 /**
  * Most conditions a filter can have for a match mode.
@@ -128,6 +141,8 @@ export const operatorsForType = (type: string, isSubField = false): string[] => 
     case 'boolean':
       ops = [...BASE];
       break;
+    case STATUS_TYPE:
+      return ['$eq'];
     default:
       ops = [...BASE, ...SENSITIVE];
   }
@@ -207,6 +222,7 @@ export const validateRow = (
     return 'operator';
   }
   if (NO_VALUE_OPERATORS.includes(row.operator)) return null;
+  if (field.type === STATUS_TYPE) return STATUS_VALUES.includes(row.value) ? null : 'value';
   // Strapi 5.62 answers 400 for any other boolean value (empty, "1", "yes", padded, ...).
   if (field.type === 'boolean') return BOOLEAN_VALUES.includes(row.value) ? null : 'value';
   if (LIST_OPERATORS.includes(row.operator)) {
@@ -420,4 +436,520 @@ export const exceedsListLimit = (value: unknown): boolean => {
     if (listLength((filters as Record<string, unknown>).$and) > MAX_ALL_CONDITIONS) return true;
   }
   return exceedsItemLimit(value);
+};
+
+/* -------------------------------------------------------------------------------------------------
+ * Condition groups (AND / OR with one level of nesting)
+ *
+ * The admin parses the list view URL with qs' default depth of 5 brackets below `filters`
+ * (`useQueryParams` in `@strapi/admin`), so a nested logical operator such as
+ * `filters[$and][0][$or][0][title][$eq]` (6 levels) arrives as `{ title: { '[$eq]': ... } }` and
+ * the Content Manager answers 400. One level of nesting fits when it uses the implicit AND of
+ * Strapi filters ("multiple fields are combined with $and by default"):
+ *
+ * - "all of (A, B, any of (C, D))" -> `{ $and: [A, B], $or: [C, D] }` (root keys are ANDed).
+ *   Only one "any" group fits: the root has one `$or` key.
+ * - "any of (A, all of (B, C))"    -> `{ $or: [A, { ...B, ...C }] }` (one object, several fields).
+ *   A group can use each field and condition once (object keys are unique).
+ *
+ * Every generated key stays within `filters[$or][0][relation][field][$op]` (5 levels).
+ * ---------------------------------------------------------------------------------------------- */
+
+/** A group of conditions. Its match is always the opposite of the top level's match. */
+export interface FilterGroup {
+  id: string;
+  kind: 'group';
+  conditions: FilterRow[];
+}
+
+export type FilterItem = FilterRow | FilterGroup;
+
+/** Editor model: the top-level match and its conditions and groups. */
+export interface FilterTree {
+  match: MatchMode;
+  items: FilterItem[];
+  /** True when the URL held filters this editor cannot represent; they are replaced on apply. */
+  unsupported: boolean;
+}
+
+/** Most groups a filter can have for a match mode ("all": one `$or` key at the root). */
+export const maxGroups = (match: MatchMode): number => (match === 'all' ? 1 : MAX_ALL_CONDITIONS);
+
+/** Most conditions inside one group. */
+export const MAX_GROUP_CONDITIONS = MAX_ALL_CONDITIONS;
+
+/**
+ * True for a group item.
+ * @param item - Condition or group.
+ */
+export const isGroup = (item: FilterItem): item is FilterGroup =>
+  (item as FilterGroup).kind === 'group';
+
+let groupCounter = 0;
+/** Creates a unique group id. */
+export const nextGroupId = (): string => {
+  groupCounter += 1;
+  return `group-${groupCounter}`;
+};
+
+/** All conditions of a tree, groups included, in display order. */
+export const treeConditions = (tree: Pick<FilterTree, 'items'>): FilterRow[] =>
+  tree.items.flatMap((item) => (isGroup(item) ? item.conditions : [item]));
+
+/** The `{ id: { $notNull } }` entry added next to a lone status condition (see buildFilterTree). */
+const STATUS_COMPANION = { id: { $notNull: 'true' } };
+
+const isStatusEntry = (entry: unknown): boolean =>
+  isPlainObject(entry) && Object.keys(entry).length === 1 && STATUS_FIELD in entry;
+
+const isStatusCompanion = (row: FilterRow): boolean =>
+  row.field === 'id' && row.operator === '$notNull';
+
+/** Merges the entries of a group into one object (implicit AND). */
+const mergeEntries = (entries: Record<string, unknown>[]): Record<string, unknown> => {
+  const out: Record<string, unknown> = {};
+  const merge = (target: Record<string, unknown>, source: Record<string, unknown>) => {
+    for (const [key, value] of Object.entries(source)) {
+      if (isPlainObject(value) && isPlainObject(target[key])) {
+        merge(target[key] as Record<string, unknown>, value);
+      } else {
+        target[key] = isPlainObject(value) ? merge({}, value) : value;
+      }
+    }
+    return target;
+  };
+  for (const entry of entries) merge(out, entry);
+  return out;
+};
+
+/**
+ * Builds the `filters` object for the URL from the editor tree. Groups without conditions are
+ * left out. Call {@link validateTree} first: an invalid tree builds an invalid query.
+ *
+ * When status is the only other top-level condition of an "all" filter with a group, an
+ * always-true `id is not null` condition is added: the Content Manager drops the whole
+ * `filters` object (and with it the group) when it takes the status out of a `$and` list that
+ * is left empty (`normalizeStatusFromFilters`, Strapi 5.57 to 5.63).
+ * @param tree - Editor tree with valid conditions.
+ * @returns The filters object, or undefined when there are no conditions.
+ */
+export const buildFilterTree = (
+  tree: Pick<FilterTree, 'match' | 'items'>
+): Record<string, unknown> | undefined => {
+  const groups = tree.items.filter(isGroup).filter((group) => group.conditions.length);
+  const rows = tree.items.filter((item): item is FilterRow => !isGroup(item));
+
+  if (tree.match === 'any') {
+    const or = tree.items
+      .map((item) => {
+        if (!isGroup(item)) return rowToFilter(item);
+        if (!item.conditions.length) return null;
+        return mergeEntries(item.conditions.map(rowToFilter));
+      })
+      .filter((entry): entry is Record<string, unknown> => !!entry);
+    return or.length ? { $or: or } : undefined;
+  }
+
+  const and: Record<string, unknown>[] = rows.map(rowToFilter);
+  const group = groups[0];
+  if (!group) return and.length ? { $and: and } : undefined;
+  const or = group.conditions.map(rowToFilter);
+  if (!and.length) return { $or: or };
+  if (and.every(isStatusEntry)) and.push(STATUS_COMPANION);
+  return { $and: and, $or: or };
+};
+
+/** Items of a parsed list: an array, or an object keyed by index (qs above its arrayLimit). */
+const listItems = (value: unknown): unknown[] | null => {
+  if (Array.isArray(value)) return value;
+  if (!isPlainObject(value)) return null;
+  const keys = Object.keys(value);
+  if (!keys.every((key) => INDEX_KEY.test(key))) return null;
+  return keys.sort((a, b) => Number(a) - Number(b)).map((key) => value[key]);
+};
+
+/** One operator and its raw value -> row, or null when the shape is not supported. */
+const toRow = (path: string, operator: string, raw: unknown): FilterRow | null => {
+  if (!ALL_OPERATORS.includes(operator)) return null;
+  if (NO_VALUE_OPERATORS.includes(operator)) {
+    // "is null: false" would mean the opposite; only the native "true" is read.
+    return raw === 'true' || raw === true
+      ? { id: nextRowId(), field: path, operator, value: '' }
+      : null;
+  }
+  if (LIST_OPERATORS.includes(operator)) {
+    const list = listItems(raw) ?? [raw];
+    if (!list.length || !list.every((item) => typeof item === 'string')) return null;
+    return { id: nextRowId(), field: path, operator, value: (list as string[]).join(', ') };
+  }
+  if (RANGE_OPERATORS.includes(operator)) {
+    const list = listItems(raw);
+    if (!list || list.length !== 2 || !list.every((v) => typeof v === 'string')) return null;
+    return {
+      id: nextRowId(),
+      field: path,
+      operator,
+      value: list[0] as string,
+      valueTo: list[1] as string,
+    };
+  }
+  if (typeof raw !== 'string') return null;
+  return { id: nextRowId(), field: path, operator, value: raw };
+};
+
+/** `{ $op: value, ... }` (or a bare value, meaning $eq) -> rows. */
+const operatorRows = (path: string, node: unknown): FilterRow[] | null => {
+  if (!isPlainObject(node)) {
+    const row = toRow(path, '$eq', node);
+    return row ? [row] : null;
+  }
+  const entries = Object.entries(node);
+  if (!entries.length) return null;
+  const rows: FilterRow[] = [];
+  for (const [operator, raw] of entries) {
+    if (!OPERATOR.test(operator)) return null;
+    const row = toRow(path, operator, raw);
+    if (!row) return null;
+    rows.push(row);
+  }
+  return rows;
+};
+
+/**
+ * Reads one filter entry (an object of fields, combined with AND) into conditions, or null
+ * when it holds a logical operator, a path deeper than relation.field or an unknown operator.
+ * @param entry - e.g. `{ title: { $eq: 'a' }, author: { name: { $eq: 'b' } } }`.
+ */
+export const entryConditions = (entry: unknown): FilterRow[] | null => {
+  if (!isPlainObject(entry)) return null;
+  const keys = Object.keys(entry);
+  if (!keys.length) return null;
+  const rows: FilterRow[] = [];
+  for (const head of keys) {
+    if (!SAFE_KEY.test(head)) return null;
+    const node = entry[head];
+    const innerKeys = isPlainObject(node) ? Object.keys(node) : [];
+    if (isPlainObject(node) && innerKeys.length && innerKeys.every((k) => SAFE_KEY.test(k))) {
+      // relation or component: { author: { name: { $eq } } }
+      for (const sub of innerKeys) {
+        const subRows = operatorRows(`${head}.${sub}`, node[sub]);
+        if (!subRows) return null;
+        rows.push(...subRows);
+      }
+      continue;
+    }
+    const opRows = operatorRows(head, node);
+    if (!opRows) return null;
+    rows.push(...opRows);
+  }
+  return rows;
+};
+
+/**
+ * Reads URL filters back into the editor tree. Understands every shape the editor writes and
+ * the older ones Magic Mark and the native filters wrote: a root `$and` or `$or` list,
+ * `$and` plus `$or` (one group), field keys at the root (combined with AND) and entries with
+ * several fields (combined with AND). Anything else sets `unsupported` and keeps the parts
+ * that could be read.
+ * @param filters - Parsed `query.filters` (already URL-decoded).
+ * @returns Editor tree.
+ */
+export const parseFilterTree = (filters: unknown): FilterTree => {
+  if (filters === undefined || filters === null || filters === '') {
+    return { match: 'all', items: [], unsupported: false };
+  }
+  if (!isPlainObject(filters)) return { match: 'all', items: [], unsupported: true };
+
+  let unsupported = false;
+  const andRows: FilterRow[] = [];
+  const andList = filters.$and === undefined ? [] : listItems(filters.$and);
+  const orList = filters.$or === undefined ? null : listItems(filters.$or);
+  if (andList === null || (filters.$or !== undefined && orList === null)) unsupported = true;
+
+  for (const entry of andList ?? []) {
+    const rows = entryConditions(entry);
+    if (rows) andRows.push(...rows);
+    else unsupported = true;
+  }
+  const rootFields: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(filters)) {
+    if (key === '$and' || key === '$or') continue;
+    if (key.startsWith('$')) unsupported = true;
+    else rootFields[key] = value;
+  }
+  if (Object.keys(rootFields).length) {
+    const rows = entryConditions(rootFields);
+    if (rows) andRows.push(...rows);
+    else unsupported = true;
+  }
+
+  // Only a root $or: match "any", entries with several conditions become "all" groups.
+  if (orList && !andRows.length && filters.$and === undefined) {
+    const items: FilterItem[] = [];
+    for (const entry of orList) {
+      const rows = entryConditions(entry);
+      if (!rows) unsupported = true;
+      else if (rows.length === 1) items.push(rows[0]);
+      else items.push({ id: nextGroupId(), kind: 'group', conditions: rows });
+    }
+    return { match: 'any', items, unsupported };
+  }
+
+  const items: FilterItem[] = [...andRows];
+  if (orList && orList.length) {
+    const conditions: FilterRow[] = [];
+    for (const entry of orList) {
+      const rows = entryConditions(entry);
+      if (rows && rows.length === 1) conditions.push(rows[0]);
+      else unsupported = true; // "any of (all of ...)" inside "all" needs a second level
+    }
+    if (conditions.length) {
+      items.push({ id: nextGroupId(), kind: 'group', conditions });
+      // Drop the always-true companion that buildFilterTree adds next to a lone status.
+      if (andRows.some((row) => row.field === STATUS_FIELD)) {
+        const companion = andRows.findIndex(isStatusCompanion);
+        if (companion >= 0) items.splice(companion, 1);
+      }
+    }
+  }
+  return { match: 'all', items, unsupported };
+};
+
+export type ConditionError =
+  'field' | 'operator' | 'value' | 'valueTo' | 'statusPlacement' | 'duplicateInGroup';
+
+/** Result of {@link validateTree}. */
+export interface TreeValidation {
+  /** Error per condition id. */
+  conditions: Map<string, ConditionError>;
+  /** True when the top level has more conditions or groups than the Content Manager accepts. */
+  tooManyItems: boolean;
+  /** Ids of groups with more conditions than accepted. */
+  tooLargeGroups: Set<string>;
+  /** True when "all" has more than one group. */
+  tooManyGroups: boolean;
+  /** True when the built query does not fit the admin's qs depth. */
+  tooDeep: boolean;
+  valid: boolean;
+}
+
+/**
+ * Validates a tree: every condition (see {@link validateRow}), the limits of the admin and
+ * Strapi query parsers, status placement (only top-level "all") and repeated field/condition
+ * pairs inside an "all" group (one object cannot hold the same key twice).
+ * @param tree - Editor tree.
+ * @param fields - Field options by path.
+ */
+export const validateTree = (
+  tree: Pick<FilterTree, 'match' | 'items'>,
+  fields: Map<string, FieldOption>
+): TreeValidation => {
+  const conditions = new Map<string, ConditionError>();
+  const tooLargeGroups = new Set<string>();
+  const check = (row: FilterRow, inGroup: boolean) => {
+    const error = validateRow(row, fields);
+    if (error) conditions.set(row.id, error);
+    else if (row.field === STATUS_FIELD && (inGroup || tree.match === 'any')) {
+      conditions.set(row.id, 'statusPlacement');
+    }
+  };
+  for (const item of tree.items) {
+    if (!isGroup(item)) {
+      check(item, false);
+      continue;
+    }
+    if (item.conditions.length > MAX_GROUP_CONDITIONS) tooLargeGroups.add(item.id);
+    const seen = new Set<string>();
+    for (const row of item.conditions) {
+      check(row, true);
+      // In "any", a group is one object: the same field and condition cannot appear twice.
+      const key = `${row.field}|${row.operator}`;
+      if (tree.match === 'any' && seen.has(key) && !conditions.has(row.id)) {
+        conditions.set(row.id, 'duplicateInGroup');
+      }
+      seen.add(key);
+    }
+  }
+  const groups = tree.items.filter(isGroup).length;
+  const topCount = tree.items.filter((item) => !isGroup(item)).length;
+  const tooManyGroups = groups > maxGroups(tree.match);
+  // "all": the top-level conditions are the root $and list (admin arrayLimit 20, see
+  // MAX_ALL_CONDITIONS); "any": every item is one entry of the root $or list.
+  const tooManyItems =
+    tree.match === 'all' ? topCount > MAX_ALL_CONDITIONS : tree.items.length > MAX_LIST_ITEMS;
+  let tooDeep = false;
+  if (!conditions.size && !tooManyGroups) {
+    const built = buildFilterTree(tree);
+    tooDeep = !!built && !fitsAdminQueryDepth(built);
+  }
+  return {
+    conditions,
+    tooManyItems,
+    tooLargeGroups,
+    tooManyGroups,
+    tooDeep,
+    valid: !conditions.size && !tooManyItems && !tooLargeGroups.size && !tooManyGroups && !tooDeep,
+  };
+};
+
+const pad2 = (n: number) => String(n).padStart(2, '0');
+
+/**
+ * A day relative to today, as a value for the editor's date or date-time input.
+ * @param daysAgo - 0 for today, 7 for a week ago.
+ * @param type - `date` (YYYY-MM-DD) or `datetime` (YYYY-MM-DDT00:00, local midnight).
+ * @param now - Current time (for tests).
+ */
+export const relativeDay = (daysAgo: number, type: string, now = new Date()): string => {
+  const day = new Date(now.getFullYear(), now.getMonth(), now.getDate() - daysAgo);
+  const date = `${day.getFullYear()}-${pad2(day.getMonth() + 1)}-${pad2(day.getDate())}`;
+  return type === 'datetime' ? `${date}T00:00` : date;
+};
+
+/**
+ * Filters for the live result count, read the way the Content Manager list reads them: a
+ * date-only value on a date-time field in the root `$and` list means the whole local day
+ * (`toApiFilters` in `@strapi/admin`, Strapi 5.62+), so it is sent as the instants it covers.
+ * @param filters - Filters object built by {@link buildFilterTree}.
+ * @param typeOf - Attribute type by field path.
+ * @returns Filters for the list API.
+ */
+export const toCountFilters = (
+  filters: Record<string, unknown>,
+  typeOf: (path: string) => string | undefined
+): Record<string, unknown> => {
+  const list = filters.$and;
+  if (!Array.isArray(list)) return filters;
+  const bounds = (value: string) => {
+    const [y, m, d] = value.split('-').map(Number);
+    return {
+      start: new Date(y, m - 1, d).toISOString(),
+      end: new Date(y, m - 1, d + 1).toISOString(),
+    };
+  };
+  const rewrite = (path: string, node: unknown): unknown => {
+    if (!isPlainObject(node) || typeOf(path) !== 'datetime') return node;
+    const out: Record<string, unknown> = {};
+    for (const [op, value] of Object.entries(node)) {
+      if (typeof value !== 'string' || !isDateOnly(value)) {
+        out[op] = value;
+        continue;
+      }
+      const { start, end } = bounds(value);
+      if (op === '$eq') Object.assign(out, { $gte: start, $lt: end });
+      else if (op === '$gt') out.$gte = end;
+      else if (op === '$gte') out.$gte = start;
+      else if (op === '$lt') out.$lt = start;
+      else if (op === '$lte') out.$lt = end;
+      else out[op] = value;
+    }
+    return out;
+  };
+  return {
+    ...filters,
+    $and: list.map((entry) =>
+      isPlainObject(entry)
+        ? Object.fromEntries(
+            Object.entries(entry).map(([key, node]) => [
+              key,
+              isPlainObject(node) && !Object.keys(node).some((k) => k.startsWith('$'))
+                ? Object.fromEntries(
+                    Object.entries(node).map(([sub, v]) => [sub, rewrite(`${key}.${sub}`, v)])
+                  )
+                : rewrite(key, node),
+            ])
+          )
+        : entry
+    ),
+  };
+};
+
+/** Operators the editor offers first, by kind of field; others appear only when in use. */
+const PRIMARY_OPERATORS: Record<string, string[]> = {
+  text: [
+    '$eq',
+    '$ne',
+    '$containsi',
+    '$notContainsi',
+    '$startsWithi',
+    '$endsWithi',
+    '$in',
+    '$notIn',
+    '$null',
+    '$notNull',
+  ],
+  number: [
+    '$eq',
+    '$ne',
+    '$gt',
+    '$gte',
+    '$lt',
+    '$lte',
+    '$between',
+    '$in',
+    '$notIn',
+    '$null',
+    '$notNull',
+  ],
+  date: ['$eq', '$gt', '$gte', '$lt', '$lte', '$between', '$null', '$notNull'],
+  // An exact date-time instant rarely matches: offer before / after instead of "is".
+  datetime: ['$gt', '$gte', '$lt', '$lte', '$between', '$null', '$notNull'],
+  enumeration: ['$eq', '$ne', '$in', '$notIn', '$null', '$notNull'],
+  boolean: ['$eq', '$null', '$notNull'],
+  status: ['$eq'],
+  other: ['$eq', '$ne', '$null', '$notNull'],
+};
+
+const KIND: Record<string, string> = {
+  string: 'text',
+  text: 'text',
+  email: 'text',
+  uid: 'text',
+  integer: 'number',
+  biginteger: 'number',
+  float: 'number',
+  decimal: 'number',
+  date: 'date',
+  time: 'date',
+  datetime: 'datetime',
+  enumeration: 'enumeration',
+  boolean: 'boolean',
+  status: 'status',
+};
+
+/**
+ * Operators the editor shows for a field: a short plain list per type, plus the current
+ * operator when an older filter uses another valid one (so it is shown, not lost).
+ * @param type - Attribute type.
+ * @param isSubField - True for relation or component sub-fields.
+ * @param current - Operator of the condition, if any.
+ */
+export const operatorChoices = (type: string, isSubField: boolean, current?: string): string[] => {
+  const valid = operatorsForType(type, isSubField);
+  const primary = (PRIMARY_OPERATORS[KIND[type] ?? 'other'] ?? []).filter((op) =>
+    valid.includes(op)
+  );
+  return current && valid.includes(current) && !primary.includes(current)
+    ? [...primary, current]
+    : primary;
+};
+
+/**
+ * First operator and value for a field the user just picked.
+ * @param field - Field option.
+ */
+export const defaultsFor = (field: FieldOption): Pick<FilterRow, 'operator' | 'value'> => {
+  switch (KIND[field.type] ?? 'other') {
+    case 'text':
+      return { operator: field.relation ? '$eq' : '$containsi', value: '' };
+    case 'date':
+    case 'datetime':
+      return { operator: '$gte', value: '' };
+    case 'boolean':
+      return { operator: '$eq', value: 'true' };
+    case 'status':
+      return { operator: '$eq', value: 'published' };
+    default:
+      return { operator: '$eq', value: '' };
+  }
 };

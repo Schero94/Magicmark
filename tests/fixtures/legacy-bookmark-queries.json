@@ -1,0 +1,65 @@
+{
+  "comment": "Query strings in the shapes earlier Magic Mark versions and the native Content Manager filters stored. Synthetic values only.",
+  "supported": [
+    {
+      "name": "native tag (4.x and Strapi native)",
+      "query": "filters[$and][0][title][$containsi]=news"
+    },
+    {
+      "name": "4.x advanced filters, match any",
+      "query": "filters[$or][0][category][$eq]=news&filters[$or][1][views][$gt]=50"
+    },
+    { "name": "3.x root field shorthand", "query": "filters[title][$eq]=A01%20Spring%20news" },
+    { "name": "3.x root field without operator", "query": "filters[featured]=true" },
+    {
+      "name": "relation main field and range",
+      "query": "filters[$and][0][author][name][$eq]=Ben%20Muster&filters[$and][1][views][$between][0]=10&filters[$and][1][views][$between][1]=100"
+    },
+    {
+      "name": "list operator",
+      "query": "filters[$and][0][category][$in][0]=news&filters[$and][0][category][$in][1]=guide"
+    },
+    {
+      "name": "boolean with sort, page size and locale",
+      "query": "filters[$and][0][featured][$eq]=true&sort=title:ASC&pageSize=20&plugins[i18n][locale]=en"
+    },
+    {
+      "name": "native status filter (5.57+)",
+      "query": "filters[$and][0][__status][$eq]=published&filters[$and][1][category][$eq]=news"
+    },
+    { "name": "is null", "query": "filters[$and][0][publishOn][$null]=true" },
+    {
+      "name": "two operators in one entry",
+      "query": "filters[$and][0][views][$gt]=10&filters[$and][0][views][$lt]=100"
+    },
+    {
+      "name": "component field",
+      "query": "filters[$or][0][seo][noIndex][$eq]=false&filters[$or][1][views][$lt]=10"
+    },
+    {
+      "name": "root field next to $and",
+      "query": "filters[category][$eq]=news&filters[$and][0][views][$gte]=80"
+    },
+    {
+      "name": "$and next to $or (hand-built)",
+      "query": "filters[$and][0][category][$eq]=news&filters[$or][0][views][$gt]=100&filters[$or][1][author][name][$eq]=Ben%20Muster"
+    },
+    {
+      "name": "$or entries with several fields (hand-built)",
+      "query": "filters[$or][0][category][$eq]=opinion&filters[$or][1][featured][$eq]=true&filters[$or][1][views][$gte]=200"
+    },
+    {
+      "name": "value with percent and ampersand",
+      "query": "filters[$and][0][title][$containsi]=50%25%20off%20%26%20more"
+    }
+  ],
+  "unsupported": [
+    { "name": "$not at the root", "query": "filters[$not][title][$eq]=x" },
+    { "name": "two levels of nesting", "query": "filters[$or][0][$and][0][title][$eq]=x" },
+    {
+      "name": "relation deeper than one field",
+      "query": "filters[$and][0][author][articles][title][$eq]=x"
+    },
+    { "name": "unknown operator", "query": "filters[$and][0][title][$regex]=x" }
+  ]
+}

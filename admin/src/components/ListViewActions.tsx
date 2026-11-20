@@ -2,7 +2,9 @@
  * Controls injected into the Content Manager list view toolbar (`listView.actions`), next to
  * the native "View settings" button and in the same style: two icon buttons.
  *
- * - "Advanced filters" opens the filter editor (any admin who sees the list).
+ * - A summary chip of the active filter when it has parts the native tags do not show
+ *   ("any" conditions or a group); it opens the filter builder.
+ * - "Advanced filters" opens the filter builder (any admin who sees the list).
  * - "Bookmarks" opens a popover with the bookmarks of this content type, "Save view" and a
  *   link to the bookmark page (needs `bookmarks.read`).
  */
@@ -15,6 +17,7 @@ import { useLocation } from 'react-router-dom';
 import { ALL_PERMISSIONS } from '../permissions';
 import { parseListViewPath } from '../utils/listView';
 import { msg } from '../utils/translations';
+import { ActiveFilterChip } from './ActiveFilterChip';
 import { AdvancedFiltersModal } from './AdvancedFiltersModal';
 import { BookmarksPopover } from './BookmarksPopover';
 
@@ -32,6 +35,7 @@ export const ListViewActions = () => {
 
   return (
     <>
+      <ActiveFilterChip uid={listView.uid} onOpen={() => setFiltersOpen(true)} />
       <IconButton
         label={formatMessage(msg('filters.title', 'Advanced filters'))}
         onClick={() => setFiltersOpen(true)}

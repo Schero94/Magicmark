@@ -147,7 +147,9 @@ test('list view injection: StrictMode mount, popover and filters dialog open cle
       await click(button('Bookmarks'));
       assert.match(document.body.textContent, /Bookmarks for Article/);
       await click(button('Advanced filters'));
-      assert.match(document.body.textContent, /Show entries that match/);
+      // No filters yet: the builder starts with the empty state and its examples.
+      assert.match(document.body.textContent, /Show only the entries you need/);
+      assert.match(document.body.textContent, /Updated in the last 7 days/);
     },
   });
   assert.equal(result.calls.filter((call) => call.method !== 'GET').length, 0, 'no mutation');

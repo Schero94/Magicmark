@@ -106,11 +106,13 @@ test('match "all" allows 20 conditions, "any" 100', () => {
 
 test('the editor caps conditions and the opener checks the limit before navigating', () => {
   const modal = read('admin/src/components/AdvancedFiltersModal.tsx');
-  assert.match(modal, /maxConditions\(match\)/);
-  assert.match(modal, /activeRows\.length > rowLimit/);
-  assert.match(modal, /rows\.length >= rowLimit/);
-  assert.match(modal, /disabled=\{atRowLimit\}/);
+  // The builder validates the whole tree (validateTree: tooManyItems, tooLargeGroups) and
+  // disables "Add condition" at the limit of the current match mode.
+  assert.match(modal, /validateTree\(/);
+  assert.match(modal, /topRows < MAX_ALL_CONDITIONS : items\.length < MAX_LIST_ITEMS/);
+  assert.match(modal, /disabled=\{!canAddCondition\}/);
   assert.match(modal, /hasTooManyValues\(row\)/);
+  assert.match(modal, /if \(!validation\.valid\)/);
 
   const opener = read('admin/src/hooks/useOpenBookmark.ts');
   const check = opener.indexOf('exceedsListLimit(parsed)');

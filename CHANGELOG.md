@@ -1,3 +1,22 @@
+## [Unreleased]
+
+### Added
+
+* **Advanced filters build AND / OR filters with one level of groups.** The builder reads as a sentence ("Show entries that match all conditions"), one line per condition. "Add an “any of” group" (with "all") or "Add an “all of” group" (with "any") adds one level of nesting, for example "Category is news and any of (Views is greater than 100, Author is Ben)". Groups are written with Strapi's implicit AND (`filters[$and]` next to `filters[$or]`, or several fields in one `$or` entry), because the Content Manager parses the list URL with a qs depth of 5 and a nested `$or` inside `$and` does not survive it.
+* Live count of matching entries while editing (the Content Manager's own list request with `pageSize=1`), an empty state with one-click examples, undo for removed conditions and groups, and focus that follows adding, removing and undoing and returns to the opening button when the dialog closes.
+* Field-aware inputs: Yes/No for booleans, the publication status (Draft, Published, Published with or without unpublished changes; the Content Manager's `__status` filter), suggestions from the related entries for relation fields, "Today", "7 days ago" and "30 days ago" for dates. Operators use plain words per type ("is at least", "is on or after", "is empty"); the case-sensitive text variants appear only when a saved filter uses them.
+* A summary chip in the list view toolbar shows the whole filter as one sentence when it has parts the native filter tags cannot show ("any" conditions or a group). Selecting it opens the builder; its cross removes every filter. Before, a list filtered with "any" looked unfiltered apart from the entry count.
+* The bookmark page shows each bookmark's filters as a sentence instead of "2 filters", and the saved-view summary shows groups.
+
+### Changed
+
+* "Contains", "starts with" and "ends with" on text fields now default to the case-insensitive operators (`$containsi`, ...). Saved filters keep their operator.
+* Date-time fields offer before / after operators instead of "is", which matched only one exact instant.
+
+### Compatibility
+
+* No migration. Bookmarks store the URL query as before, and every earlier shape opens unchanged: native `$and` tags, the 4.x "any condition" `$or` list, 3.x root fields (`filters[title][$eq]=…`, `filters[featured]=true`), entries with two operators on one field, and `$and` next to `$or`. The builder reads all of them; the rebuilt filter selects the same entries (`tests/admin-filter-groups.test.cjs`, fixtures in `tests/fixtures/legacy-bookmark-queries.json`). Shapes it cannot show (`$not`, two levels of groups) are flagged in the dialog and stay untouched until you apply.
+
 ## [4.0.5](https://github.com/Schero94/Magicmark/compare/v4.0.4...v4.0.5) (2026-11-19)
 
 

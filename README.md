@@ -30,6 +30,7 @@ Issues: [github.com/Schero94/Magicmark/issues](https://github.com/Schero94/Magic
 - [Quick start (1 minute)](#quick-start-1-minute)
 - [Screenshots](#screenshots)
 - [How it works](#how-it-works)
+  - [Building filters (AND / OR)](#building-filters-and--or)
 - [Configuration](#configuration)
 - [Permissions](#permissions)
 - [Examples](#examples)
@@ -66,9 +67,11 @@ read, create, edit, share or tidy up bookmarks, and the server checks every one 
   admins. Recipients can open, pin and duplicate it; only the owner or a manager can change it.
 - **Pins per user.** Pinned bookmarks come first in the toolbar and in the "Pinned bookmarks"
   widget on the Strapi homepage. Pinning a shared bookmark changes only your own list.
-- **Advanced filters** add "all conditions" or "any condition", the operators "is one of", "is
-  none of" and "is between", and fields of relations and non-repeatable components. "All
-  conditions" filters show up as native filter tags.
+- **Advanced filters with AND / OR.** Build filters as plain sentences: "Show entries that match
+  all conditions: Category is news, and any of (Views is greater than 100, Author is Ben)". One
+  optional group adds one level of nesting. Field-aware inputs (Yes/No, lists, dates with "Today",
+  "7 days ago", relation suggestions, publication status), a live count of matching entries,
+  one-click examples, undo, and a readable summary chip of the active filter in the toolbar.
 - **Keep views current.** "Update with current view" saves the list you are looking at into an
   existing bookmark; its name and sharing stay.
 - **Magic Mark page** with search, scope (created by me, shared with me, pinned, all shared),
@@ -113,15 +116,15 @@ Super Admins have every Magic Mark permission. For other roles, turn on what the
 
 All screenshots use synthetic data on an isolated Strapi 5.61 host.
 
-| Advanced filters                                                                                                | Save view as bookmark                                                                                                     |
-| --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
-| ![Advanced filters dialog with two conditions](https://schero94.github.io/Magicmark/img/advanced-filters.png)   | ![Save view dialog with the captured filters and sharing options](https://schero94.github.io/Magicmark/img/save-view.png) |
-| **Magic Mark page**                                                                                             | **Dark mode**                                                                                                             |
-| ![Bookmarks page with table, search and filters](https://schero94.github.io/Magicmark/img/bookmarks.png)        | ![Bookmarks page in dark mode](https://schero94.github.io/Magicmark/img/bookmarks-dark.png)                               |
-| **Homepage widget**                                                                                             | **Delete confirmation**                                                                                                   |
-| ![Pinned bookmarks widget on the Strapi homepage](https://schero94.github.io/Magicmark/img/homepage-widget.png) | ![Delete bookmark confirmation dialog](https://schero94.github.io/Magicmark/img/delete-bookmark.png)                      |
-| **Mobile, 390 px**                                                                                              |                                                                                                                           |
-| ![Bookmarks page at 390 px width](https://schero94.github.io/Magicmark/img/mobile-bookmarks.png)                |                                                                                                                           |
+| Advanced filters                                                                                                                           | Save view as bookmark                                                                                                     |
+| ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| ![Advanced filters with two conditions, an any-of group and the live count](https://schero94.github.io/Magicmark/img/advanced-filters.png) | ![Save view dialog with the captured filters and sharing options](https://schero94.github.io/Magicmark/img/save-view.png) |
+| **Magic Mark page**                                                                                                                        | **Dark mode**                                                                                                             |
+| ![Bookmarks page with table, search and filters](https://schero94.github.io/Magicmark/img/bookmarks.png)                                   | ![Bookmarks page in dark mode](https://schero94.github.io/Magicmark/img/bookmarks-dark.png)                               |
+| **Homepage widget**                                                                                                                        | **Delete confirmation**                                                                                                   |
+| ![Pinned bookmarks widget on the Strapi homepage](https://schero94.github.io/Magicmark/img/homepage-widget.png)                            | ![Delete bookmark confirmation dialog](https://schero94.github.io/Magicmark/img/delete-bookmark.png)                      |
+| **Mobile, 390 px**                                                                                                                         |                                                                                                                           |
+| ![Bookmarks page at 390 px width](https://schero94.github.io/Magicmark/img/mobile-bookmarks.png)                                           |                                                                                                                           |
 
 ## How it works
 
@@ -131,7 +134,7 @@ All screenshots use synthetic data on an isolated Strapi 5.61 host.
 | Owner            | The admin user who created the bookmark. The owner, or someone with **Manage shared bookmarks of others**, can edit or delete it.                                            |
 | Visibility       | **Only me**, **Specific roles and users** or **All admin users**. Recipients can open, pin and duplicate a bookmark, but not change it.                                      |
 | Pin              | Per user. Pinning a shared bookmark changes only your own toolbar list and homepage widget.                                                                                  |
-| Advanced filters | A filter editor for the list view with "all conditions" or "any condition", extra operators, and relation and component fields.                                              |
+| Advanced filters | A filter builder for the list view: "all" or "any" conditions, one optional group, extra operators, relation and component fields, and a live count.                         |
 
 Where you find it:
 
@@ -142,18 +145,67 @@ Where you find it:
 | **Magic Mark** page         | Main menu                                                                                                                                                                                                                                                                                         | Read bookmarks                                 |
 | **Pinned bookmarks** widget | Strapi homepage                                                                                                                                                                                                                                                                                   | Read bookmarks                                 |
 
-With **All conditions** the filters use the same `$and` shape as Strapi's own filters, so they
-appear as filter tags and can be removed one by one. With **Any condition** the list is filtered
-correctly, but Strapi does not show those conditions as tags; open Advanced filters to change or
-clear them.
+### Building filters (AND / OR)
+
+Open **Advanced filters** (the sliders icon next to Bookmarks). An empty filter offers one-click
+examples ("Updated in the last 7 days", "Published entries", "Title contains …") and **Add
+condition**. Each condition reads as a sentence: field, condition, value.
+
+```text
+Show entries that match [all conditions ▾]
+  [Category ▾] [is ▾]               [news ▾]          🗑
+  AND
+  [Publish on ▾] [is on or after ▾] [2026-01-01]      🗑
+  AND
+  ┌ Any of these ─────────────────────────────────────┐
+  │ [Views ▾]  [is greater than ▾] [100]           🗑 │
+  │ OR                                                │
+  │ [Author (name) ▾] [is ▾] [Ben Muster ▾]        🗑 │
+  │ + Add condition to this group                     │
+  └───────────────────────────────────────────────────┘
+  + Add condition    + Add an "any of" group
+  4 entries match.
+```
+
+- **Match all or any.** The top choice decides how the main conditions combine. A group always
+  uses the other one: with "all" you can add one "any of" group, with "any" you can add several
+  "all of" groups (for example "Category is opinion, or all of (Featured is Yes, Views is at
+  least 200)").
+- **Inputs follow the field type:** Yes/No for booleans, a list for enumerations and the
+  publication status, suggestions from the related entries for relation fields, "Today", "7 days
+  ago" and "30 days ago" for dates, and two inputs for "is between". Operators use plain words
+  ("is at least", "is on or after", "is empty").
+- **Live count.** The line under the conditions shows how many entries match before you apply,
+  using the same Content Manager request as the list.
+- **Undo.** Removing a condition or a group shows **Undo** until the next change.
+- **Active filter chip.** When the filter has parts Strapi's own filter tags cannot show ("any"
+  conditions or a group), the toolbar shows the whole filter as one sentence. Select it to edit
+  the filter, or use the cross next to it to remove every filter.
+
+With "all" the main conditions use the same `$and` shape as Strapi's own filters, so they also
+appear as native filter tags. Bookmarks save the filter exactly as it is in the URL, and bookmarks
+saved by earlier versions open unchanged; the builder reads them, including the 3.x shapes.
+
+**Limits.** The Content Manager parses the list URL with the `qs` default depth of 5 brackets, so
+`filters[$and][0][$or][0][title][$eq]` (a nested `$or` inside `$and`) does not reach it intact.
+The builder therefore writes groups with Strapi's implicit AND: "all of (A, any of (B, C))" is
+`filters[$and][…]=A&filters[$or][…]=B,C`, and "any of (A, all of (B, C))" puts B and C into one
+`$or` entry. This allows one level of groups, one "any of" group with "all", and each field and
+condition once inside an "all of" group. Status (draft, published, modified) works only as a main
+condition with "all", because the Content Manager reads it only from the main `$and` list. If
+Status is the only main condition next to a group, the builder adds the always-true condition
+"id is not empty": without it the Content Manager drops the group (Strapi 5.57 to 5.63).
+Removing a native filter tag also removes a group, because Strapi's tags rewrite the filter as
+`$and` only; the chip then shows what is left. Dates are fixed when you apply: a bookmark made
+with "7 days ago" keeps that date.
 
 A filter can have at most 100 values for "is one of" / "is none of" and at most 100 conditions
-with **Any condition**: that is the `arrayLimit` of Strapi's `strapi::query` middleware, and from
-Strapi 5.63 a longer list is answered with 400. With **All conditions** the limit is 20, because
-the Content Manager list view does not open with more `$and` conditions in the URL (Strapi 5.62
-and 5.63). Advanced filters shows these limits next to the fields, and a bookmark with a longer
-list is not opened: a notice asks you to narrow the filters and save the current view into the
-bookmark again.
+with **any**: that is the `arrayLimit` of Strapi's `strapi::query` middleware, and from Strapi
+5.63 a longer list is answered with 400. With **all** the limit is 20 main conditions, because the
+Content Manager list view does not open with more `$and` conditions in the URL (Strapi 5.62 and
+5.63); a group can have 20 conditions. Advanced filters shows these limits next to the buttons,
+and a bookmark with a longer list is not opened: a notice asks you to narrow the filters and save
+the current view into the bookmark again.
 
 ## Configuration
 
@@ -185,9 +237,13 @@ search shows email addresses only to admins who may read admin users (`admin::us
 `updatedAt` descending, save the view as "Waiting for review" and share it with the Editor role.
 Every editor finds it in the Bookmarks menu of Articles and can pin it to the homepage.
 
-**A personal working set.** In Advanced filters choose **Any condition**, add "stage is one of
+**A personal working set.** In Advanced filters choose **any condition**, add "stage is one of
 idea, review" and "author is anna.beispiel", apply, then save the view as a private bookmark and
 pin it.
+
+**News that is popular or by one author.** Keep **all conditions**, add "Category is news", then
+**Add an "any of" group** with "Views is greater than 100" and "Author (name) is Ben Muster". The
+count line shows the result before you apply; save the view as a bookmark to keep it.
 
 **Keep a shared bookmark up to date.** Change the filters in the list, open Bookmarks and use the
 refresh icon next to the bookmark. It now stores the current view; the name and the people it is
@@ -397,8 +453,13 @@ bookmark opens on page 1 with its filters, sort, page size, search and locale.
 **Are the columns of the list view saved?** No. Columns are a per-user Content Manager setting
 and stay as they are.
 
-**Why do "Any condition" filters not show as filter tags?** Strapi shows only `$and` filters as
-tags. The list is still filtered correctly; open Advanced filters to change or clear them.
+**Why do "any condition" filters not show as filter tags?** Strapi shows only `$and` filters as
+tags. The list is still filtered correctly, and the filter chip in the toolbar shows the whole
+filter as a sentence; select it to change the filter, or use its cross to clear it.
+
+**Can I nest groups deeper than one level?** No. The Content Manager reads the list URL with a
+bracket depth of 5, and a second level of groups needs more (see
+[Building filters](#building-filters-and--or)).
 
 **Does it work with a custom admin URL?** Yes. Bookmarks store the path inside the admin, not the
 full URL.

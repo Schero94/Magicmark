@@ -33,6 +33,10 @@ Configuration essentials:
 - Admin permissions under Settings > Roles > Plugins > Magic Mark: `plugin::magic-mark.bookmarks.read`, `create`, `update`, `delete`, `share`, `manage`. Super Admins have all of them; other roles have none until granted.
 - Admin API under `/magic-mark` (`/bookmarks`, `/bookmarks/:id`, `/bookmarks/:id/view`, `/bookmarks/:id/duplicate`, `/bookmarks/:id/pin`, `/sharing/roles`, `/sharing/users`). There are no Content API routes.
 
+## Used by
+
+No companies are listed yet. Using Magic Mark in production? Add your company: https://github.com/Schero94/Magicmark/issues/new?template=showcase.yml
+
 ## Docs
 
 - [Documentation site](https://schero94.github.io/Magicmark/): features, how it works, install, screens, permissions, examples, admin API, security, several instances, upgrading from 3.x, FAQ

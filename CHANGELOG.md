@@ -1,4 +1,10 @@
-## [Unreleased]
+# [4.1.0](https://github.com/Schero94/Magicmark/compare/v4.0.5...v4.1.0) (2026-11-20)
+
+
+### Features
+
+* AND / OR filter builder with groups, live count and filter chip ([#19](https://github.com/Schero94/Magicmark/issues/19)) ([c2ed0a3](https://github.com/Schero94/Magicmark/commit/c2ed0a39dcf7544b1daea11ce0784209980545f9))
+
 
 ### Added
 

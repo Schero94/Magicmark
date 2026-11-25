@@ -1,0 +1,17 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Discussions
+    url: https://github.com/Schero94/Magicmark/discussions
+    about: Ask questions, share ideas, and discuss with the community
+  - name: 📖 Documentation
+    url: https://github.com/Schero94/Magicmark#readme
+    about: Read the full documentation and setup guide
+  - name: 🐛 Existing Issues
+    url: https://github.com/Schero94/Magicmark/issues
+    about: Check if your issue has already been reported
+  - name: ⭐ Star on GitHub
+    url: https://github.com/Schero94/Magicmark
+    about: Show your support by starring the repository
+  - name: 🏢 Used by
+    url: https://schero94.github.io/Magicmark/#used-by
+    about: See the companies that use Magic Mark. To add yours, choose "Showcase your company" above.

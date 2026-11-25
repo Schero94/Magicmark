@@ -1,5 +1,5 @@
 /**
- * Visibility and share targets of a bookmark: "Only me", "Specific roles and users" or
+ * Visibility and share targets of a bookmark: "Only me", "Shared with roles and users" or
  * "All admin users". Roles come from a multi select, users from a server-side search.
  */
 import {
@@ -103,7 +103,7 @@ export const SharingFields = ({ value, onChange, error }: SharingFieldsProps) =>
             {formatMessage(msg('visibility.private', 'Only me'))}
           </Radio.Item>
           <Radio.Item value="shared">
-            {formatMessage(msg('visibility.sharedOption', 'Specific roles and users'))}
+            {formatMessage(msg('visibility.sharedOption', 'Shared with roles and users'))}
           </Radio.Item>
           <Radio.Item value="public">
             {formatMessage(msg('visibility.publicOption', 'All admin users'))}

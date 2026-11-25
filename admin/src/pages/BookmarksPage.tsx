@@ -95,7 +95,7 @@ const VISIBILITY_BADGE: Record<
   public: {
     backgroundColor: 'secondary200',
     textColor: 'secondary700',
-    label: msg('visibility.public', 'All admins'),
+    label: msg('visibility.public', 'All admin users'),
   },
 };
 
@@ -342,7 +342,15 @@ export const BookmarksPage = () => {
         <Box paddingTop={1} color="neutral600">
           <Icon aria-hidden />
         </Box>
-        <Flex direction="column" alignItems="flex-start" minWidth={0}>
+        {/* The Design System table sets `white-space: nowrap` on the whole table, so a long name
+            or description ran over the next columns. The name column wraps instead, like the
+            cards and the popover; Td maxWidth bounds it. No DS prop sets white-space. */}
+        <Flex
+          direction="column"
+          alignItems="flex-start"
+          minWidth={0}
+          style={{ whiteSpace: 'normal', overflowWrap: 'anywhere' }}
+        >
           {target ? (
             <Link
               tag={NavLink}
@@ -417,7 +425,8 @@ export const BookmarksPage = () => {
         startActions={
           <Flex gap={2} wrap="wrap">
             <SearchInput label={formatMessage(msg('page.search', 'Search bookmarks'))} />
-            <Box minWidth="16rem">
+            {/* Full width below the medium breakpoint, like the search field above them. */}
+            <Box minWidth="16rem" width={{ initial: '100%', medium: 'auto' }}>
               <SingleSelect
                 size="S"
                 aria-label={formatMessage(msg('page.scope', 'Show'))}
@@ -443,7 +452,7 @@ export const BookmarksPage = () => {
                 ) : null}
               </SingleSelect>
             </Box>
-            <Box minWidth="20rem">
+            <Box minWidth="20rem" width={{ initial: '100%', medium: 'auto' }}>
               <SingleSelect
                 size="S"
                 aria-label={formatMessage(msg('page.contentType', 'Content type'))}

@@ -249,7 +249,10 @@ export const BookmarksPopover = ({
                             <Box paddingTop={1} color="neutral600">
                               <Icon aria-hidden />
                             </Box>
-                            <Flex direction="column" alignItems="flex-start" minWidth={0}>
+                            {/* stretch, not flex-start: the ellipsis of a long description needs a bounded width;
+                                with flex-start the text took its full width and the popover
+                                scrolled sideways. */}
+                            <Flex direction="column" alignItems="stretch" flex={1} minWidth={0}>
                               {target ? (
                                 <Link
                                   tag={NavLink}

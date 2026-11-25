@@ -133,7 +133,7 @@ All screenshots use synthetic data on an isolated Strapi 5.61 host.
 | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Bookmark         | A saved Content Manager list view: content type, filters, sort order, page size, search text and locale. The page number is not saved, so a bookmark always opens on page 1. |
 | Owner            | The admin user who created the bookmark. The owner, or someone with **Manage shared bookmarks of others**, can edit or delete it.                                            |
-| Visibility       | **Only me**, **Specific roles and users** or **All admin users**. Recipients can open, pin and duplicate a bookmark, but not change it.                                      |
+| Visibility       | **Only me**, **Shared with roles and users** or **All admin users**. Recipients can open, pin and duplicate a bookmark, but not change it.                                   |
 | Pin              | Per user. Pinning a shared bookmark changes only your own toolbar list and homepage widget.                                                                                  |
 | Advanced filters | A filter builder for the list view: "all" or "any" conditions, one optional group, extra operators, relation and component fields, and a live count.                         |
 

@@ -1,3 +1,18 @@
+## [Unreleased]
+
+### Fixed
+
+* Bookmark page: a long bookmark name or description no longer runs over the Content type and Filters columns. The name column wraps like the cards and the popover (the Design System table sets `white-space: nowrap`).
+* Bookmarks popover: a long description is cut with an ellipsis instead of making the popover scroll sideways.
+* Closing a changed bookmark form asks "Discard changes?" with a "Discard changes" button instead of the generic "Confirmation" / "Confirm".
+* The edit dialog offers "Try again" when the bookmark could not be loaded.
+* Phones and small tablets: the "Show" and "Content type" selects on the bookmark page are full width, like the search field.
+
+### Changed
+
+* One term per concept: removing the list filters reads "Clear filters" in the filter builder, the filter chip and the bookmark page (was "Clear all" and "Remove all filters"); the visibility "All admins" badge reads "All admin users" like the option, and the option "Specific roles and users" reads "Shared with roles and users" to match the "Shared" badge.
+* Filter builder footer: Cancel on the left, "Clear filters" and "Apply" on the right, like the bookmark form and native Strapi dialogs.
+
 # [4.1.0](https://github.com/Schero94/Magicmark/compare/v4.0.5...v4.1.0) (2026-11-20)
 
 

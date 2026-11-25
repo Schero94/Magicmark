@@ -56,7 +56,7 @@ export const ActiveFilterChip = ({ uid, onOpen }: ActiveFilterChipProps) => {
         </Button>
       </Tooltip>
       <IconButton
-        label={formatMessage(msg('chip.clear', 'Remove all filters'))}
+        label={formatMessage(msg('chip.clear', 'Clear filters'))}
         onClick={() =>
           setQuery(
             { ...withEncodedUserParams(query, { page: 1 }), filters: undefined },

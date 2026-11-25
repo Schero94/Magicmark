@@ -664,15 +664,17 @@ export const AdvancedFiltersModal = ({ open, onOpenChange, uid }: AdvancedFilter
             </Flex>
           )}
         </Modal.Body>
-        {/* Wraps on narrow screens: three buttons with longer labels (de) do not fit 320 px. */}
+        {/* Cancel on the left and the actions on the right, like every other plugin and native
+            dialog footer. Wraps on narrow screens: three buttons with longer labels (de) do not
+            fit 320 px. */}
         <Modal.Footer wrap="wrap" gap={2}>
-          <Button variant="danger-light" onClick={clearAll} disabled={!query.filters}>
-            {formatMessage(msg('filters.clear', 'Clear all'))}
-          </Button>
+          <Modal.Close>
+            <Button variant="tertiary">{formatMessage(msg('form.cancel', 'Cancel'))}</Button>
+          </Modal.Close>
           <Flex gap={2} marginLeft="auto">
-            <Modal.Close>
-              <Button variant="tertiary">{formatMessage(msg('form.cancel', 'Cancel'))}</Button>
-            </Modal.Close>
+            <Button variant="danger-light" onClick={clearAll} disabled={!query.filters}>
+              {formatMessage(msg('filters.clear', 'Clear filters'))}
+            </Button>
             <Button onClick={apply} disabled={!ready}>
               {formatMessage(msg('filters.apply', 'Apply'))}
             </Button>

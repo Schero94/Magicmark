@@ -98,6 +98,7 @@ export const BookmarkFormModal = ({
   const [loaded, setLoaded] = useState<Bookmark | null>(null);
   const [loading, setLoading] = useState(!!bookmarkId);
   const [loadFailed, setLoadFailed] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   // Set when the server rejects the captured list view itself (search or filter too long);
@@ -135,7 +136,13 @@ export const BookmarkFormModal = ({
     return () => {
       active = false;
     };
-  }, [bookmarkId, api]);
+  }, [bookmarkId, api, loadAttempt]);
+
+  const retryLoad = () => {
+    setLoadFailed(false);
+    setLoading(true);
+    setLoadAttempt((n) => n + 1);
+  };
 
   const validate = () => {
     const next: Record<string, string> = {};
@@ -267,9 +274,14 @@ export const BookmarkFormModal = ({
                 <Loader small>{formatMessage(msg('state.loading', 'Loading'))}</Loader>
               </Flex>
             ) : loadFailed ? (
-              <Typography textColor="danger600">
-                {formatMessage(msg('form.loadError', 'The bookmark could not be loaded.'))}
-              </Typography>
+              <Flex direction="column" alignItems="flex-start" gap={3}>
+                <Typography textColor="danger600">
+                  {formatMessage(msg('form.loadError', 'The bookmark could not be loaded.'))}
+                </Typography>
+                <Button variant="secondary" onClick={retryLoad}>
+                  {formatMessage(msg('state.retry', 'Try again'))}
+                </Button>
+              </Flex>
             ) : (
               <Flex direction="column" alignItems="stretch" gap={6}>
                 {queryRejected ? (
@@ -364,18 +376,20 @@ export const BookmarkFormModal = ({
       </Modal.Root>
       <Dialog.Root open={confirmDiscard} onOpenChange={setConfirmDiscard}>
         <ConfirmDialog
-          variant="danger"
-          onConfirm={() => {
-            setConfirmDiscard(false);
-            onOpenChange(false);
-          }}
+          title={formatMessage(msg('form.discardTitle', 'Discard changes?'))}
+          endAction={
+            <Button
+              variant="danger"
+              onClick={() => {
+                setConfirmDiscard(false);
+                onOpenChange(false);
+              }}
+            >
+              {formatMessage(msg('form.discardConfirm', 'Discard changes'))}
+            </Button>
+          }
         >
-          {formatMessage(
-            msg(
-              'form.discardBody',
-              'Close without saving? Your changes to this bookmark will be lost.'
-            )
-          )}
+          {formatMessage(msg('form.discardBody', 'Your changes to this bookmark will be lost.'))}
         </ConfirmDialog>
       </Dialog.Root>
     </>

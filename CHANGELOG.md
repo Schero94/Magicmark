@@ -1,4 +1,10 @@
-## [Unreleased]
+## [4.1.1](https://github.com/Schero94/Magicmark/compare/v4.1.0...v4.1.1) (2026-11-25)
+
+
+### Bug Fixes
+
+* **admin:** clearer click paths, consistent wording and spacing ([#24](https://github.com/Schero94/Magicmark/issues/24)) ([6a4742a](https://github.com/Schero94/Magicmark/commit/6a4742a15d4dea9272923692a90348ae07753d8c))
+
 
 ### Fixed
 

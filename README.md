@@ -392,6 +392,23 @@ The plugin develops against the `@strapi/design-system` and `@strapi/icons` mino
 Strapi baseline's admin ships (2.3.x for Strapi 5.62). Dependabot does not propose newer minors
 of these two packages; they are raised by hand with each Strapi baseline bump.
 
+### Compatibility canary
+
+A scheduled workflow, `.github/workflows/canary.yml`, runs every Monday at 04:17 UTC and on demand
+(Actions → Compatibility canary → Run workflow). It installs the newest Strapi 5.x release over the
+lockfile and tests the plugin on the newest Node.js release, the newest LTS and every LTS line
+inside `engines.node`: the regression tests, the admin StrictMode tests, both type checks, the
+build, `verify` and `verify:runtime`, as `test.yml` runs them. There is no Strapi boot test in this
+repository; the workbench fleet canary boots the plugin with the other plugins.
+
+A failure opens or updates one issue labelled `compat` ("Compatibility: Strapi X.Y.Z / Node A.B.C")
+with the failing jobs, the failing step and a log excerpt; the next green run closes it. The last
+passing and the last run are recorded in the closed issue "Compatibility canary state". A manual run
+can force a Strapi version (`strapi`) or Node.js versions (`node`), and `dry-run` prints the plan
+instead of writing issues. Pull requests that change the canary run it as a dry run. The logic lives
+in `.github/scripts/compat-canary.mjs` (byte-identical in every plugin of the workbench, unit-tested
+in `compat-canary.test.mjs`).
+
 ## Upgrading from 3.x
 
 There are no manual steps. Update the package, rebuild the admin (`npm run build`) and start

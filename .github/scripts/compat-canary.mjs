@@ -567,8 +567,9 @@ export function failureTitle(current, failed) {
  * @returns {string} Markdown body.
  */
 export function failureBody({ current, failed, lastPass, runUrl, fingerprint }) {
+  const lastNodes = lastPass?.nodes?.join(', ') || '(not recorded)';
   const last = lastPass
-    ? `Strapi ${lastPass.strapi} / Node ${lastPass.nodes.join(', ')} on ${lastPass.date} ([run](${lastPass.run}))`
+    ? `Strapi ${lastPass.strapi} / Node ${lastNodes} on ${lastPass.date} ([run](${lastPass.run}))`
     : 'none recorded';
   const lines = [
     'The compatibility canary tested this plugin against newer Strapi and Node.js versions than the',
@@ -636,6 +637,23 @@ export function stateBody(state) {
     '',
     writeMarker(MARKERS.state, state),
   ].join('\n');
+}
+
+/**
+ * One line that says what an action does, for the job summary.
+ *
+ * @param {{type: string, number?: number|null, title?: string, comment?: string|null}} action Action.
+ * @returns {string} For example `update #9 (with a comment): Compatibility: ...`.
+ */
+export function describeAction(action) {
+  const issue = action.number ? `#${action.number}` : '';
+  if (action.type === 'create') return `open a new issue: ${action.title}`;
+  if (action.type === 'close') return `comment on and close ${issue}`;
+  if (action.type === 'update') {
+    const how = action.comment ? 'with one comment' : 'body only, no notification';
+    return `update ${issue} (${how}): ${action.title}`;
+  }
+  return issue ? `update the state issue ${issue}` : 'create the closed state issue';
 }
 
 /**
@@ -1063,8 +1081,7 @@ async function report() {
   log.push(`- New since the last passing run: ${plan.news.join('; ') || 'nothing'}`);
   for (const action of plan.actions) {
     const target = action.number ? `#${action.number}` : 'new issue';
-    const title = action.title ? `: ${action.title}` : '';
-    log.push(`- ${dryRun ? 'Would ' : ''}${action.type} ${target}${title}`);
+    log.push(`- ${dryRun ? 'Would: ' : ''}${describeAction(action)}`);
     if (dryRun && action.type !== 'state')
       console.log(`\n----- ${action.type} ${target}\n${action.body || action.comment}`);
     if (dryRun) continue;

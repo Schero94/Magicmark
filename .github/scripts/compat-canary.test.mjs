@@ -15,6 +15,7 @@ import {
   bumpAppPins,
   classifyJobs,
   compareVersions,
+  describeAction,
   excerptLog,
   failureTitle,
   parseVersion,
@@ -480,4 +481,27 @@ test('proposal text names the evidence and never claims a merge', () => {
     runUrl: RUN,
   });
   assert.equal(pin.title, 'chore(deps): run the test app on Strapi 5.65.0');
+});
+
+test('describes each planned action in one line', () => {
+  assert.equal(describeAction({ type: 'create', title: 'T' }), 'open a new issue: T');
+  assert.equal(describeAction({ type: 'close', number: 3 }), 'comment on and close #3');
+  const quiet = { type: 'update', number: 3, title: 'T', comment: null };
+  assert.equal(describeAction(quiet), 'update #3 (body only, no notification): T');
+  assert.equal(describeAction({ ...quiet, comment: 'c' }), 'update #3 (with one comment): T');
+  assert.equal(describeAction({ type: 'state', number: null }), 'create the closed state issue');
+  assert.equal(describeAction({ type: 'state', number: 7 }), 'update the state issue #7');
+});
+
+test('a simulated last pass without Node versions renders readably', () => {
+  const lastPass = { strapi: '5.63.0', nodes: [], date: 'simulated', run: 'simulated' };
+  const simulated = { number: 0, body: stateBody({ lastPass, lastRun: lastPass }) };
+  const failing = {
+    outcome: 'fail',
+    failed: failedJobs(),
+    stateIssue: simulated,
+    openFailures: [],
+  };
+  const [create] = plan(failing).actions;
+  assert.match(create.body, /Strapi 5\.63\.0 \/ Node \(not recorded\) on simulated/);
 });
